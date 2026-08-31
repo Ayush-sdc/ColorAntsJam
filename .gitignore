@@ -1,0 +1,58 @@
+# Unity .gitignore
+
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+MemoryCaptures/
+Recordings/
+
+# Asset meta-files can cause conflicts with redone GUIDs, but should be included:
+# !*.meta
+
+# Uncomment this line to ignore accidental leak of sensitivity credentials:
+# /Assets/Plugins/Editor/MySecretFolder*
+
+# Unity3D generated meta files
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Unity3D Generated File On Crash Reports
+sysinfo.txt
+
+# Builds
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# Crashlytics generated file
+crashlytics-build.properties
+
+# Visual Studio / Rider / VS Code generated files
+.vs/
+.idea/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Unity profiler
+*.profiler
+
+# OS generated
+.DS_Store
+Thumbs.db
