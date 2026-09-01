@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerInputHandler : MonoBehaviour
@@ -13,6 +13,11 @@ public class PlayerInputHandler : MonoBehaviour
         if (mainCamera == null)
         {
             mainCamera = Camera.main;
+        }
+
+        if (mainCamera != null)
+        {
+            mainCamera.fieldOfView = 78f;
         }
 
         AntQueueController.OnQueueMoveStarted += HandleMoveStarted;
@@ -36,8 +41,57 @@ public class PlayerInputHandler : MonoBehaviour
         canInteract = true;
     }
 
+    public static Vector3 MouseWorldPosition { get; private set; } = Vector3.zero;
+
     private void Update()
     {
+        // Continuously update MouseWorldPosition for ant eye gaze tracking
+        Vector2 currentPointerScreenPos = Vector2.zero;
+        bool hasPointer = false;
+
+        if (Mouse.current != null)
+        {
+            currentPointerScreenPos = Mouse.current.position.ReadValue();
+            hasPointer = true;
+        }
+        else if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
+        {
+            currentPointerScreenPos = Touchscreen.current.primaryTouch.position.ReadValue();
+            hasPointer = true;
+        }
+
+        if (hasPointer && mainCamera != null)
+        {
+            Ray ray = mainCamera.ScreenPointToRay(currentPointerScreenPos);
+            Plane gazePlane = new Plane(Vector3.up, new Vector3(0f, 0.32f, 0f));
+            if (gazePlane.Raycast(ray, out float enter))
+            {
+                MouseWorldPosition = ray.GetPoint(enter);
+            }
+        }
+        // Keyboard Shortcuts for Level Navigation in Game Mode:
+        // 'E' -> Next Level
+        // 'Q' -> Previous Level
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.eKey.wasPressedThisFrame)
+            {
+                if (GameManager.Instance != null)
+                {
+                    GameManager.Instance.NextLevel();
+                    return;
+                }
+            }
+            else if (Keyboard.current.qKey.wasPressedThisFrame)
+            {
+                if (GameManager.Instance != null)
+                {
+                    GameManager.Instance.PreviousLevel();
+                    return;
+                }
+            }
+        }
+
         if (!canInteract) return;
 
         // Support both mouse click and screen touch

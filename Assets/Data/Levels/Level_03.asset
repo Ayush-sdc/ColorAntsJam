@@ -1,0 +1,96 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08c48c4a571c5df44b34a1f6328e9d42, type: 3}
+  m_Name: Level_03
+  m_EditorClassIdentifier: Assembly-CSharp::Level
+  levelNumber: 3
+  levelName: Twin Worms Jam
+  difficulty: Medium
+  timeLimitInSeconds: 120
+  gridWidth: 9
+  gridHeight: 6
+  cellSize: 1
+  holes:
+  - holeColor: 3
+    gridCoordinate: {x: 6, y: 4}
+    displayCount: 6
+  - holeColor: 0
+    gridCoordinate: {x: 6, y: 2}
+    displayCount: 6
+  - holeColor: 4
+    gridCoordinate: {x: 1, y: 0}
+    displayCount: 11
+  antQueues:
+  - queueId: Yellow_3A
+    antColor: 3
+    antCount: 3
+    initialBodyCoordinates:
+    - {x: 5, y: 4}
+    - {x: 4, y: 4}
+    - {x: 3, y: 4}
+    fullPathToHole:
+    - {x: 5, y: 4}
+    - {x: 6, y: 4}
+  - queueId: Yellow_3B
+    antColor: 3
+    antCount: 3
+    initialBodyCoordinates:
+    - {x: 2, y: 4}
+    - {x: 1, y: 4}
+    - {x: 0, y: 4}
+    fullPathToHole:
+    - {x: 2, y: 4}
+    - {x: 3, y: 4}
+    - {x: 4, y: 4}
+    - {x: 5, y: 4}
+    - {x: 6, y: 4}
+  - queueId: Blue_3A
+    antColor: 0
+    antCount: 3
+    initialBodyCoordinates:
+    - {x: 5, y: 2}
+    - {x: 4, y: 2}
+    - {x: 3, y: 2}
+    fullPathToHole:
+    - {x: 5, y: 2}
+    - {x: 6, y: 2}
+  - queueId: Blue_3B
+    antColor: 0
+    antCount: 3
+    initialBodyCoordinates:
+    - {x: 2, y: 2}
+    - {x: 1, y: 2}
+    - {x: 0, y: 2}
+    fullPathToHole:
+    - {x: 2, y: 2}
+    - {x: 3, y: 2}
+    - {x: 4, y: 2}
+    - {x: 5, y: 2}
+    - {x: 6, y: 2}
+  - queueId: Red_3
+    antColor: 4
+    antCount: 11
+    initialBodyCoordinates:
+    - {x: 2, y: 0}
+    - {x: 3, y: 0}
+    - {x: 4, y: 0}
+    - {x: 5, y: 0}
+    - {x: 6, y: 0}
+    - {x: 7, y: 0}
+    - {x: 8, y: 0}
+    - {x: 8, y: 1}
+    - {x: 8, y: 2}
+    - {x: 8, y: 3}
+    - {x: 8, y: 4}
+    fullPathToHole:
+    - {x: 2, y: 0}
+    - {x: 1, y: 0}

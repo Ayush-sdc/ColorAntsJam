@@ -46,6 +46,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HoleController
   holeColor: 0
   gridCoordinate: {x: 0, y: 0}
-  rimRenderer: {fileID: 0}
-  innerHoleRenderer: {fileID: 0}
-  holeLight: {fileID: 0}
+  initialCapacity: 1
+  remainingCount: 1
+  slotRoot: {fileID: 0}
+  rimRenderers: []
+  pitRenderers: []
+  countBadgeObj: {fileID: 0}
+  countTextMesh: {fileID: 0}
+  badgeBackgroundRenderer: {fileID: 0}

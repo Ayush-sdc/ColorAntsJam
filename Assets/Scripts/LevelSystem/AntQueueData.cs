@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -47,14 +47,19 @@ public class HoleData
     [Tooltip("Grid coordinate where this hole is located.")]
     [SerializeField] private Vector2Int gridCoordinate = Vector2Int.zero;
 
+    [Tooltip("Target / capacity count displayed on the hole badge.")]
+    [SerializeField] private int displayCount = 1;
+
     public AntColor HoleColor => holeColor;
     public Vector2Int GridCoordinate => gridCoordinate;
+    public int DisplayCount => displayCount;
 
     public HoleData() { }
 
-    public HoleData(AntColor color, Vector2Int coordinate)
+    public HoleData(AntColor color, Vector2Int coordinate, int count = 1)
     {
         this.holeColor = color;
         this.gridCoordinate = coordinate;
+        this.displayCount = count;
     }
 }

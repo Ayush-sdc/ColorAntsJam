@@ -46,4 +46,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AntUnit
   antColor: 0
   isHead: 0
+  isTail: 0
   bodyRenderer: {fileID: 0}

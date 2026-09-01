@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public class LevelManager : MonoBehaviour
@@ -103,6 +103,18 @@ public class LevelManager : MonoBehaviour
         PlayerPrefs.Save();
 
         LoadLevel(currentLevelNumber);
+    }
+
+    /// <summary>
+    /// Loads the previous level (clamped to Level 1 minimum).
+    /// </summary>
+    public void LoadPreviousLevel()
+    {
+        int prevLevel = Mathf.Max(1, currentLevelNumber - 1);
+        PlayerPrefs.SetInt(CurrentLevelPrefKey, prevLevel);
+        PlayerPrefs.Save();
+
+        LoadLevel(prevLevel);
     }
 
     /// <summary>

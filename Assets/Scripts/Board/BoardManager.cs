@@ -12,9 +12,9 @@ public class BoardManager : MonoBehaviour
     [SerializeField] private GameObject holePrefab;
     [SerializeField] private GameObject antQueuePrefab;
 
-    private int width;
-    private int height;
-    private float cellSize;
+    [SerializeField] private int width;
+    [SerializeField] private int height;
+    [SerializeField] private float cellSize = 1.0f;
 
     private readonly Dictionary<Vector2Int, HoleController> holesMap = new Dictionary<Vector2Int, HoleController>();
     private readonly List<AntQueueController> activeQueues = new List<AntQueueController>();
@@ -23,6 +23,7 @@ public class BoardManager : MonoBehaviour
     public int Height => height;
     public float CellSize => cellSize;
     public IReadOnlyList<AntQueueController> ActiveQueues => activeQueues;
+    public Transform BoardParent => boardParent;
 
     public static event Action OnBoardStateChanged;
 
@@ -30,7 +31,7 @@ public class BoardManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            SafeDestroy(gameObject);
             return;
         }
         Instance = this;
@@ -64,7 +65,9 @@ public class BoardManager : MonoBehaviour
         height = level.GridHeight;
         cellSize = level.CellSize;
 
-        // 1. Update/Frame Background Environment
+        Transform parentTransform = boardParent != null ? boardParent : transform;
+
+        // 1. Update/Frame Background Environment if present
         if (GardenBackgroundManager.Instance != null)
         {
             GardenBackgroundManager.Instance.BuildEnvironment(width, height, cellSize);
@@ -73,10 +76,23 @@ public class BoardManager : MonoBehaviour
         // 2. Spawn Grid Visual Tiles
         SpawnGridVisuals();
 
-        // 3. Spawn Holes
+        // 3. Spawn Holes with initial capacity equal to matching queue ants
         foreach (var holeData in level.Holes)
         {
-            SpawnHole(holeData);
+            int totalAntsForColor = 0;
+            if (level.AntQueues != null)
+            {
+                foreach (var q in level.AntQueues)
+                {
+                    if (q.AntColor == holeData.HoleColor)
+                    {
+                        totalAntsForColor += q.InitialBodyCoordinates.Count;
+                    }
+                }
+            }
+
+            int initialCount = totalAntsForColor > 0 ? totalAntsForColor : holeData.DisplayCount;
+            SpawnHole(holeData, initialCount);
         }
 
         // 4. Spawn Ant Queues
@@ -90,80 +106,75 @@ public class BoardManager : MonoBehaviour
 
     private void SpawnGridVisuals()
     {
+        Transform parentTransform = boardParent != null ? boardParent : transform;
         Transform gridHolder = new GameObject("TilesHolder").transform;
-        gridHolder.SetParent(boardParent != null ? boardParent : transform);
+        gridHolder.SetParent(parentTransform);
+        gridHolder.localPosition = Vector3.zero;
 
-        for (int x = 0; x < width; x++)
+        // Clean, elegant studio floor backdrop
+        GameObject floorObj = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        floorObj.name = "StudioFloor";
+        floorObj.transform.SetParent(gridHolder);
+        floorObj.transform.localPosition = new Vector3(0f, -0.05f, 0f);
+        floorObj.transform.localScale = new Vector3((width * cellSize + 20f) * 0.1f, 1f, (height * cellSize + 20f) * 0.1f);
+        SafeDestroy(floorObj.GetComponent<Collider>());
+
+        var floorRenderer = floorObj.GetComponent<MeshRenderer>();
+        if (floorRenderer != null)
         {
-            for (int y = 0; y < height; y++)
-            {
-                Vector3 worldPos = GridToWorldPosition(new Vector2Int(x, y), -0.05f);
-                GameObject tileObj;
-                if (tilePrefab != null)
-                {
-                    tileObj = Instantiate(tilePrefab, worldPos, Quaternion.identity, gridHolder);
-                }
-                else
-                {
-                    tileObj = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                    tileObj.name = $"Tile_{x}_{y}";
-                    tileObj.transform.SetParent(gridHolder);
-                    tileObj.transform.position = worldPos;
-                    tileObj.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-                    tileObj.transform.localScale = Vector3.one * (cellSize * 0.95f);
-                    
-                    var renderer = tileObj.GetComponent<MeshRenderer>();
-                    if (renderer != null)
-                    {
-                        var mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-                        bool isChecker = (x + y) % 2 == 0;
-                        // Polished garden flagstone tones: creamy warm white & soft sand
-                        mat.color = isChecker ? new Color(0.96f, 0.95f, 0.93f) : new Color(0.88f, 0.86f, 0.82f);
-                        if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.15f);
-                        renderer.material = mat;
-                    }
-                }
-            }
+            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
+            mat.color = AntColorPalette.StudioBackground;
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.08f);
+            floorRenderer.material = mat;
         }
     }
 
-    private void SpawnHole(HoleData holeData)
+    private void SpawnHole(HoleData holeData, int initialCount)
     {
-        Vector3 worldPos = GridToWorldPosition(holeData.GridCoordinate, 0.01f);
+        Transform parentTransform = boardParent != null ? boardParent : transform;
+
+        // Capsule slots span 2 cells. For right-side slots (x >= 4), offset center +0.5 cellSize; for left-side (x <= 2), offset -0.5 cellSize
+        float xOffset = holeData.GridCoordinate.x >= 4 ? 0.5f : -0.5f;
+        Vector3 worldPos = GridToWorldPosition(holeData.GridCoordinate, 0.01f) + new Vector3(xOffset * cellSize, 0f, 0f);
         GameObject holeObj;
         HoleController controller;
 
         if (holePrefab != null)
         {
-            holeObj = Instantiate(holePrefab, worldPos, Quaternion.identity, transform);
+            holeObj = Instantiate(holePrefab, worldPos, Quaternion.identity, parentTransform);
             controller = holeObj.GetComponent<HoleController>();
         }
         else
         {
             holeObj = new GameObject($"Hole_{holeData.HoleColor}_{holeData.GridCoordinate.x}_{holeData.GridCoordinate.y}");
-            holeObj.transform.SetParent(transform);
+            holeObj.transform.SetParent(parentTransform);
             holeObj.transform.position = worldPos;
             controller = holeObj.AddComponent<HoleController>();
         }
 
-        controller.Initialize(holeData.HoleColor, holeData.GridCoordinate);
+        controller.Initialize(holeData.HoleColor, holeData.GridCoordinate, initialCount);
         holesMap[holeData.GridCoordinate] = controller;
+        
+        // Register secondary cell of the 2-cell wide slot
+        Vector2Int secondaryCoord = holeData.GridCoordinate + new Vector2Int(holeData.GridCoordinate.x >= 4 ? 1 : -1, 0);
+        holesMap[secondaryCoord] = controller;
     }
 
     private void SpawnAntQueue(AntQueueData data)
     {
+        Transform parentTransform = boardParent != null ? boardParent : transform;
         GameObject queueObj;
         AntQueueController queueController;
 
         if (antQueuePrefab != null)
         {
-            queueObj = Instantiate(antQueuePrefab, Vector3.zero, Quaternion.identity, transform);
+            queueObj = Instantiate(antQueuePrefab, Vector3.zero, Quaternion.identity, parentTransform);
             queueController = queueObj.GetComponent<AntQueueController>();
         }
         else
         {
             queueObj = new GameObject($"AntQueue_{data.QueueId}_{data.AntColor}");
-            queueObj.transform.SetParent(transform);
+            queueObj.transform.SetParent(parentTransform);
             queueController = queueObj.AddComponent<AntQueueController>();
         }
 
@@ -200,16 +211,15 @@ public class BoardManager : MonoBehaviour
         var remainingPath = queue.GetRemainingPath();
         if (remainingPath == null || remainingPath.Count == 0) return false;
 
-        // Check if destination matches correct color hole
+        // Check if destination matches correct color hole and is not full
         Vector2Int destination = remainingPath[remainingPath.Count - 1];
         var hole = GetHoleAt(destination);
-        if (hole == null || hole.Color != queue.Color)
+        if (hole == null || hole.Color != queue.Color || hole.IsFull)
         {
             return false;
         }
 
         // Check each step on the path ahead (from head forward)
-        // Note: we start from index 1 because index 0 is the queue's own current head position
         for (int i = 1; i < remainingPath.Count; i++)
         {
             Vector2Int step = remainingPath[i];
@@ -228,7 +238,7 @@ public class BoardManager : MonoBehaviour
         if (activeQueues.Contains(queue))
         {
             activeQueues.Remove(queue);
-            Destroy(queue.gameObject);
+            SafeDestroy(queue.gameObject);
         }
 
         OnBoardStateChanged?.Invoke();
@@ -239,21 +249,36 @@ public class BoardManager : MonoBehaviour
         holesMap.Clear();
         foreach (var q in activeQueues)
         {
-            if (q != null) Destroy(q.gameObject);
+            if (q != null) SafeDestroy(q.gameObject);
         }
         activeQueues.Clear();
 
-        // Destroy any leftover children
+        // Destroy any leftover children in transform
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
-            Destroy(transform.GetChild(i).gameObject);
+            SafeDestroy(transform.GetChild(i).gameObject);
         }
-        if (boardParent != null)
+
+        // Destroy children in boardParent if separate
+        if (boardParent != null && boardParent != transform)
         {
             for (int i = boardParent.childCount - 1; i >= 0; i--)
             {
-                Destroy(boardParent.GetChild(i).gameObject);
+                SafeDestroy(boardParent.GetChild(i).gameObject);
             }
+        }
+    }
+
+    private void SafeDestroy(UnityEngine.Object obj)
+    {
+        if (obj == null) return;
+        if (Application.isPlaying)
+        {
+            Destroy(obj);
+        }
+        else
+        {
+            DestroyImmediate(obj);
         }
     }
 }

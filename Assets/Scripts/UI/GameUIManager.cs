@@ -1,13 +1,13 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class GameUIManager : MonoBehaviour
 {
     [Header("Top Bar UI Elements")]
-    [SerializeField] private Text levelTitleText;
-    [SerializeField] private Text difficultyBadgeText;
     [SerializeField] private Text timerText;
-    [SerializeField] private Text livesText;
+    [SerializeField] private Text levelNumberText;
+    [SerializeField] private Image[] heartImages;
 
     [Header("Panels")]
     [SerializeField] private GameObject winPanel;
@@ -16,6 +16,7 @@ public class GameUIManager : MonoBehaviour
 
     [Header("Buttons")]
     [SerializeField] private Button restartButton;
+    [SerializeField] private Button settingsButton;
     [SerializeField] private Button nextLevelButton;
     [SerializeField] private Button retryButton;
 
@@ -29,6 +30,7 @@ public class GameUIManager : MonoBehaviour
         if (restartButton != null) restartButton.onClick.AddListener(() => GameManager.Instance.RestartLevel());
         if (retryButton != null) retryButton.onClick.AddListener(() => GameManager.Instance.RestartLevel());
         if (nextLevelButton != null) nextLevelButton.onClick.AddListener(() => GameManager.Instance.NextLevel());
+        if (settingsButton != null) settingsButton.onClick.AddListener(ToggleSoundSettings);
     }
 
     private void OnDestroy()
@@ -39,10 +41,17 @@ public class GameUIManager : MonoBehaviour
         LevelManager.OnLevelLoaded -= HandleLevelLoaded;
     }
 
+    private void ToggleSoundSettings()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.ToggleMute();
+        }
+    }
+
     private void HandleLevelLoaded(Level level)
     {
-        if (levelTitleText != null) levelTitleText.text = $"Level {level.LevelNumber}";
-        if (difficultyBadgeText != null) difficultyBadgeText.text = level.Difficulty;
+        if (levelNumberText != null) levelNumberText.text = level.LevelNumber.ToString();
 
         if (winPanel != null) winPanel.SetActive(false);
         if (losePanel != null) losePanel.SetActive(false);
@@ -53,25 +62,44 @@ public class GameUIManager : MonoBehaviour
         if (timerText == null) return;
         int mins = Mathf.FloorToInt(seconds / 60f);
         int secs = Mathf.FloorToInt(seconds % 60f);
-        timerText.text = $"{mins:00}:{secs:00}";
+        timerText.text = $"{mins}:{secs:00}";
     }
 
     private void UpdateLivesUI(int lives)
     {
-        if (livesText != null)
+        if (heartImages != null && heartImages.Length > 0)
         {
-            string heartString = "";
-            for (int i = 0; i < Mathf.Max(0, lives); i++)
+            for (int i = 0; i < heartImages.Length; i++)
             {
-                heartString += "<3 ";
+                if (heartImages[i] != null)
+                {
+                    bool isAlive = i < lives;
+                    heartImages[i].color = isAlive ? Color.white : new Color(0.25f, 0.25f, 0.30f, 0.35f);
+                }
             }
-            livesText.text = heartString;
         }
     }
 
     private void HandleGameStateChanged(GameState state)
     {
-        if (winPanel != null) winPanel.SetActive(state == GameState.LevelWon);
-        if (losePanel != null) losePanel.SetActive(state == GameState.LevelLost);
+        if (winPanel != null)
+        {
+            winPanel.SetActive(state == GameState.LevelWon);
+            if (state == GameState.LevelWon)
+            {
+                winPanel.transform.localScale = Vector3.one * 0.7f;
+                winPanel.transform.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutBack);
+            }
+        }
+
+        if (losePanel != null)
+        {
+            losePanel.SetActive(state == GameState.LevelLost);
+            if (state == GameState.LevelLost)
+            {
+                losePanel.transform.localScale = Vector3.one * 0.7f;
+                losePanel.transform.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutBack);
+            }
+        }
     }
 }

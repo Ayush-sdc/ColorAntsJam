@@ -18,10 +18,10 @@ public class AntQueueController : MonoBehaviour
 
     [Header("Animation Settings")]
     [SerializeField] private float stepDuration = 0.16f;
-    [SerializeField] private float jumpPower = 0.45f;
+    [SerializeField] private float jumpPower = 0.42f;
     [SerializeField] private float enterHoleJumpPower = 1.1f;
 
-    private readonly List<AntUnit> antUnits = new List<AntUnit>();
+    [SerializeField] private List<AntUnit> antUnits = new List<AntUnit>();
 
     public string QueueId => queueId;
     public AntColor Color => antColor;
@@ -29,6 +29,7 @@ public class AntQueueController : MonoBehaviour
     public bool IsMoving => isMoving;
     public IReadOnlyList<Vector2Int> CurrentBodyCoordinates => currentBodyCoordinates;
     public IReadOnlyList<Vector2Int> RemainingPath => remainingPath;
+    public IReadOnlyList<AntUnit> Units => antUnits;
 
     public static event Action<AntQueueController> OnQueueMoveStarted;
     public static event Action<AntQueueController> OnQueueMoveCompleted;
@@ -46,41 +47,81 @@ public class AntQueueController : MonoBehaviour
         SpawnAnts();
     }
 
-    private void SpawnAnts()
+    [ContextMenu("Rebuild Queue Visuals")]
+    public void SpawnAnts()
     {
         // Clear previous units if any
         foreach (var unit in antUnits)
         {
-            if (unit != null) Destroy(unit.gameObject);
+            if (unit != null) SafeDestroy(unit.gameObject);
         }
         antUnits.Clear();
+
+        // Also clean any unreferenced child objects
+        for (int c = transform.childCount - 1; c >= 0; c--)
+        {
+            SafeDestroy(transform.GetChild(c).gameObject);
+        }
 
         for (int i = 0; i < currentBodyCoordinates.Count; i++)
         {
             Vector2Int coord = currentBodyCoordinates[i];
-            Vector3 worldPos = BoardManager.Instance.GridToWorldPosition(coord);
+            Vector3 worldPos = BoardManager.Instance != null ? BoardManager.Instance.GridToWorldPosition(coord) : new Vector3(coord.x, 0, coord.y);
 
             GameObject antObj = new GameObject($"Ant_{queueId}_{i}");
-            antObj.transform.SetParent(transform);
+            antObj.transform.SetParent(transform, false);
             antObj.transform.position = worldPos;
 
-            // Orient towards the previous segment or along the path
-            if (i == 0 && remainingPath.Count > 1)
+            var antUnit = antObj.AddComponent<AntUnit>();
+            antUnit.Setup(antColor, (i == 0), (i == currentBodyCoordinates.Count - 1));
+            antUnits.Add(antUnit);
+        }
+
+        UpdateAntOrientations();
+    }
+
+    /// <summary>
+    /// Strictly aligns every individual AntUnit to face the segment directly ahead of it (or the next path step).
+    /// </summary>
+    public void UpdateAntOrientations()
+    {
+        for (int i = 0; i < antUnits.Count; i++)
+        {
+            var unit = antUnits[i];
+            if (unit == null) continue;
+
+            Vector3 lookDir = Vector3.forward;
+
+            if (i == 0)
             {
-                Vector3 lookDir = BoardManager.Instance.GridToWorldPosition(remainingPath[1]) - worldPos;
-                lookDir.y = 0;
-                if (lookDir != Vector3.zero) antObj.transform.rotation = Quaternion.LookRotation(lookDir);
+                // Lead ant faces the next step on the path towards the goal tray
+                if (remainingPath != null && remainingPath.Count > 1)
+                {
+                    Vector3 nextPos = BoardManager.Instance != null ? BoardManager.Instance.GridToWorldPosition(remainingPath[1]) : new Vector3(remainingPath[1].x, 0, remainingPath[1].y);
+                    lookDir = nextPos - unit.transform.position;
+                }
+                else if (currentBodyCoordinates.Count > 1)
+                {
+                    // Fallback: face away from the segment behind it
+                    Vector3 behindPos = BoardManager.Instance != null ? BoardManager.Instance.GridToWorldPosition(currentBodyCoordinates[1]) : new Vector3(currentBodyCoordinates[1].x, 0, currentBodyCoordinates[1].y);
+                    lookDir = unit.transform.position - behindPos;
+                }
             }
-            else if (i > 0)
+            else
             {
-                Vector3 lookDir = BoardManager.Instance.GridToWorldPosition(currentBodyCoordinates[i - 1]) - worldPos;
-                lookDir.y = 0;
-                if (lookDir != Vector3.zero) antObj.transform.rotation = Quaternion.LookRotation(lookDir);
+                // Following ant strictly faces the ant directly in front of it in the queue
+                var leadAnt = antUnits[i - 1];
+                if (leadAnt != null)
+                {
+                    lookDir = leadAnt.transform.position - unit.transform.position;
+                }
             }
 
-            var antUnit = antObj.AddComponent<AntUnit>();
-            antUnit.Setup(antColor, (i == 0));
-            antUnits.Add(antUnit);
+            lookDir.y = 0;
+            if (lookDir.sqrMagnitude > 0.0001f)
+            {
+                unit.transform.rotation = Quaternion.LookRotation(lookDir);
+            }
         }
     }
 
@@ -95,7 +136,7 @@ public class AntQueueController : MonoBehaviour
     }
 
     /// <summary>
-    /// Attempts to trigger this queue to move along its predefined path to its hole.
+    /// Attempts to trigger this queue to move along its predefined path to its hole tray.
     /// Returns true if the move started, false if blocked or unable to move.
     /// </summary>
     public bool TryStartMove()
@@ -114,9 +155,6 @@ public class AntQueueController : MonoBehaviour
         return true;
     }
 
-    /// <summary>
-    /// Bounces/shakes the queue to provide visual feedback that it is currently blocked.
-    /// </summary>
     public void PlayBlockedShake()
     {
         foreach (var unit in antUnits)
@@ -127,89 +165,145 @@ public class AntQueueController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Strict follow-the-leader chain movement:
+    /// - Segment [i] only steps into the exact cell vacated by segment [i-1].
+    /// - No segment skips any grid cell.
+    /// - Each segment only dives into the tray once it reaches the cell directly adjacent to the tray.
+    /// </summary>
     private IEnumerator MoveRoutine()
     {
         isMoving = true;
         OnQueueMoveStarted?.Invoke(this);
 
-        // Path steps to traverse from current head position (index 0) to hole (last index)
-        // remainingPath[0] is current head
-        int pathSteps = remainingPath.Count - 1;
-
         Vector2Int holeCoord = remainingPath[remainingPath.Count - 1];
         HoleController hole = BoardManager.Instance.GetHoleAt(holeCoord);
         Vector3 holeWorldPos = BoardManager.Instance.GridToWorldPosition(holeCoord);
 
-        for (int step = 1; step <= pathSteps; step++)
+        // Precompute the complete unbroken path of coordinates that each ant must traverse
+        // For Ant 0: [ remainingPath[1], remainingPath[2], ..., holeCoord ]
+        // For Ant i: [ bodyCoord[i-1], bodyCoord[i-2], ..., bodyCoord[0], remainingPath[1], ..., holeCoord ]
+        int initialAntCount = antUnits.Count;
+        List<List<Vector2Int>> antTracks = new List<List<Vector2Int>>(initialAntCount);
+
+        for (int i = 0; i < initialAntCount; i++)
         {
-            Vector2Int nextHeadCoord = remainingPath[step];
-
-            // 1. Shift body coordinates: Head moves to nextHeadCoord, each segment takes position of segment in front
-            Vector2Int prevHead = currentBodyCoordinates[0];
-            for (int b = currentBodyCoordinates.Count - 1; b > 0; b--)
+            List<Vector2Int> track = new List<Vector2Int>();
+            // Historical body coordinates ahead of ant i
+            for (int h = i - 1; h >= 0; h--)
             {
-                currentBodyCoordinates[b] = currentBodyCoordinates[b - 1];
+                track.Add(currentBodyCoordinates[h]);
             }
-            currentBodyCoordinates[0] = nextHeadCoord;
-
-            // 2. Animate all active visual units along the shift simultaneously
-            Sequence stepSequence = DOTween.Sequence();
-
-            for (int i = 0; i < antUnits.Count; i++)
+            // Path steps ahead of the head
+            for (int p = 1; p < remainingPath.Count; p++)
             {
-                var unit = antUnits[i];
+                track.Add(remainingPath[p]);
+            }
+            antTracks.Add(track);
+        }
+
+        // Total number of discrete steps to ingest the entire queue
+        int totalSteps = (remainingPath.Count - 1) + initialAntCount;
+
+        // Active tracking lists
+        List<AntUnit> activeUnits = new List<AntUnit>(antUnits);
+        List<int> originalIndices = new List<int>();
+        for (int i = 0; i < initialAntCount; i++) originalIndices.Add(i);
+
+        for (int step = 0; step < totalSteps; step++)
+        {
+            Sequence stepSequence = DOTween.Sequence();
+            List<int> toRemoveAtStepEnd = new List<int>();
+
+            for (int a = 0; a < activeUnits.Count; a++)
+            {
+                var unit = activeUnits[a];
                 if (unit == null) continue;
 
-                Vector3 targetPos = BoardManager.Instance.GridToWorldPosition(currentBodyCoordinates[i]);
-                Vector3 moveDir = targetPos - unit.transform.position;
-                moveDir.y = 0;
+                int origIndex = originalIndices[a];
+                var track = antTracks[origIndex];
 
-                // Rotate towards movement direction
-                if (moveDir.sqrMagnitude > 0.001f)
+                if (step < track.Count)
                 {
-                    stepSequence.Join(unit.transform.DORotateQuaternion(Quaternion.LookRotation(moveDir), stepDuration * 0.5f));
-                }
+                    Vector2Int targetCoord = track[step];
 
-                // Smooth jump hop to the next cell
-                stepSequence.Join(unit.transform.DOJump(targetPos, jumpPower, 1, stepDuration).SetEase(Ease.Linear));
+                    if (targetCoord == holeCoord)
+                    {
+                        // High-arc dive jump into hole pit from the entrance cell
+                        Vector3 targetPit = holeWorldPos + new Vector3(0f, -0.2f, 0f);
+                        stepSequence.Join(unit.transform.DOJump(targetPit, enterHoleJumpPower, 1, stepDuration * 1.2f).SetEase(Ease.InQuad));
+                        stepSequence.Join(unit.transform.DOScale(Vector3.zero, stepDuration * 1.2f).SetEase(Ease.InBack));
+
+                        // Decrement hole count immediately as soon as the ant enters the hole!
+                        if (hole != null)
+                        {
+                            hole.OnAntSwallowed();
+                        }
+
+                        toRemoveAtStepEnd.Add(a);
+                    }
+                    else
+                    {
+                        // Strict 1-tile hop along the grid
+                        Vector3 targetPos = BoardManager.Instance.GridToWorldPosition(targetCoord);
+                        Vector3 moveDir = targetPos - unit.transform.position;
+                        moveDir.y = 0;
+
+                        if (moveDir.sqrMagnitude > 0.001f)
+                        {
+                            stepSequence.Join(unit.transform.DORotateQuaternion(Quaternion.LookRotation(moveDir), stepDuration * 0.5f));
+                        }
+                        stepSequence.Join(unit.transform.DOJump(targetPos, jumpPower, 1, stepDuration).SetEase(Ease.Linear));
+
+                        // Update current coordinates of active body
+                        if (a < currentBodyCoordinates.Count)
+                        {
+                            currentBodyCoordinates[a] = targetCoord;
+                        }
+                    }
+                }
             }
 
             yield return stepSequence.WaitForCompletion();
-        }
 
-        // Now head is at the hole! Ants enter the hole one by one in queue order with a satisfying jump/swallow animation
-        yield return StartCoroutine(EnterHoleRoutine(hole, holeWorldPos));
+            // Clean up swallowed ant GameObjects
+            for (int r = toRemoveAtStepEnd.Count - 1; r >= 0; r--)
+            {
+                int remIdx = toRemoveAtStepEnd[r];
+                var swallowedUnit = activeUnits[remIdx];
+
+                if (remIdx < currentBodyCoordinates.Count)
+                {
+                    currentBodyCoordinates.RemoveAt(remIdx);
+                }
+
+                activeUnits.RemoveAt(remIdx);
+                originalIndices.RemoveAt(remIdx);
+                antUnits.Remove(swallowedUnit);
+
+                SafeDestroy(swallowedUnit.gameObject);
+            }
+        }
 
         isMoving = false;
         OnQueueMoveCompleted?.Invoke(this);
         BoardManager.Instance.OnQueueCompleted(this);
     }
 
-    private IEnumerator EnterHoleRoutine(HoleController hole, Vector3 holeWorldPos)
+    private void SafeDestroy(UnityEngine.Object obj)
     {
-        for (int i = 0; i < antUnits.Count; i++)
-        {
-            var unit = antUnits[i];
-            if (unit == null) continue;
-
-            Sequence enterSeq = DOTween.Sequence();
-
-            // High arc jump into hole pit
-            Vector3 targetPit = holeWorldPos + new Vector3(0f, -0.2f, 0f);
-            enterSeq.Append(unit.transform.DOJump(targetPit, enterHoleJumpPower, 1, stepDuration * 1.5f).SetEase(Ease.InQuad));
-            enterSeq.Join(unit.transform.DOScale(Vector3.zero, stepDuration * 1.5f).SetEase(Ease.InBack));
-
-            enterSeq.OnComplete(() =>
-            {
-                if (hole != null) hole.PlaySwallowEffect();
-                Destroy(unit.gameObject);
-            });
-
-            // Delay between consecutive ants jumping in
-            yield return new WaitForSeconds(stepDuration * 0.9f);
-        }
-
-        // Small pause to let the final swallow effect conclude
-        yield return new WaitForSeconds(0.2f);
+        if (obj == null) return;
+        if (Application.isPlaying) Destroy(obj);
+        else DestroyImmediate(obj);
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (!Application.isPlaying && antUnits.Count > 0)
+        {
+            UpdateAntOrientations();
+        }
+    }
+#endif
 }

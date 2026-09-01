@@ -13,59 +13,96 @@ MonoBehaviour:
   m_Name: Level_01
   m_EditorClassIdentifier: Assembly-CSharp::Level
   levelNumber: 1
-  levelName: Tutorial - The Chain Unblock
+  levelName: Color Slither Jam
   difficulty: Easy
   timeLimitInSeconds: 120
   gridWidth: 9
-  gridHeight: 10
+  gridHeight: 6
   cellSize: 1
   holes:
-  - holeColor: 2
-    gridCoordinate: {x: 2, y: 8}
-  - holeColor: 1
-    gridCoordinate: {x: 4, y: 8}
+  - holeColor: 3
+    gridCoordinate: {x: 6, y: 4}
+    displayCount: 1
+  - holeColor: 4
+    gridCoordinate: {x: 1, y: 0}
+    displayCount: 1
   - holeColor: 0
-    gridCoordinate: {x: 6, y: 8}
+    gridCoordinate: {x: 6, y: 2}
+    displayCount: 1
+  - holeColor: 10
+    gridCoordinate: {x: 6, y: 1}
+    displayCount: 1
+  - holeColor: 1
+    gridCoordinate: {x: 6, y: 3}
+    displayCount: 1
   antQueues:
-  - queueId: Purple_Queue
-    antColor: 2
-    antCount: 3
-    initialBodyCoordinates:
-    - {x: 2, y: 4}
-    - {x: 2, y: 3}
-    - {x: 2, y: 2}
-    fullPathToHole:
-    - {x: 2, y: 4}
-    - {x: 2, y: 5}
-    - {x: 2, y: 6}
-    - {x: 2, y: 7}
-    - {x: 2, y: 8}
-  - queueId: Green_Queue
+  - queueId: Green_Slither
     antColor: 1
-    antCount: 3
+    antCount: 7
     initialBodyCoordinates:
-    - {x: 1, y: 6}
-    - {x: 1, y: 5}
-    - {x: 1, y: 4}
-    fullPathToHole:
-    - {x: 1, y: 6}
-    - {x: 2, y: 6}
-    - {x: 3, y: 6}
-    - {x: 4, y: 6}
-    - {x: 4, y: 7}
-    - {x: 4, y: 8}
-  - queueId: Blue_Queue
-    antColor: 0
-    antCount: 3
-    initialBodyCoordinates:
-    - {x: 3, y: 5}
-    - {x: 3, y: 4}
+    - {x: 5, y: 3}
+    - {x: 4, y: 3}
     - {x: 3, y: 3}
+    - {x: 2, y: 3}
+    - {x: 1, y: 3}
+    - {x: 1, y: 2}
+    - {x: 1, y: 1}
     fullPathToHole:
-    - {x: 3, y: 5}
-    - {x: 4, y: 5}
-    - {x: 4, y: 6}
-    - {x: 5, y: 6}
-    - {x: 6, y: 6}
-    - {x: 6, y: 7}
-    - {x: 6, y: 8}
+    - {x: 5, y: 3}
+    - {x: 6, y: 3}
+  - queueId: Red_Slither
+    antColor: 4
+    antCount: 11
+    initialBodyCoordinates:
+    - {x: 2, y: 0}
+    - {x: 3, y: 0}
+    - {x: 4, y: 0}
+    - {x: 5, y: 0}
+    - {x: 6, y: 0}
+    - {x: 7, y: 0}
+    - {x: 8, y: 0}
+    - {x: 8, y: 1}
+    - {x: 8, y: 2}
+    - {x: 8, y: 3}
+    - {x: 8, y: 4}
+    fullPathToHole:
+    - {x: 2, y: 0}
+    - {x: 1, y: 0}
+  - queueId: Yellow_Slither
+    antColor: 3
+    antCount: 9
+    initialBodyCoordinates:
+    - {x: 5, y: 4}
+    - {x: 4, y: 4}
+    - {x: 3, y: 4}
+    - {x: 2, y: 4}
+    - {x: 1, y: 4}
+    - {x: 0, y: 4}
+    - {x: 0, y: 3}
+    - {x: 0, y: 2}
+    - {x: 0, y: 1}
+    fullPathToHole:
+    - {x: 5, y: 4}
+    - {x: 6, y: 4}
+  - queueId: Brown_Slither
+    antColor: 10
+    antCount: 3
+    initialBodyCoordinates:
+    - {x: 5, y: 1}
+    - {x: 4, y: 1}
+    - {x: 3, y: 1}
+    fullPathToHole:
+    - {x: 5, y: 1}
+    - {x: 6, y: 1}
+  - queueId: Blue_Slither
+    antColor: 0
+    antCount: 5
+    initialBodyCoordinates:
+    - {x: 5, y: 2}
+    - {x: 4, y: 2}
+    - {x: 3, y: 2}
+    - {x: 2, y: 2}
+    - {x: 2, y: 1}
+    fullPathToHole:
+    - {x: 5, y: 2}
+    - {x: 6, y: 2}

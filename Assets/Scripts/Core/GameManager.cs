@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public enum GameState
@@ -136,11 +136,25 @@ public class GameManager : MonoBehaviour
 
     public void NextLevel()
     {
-        LevelManager.Instance.AdvanceToNextLevel();
+        if (LevelManager.Instance != null)
+        {
+            LevelManager.Instance.AdvanceToNextLevel();
+        }
+    }
+
+    public void PreviousLevel()
+    {
+        if (LevelManager.Instance != null)
+        {
+            LevelManager.Instance.LoadPreviousLevel();
+        }
     }
 
     public void RestartLevel()
     {
-        LevelManager.Instance.RestartCurrentLevel();
+        if (LevelManager.Instance != null)
+        {
+            LevelManager.Instance.RestartCurrentLevel();
+        }
     }
 }
