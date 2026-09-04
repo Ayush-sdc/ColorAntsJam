@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using DG.Tweening;
 
 [ExecuteAlways]
@@ -10,6 +10,18 @@ public class HoleController : MonoBehaviour
     [SerializeField] private int initialCapacity = 1;
     [SerializeField] private int remainingCount = 1;
     [SerializeField] private bool isRightSide = true;
+
+    [Header("Slot Dimensions")]
+    [Tooltip("Center box width between capsule end caps.")]
+    [SerializeField] private float centerWidth = 1.25f;
+    [Tooltip("Outer rim radius / thickness.")]
+    [SerializeField] private float capRadius = 0.62f;
+    [Tooltip("Inner dark pit radius.")]
+    [SerializeField] private float innerRadius = 0.50f;
+    [Tooltip("Rim border height.")]
+    [SerializeField] private float rimHeight = 0.06f;
+    [Tooltip("Pit floor height.")]
+    [SerializeField] private float pitHeight = 0.065f;
 
     [Header("Visual Components")]
     [SerializeField] private Transform slotRoot;
@@ -24,6 +36,10 @@ public class HoleController : MonoBehaviour
     public int RemainingCount => remainingCount;
     public int InitialCapacity => initialCapacity;
     public bool IsFull => remainingCount <= 0;
+
+    public float CenterWidth { get => centerWidth; set { centerWidth = value; BuildCapsuleSlotVisuals(isRightSide); } }
+    public float CapRadius { get => capRadius; set { capRadius = value; BuildCapsuleSlotVisuals(isRightSide); } }
+    public float InnerRadius { get => innerRadius; set { innerRadius = value; BuildCapsuleSlotVisuals(isRightSide); } }
 
     private void Awake()
     {
@@ -53,7 +69,7 @@ public class HoleController : MonoBehaviour
             SafeDestroy(slotRoot.gameObject);
         }
 
-        // Also clean up any lingering child objects
+        // Clean up any lingering child objects
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
             SafeDestroy(transform.GetChild(i).gameObject);
@@ -65,12 +81,6 @@ public class HoleController : MonoBehaviour
 
         // Rotate root so the open entrance pit is ALWAYS on the side facing the oncoming ants
         slotRoot.localRotation = Quaternion.Euler(0f, rightSide ? 0f : 180f, 0f);
-
-        // The tray is a horizontal stadium/capsule spanning width ~2.1 units and height ~1.05 units
-        float capRadius = 0.52f;
-        float centerWidth = 1.0f;
-        float rimHeight = 0.06f;
-        float pitHeight = 0.065f;
 
         Material rimMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
         rimMat.color = AntColorPalette.GetColor(holeColor);
@@ -113,7 +123,6 @@ public class HoleController : MonoBehaviour
         centerRim.GetComponent<MeshRenderer>().material = rimMat;
 
         // 2. Dark Recessed Well / Floor (Seamless continuous dark stadium)
-        float innerRadius = 0.40f;
         float innerWidth = centerWidth;
 
         GameObject pitHolder = new GameObject("SlotPit");
@@ -146,7 +155,7 @@ public class HoleController : MonoBehaviour
         // 3. Stylized Numeric Badge (Placed on outer end of tray)
         countBadgeObj = new GameObject("SlotCounterBadge");
         countBadgeObj.transform.SetParent(slotRoot, false);
-        countBadgeObj.transform.localPosition = new Vector3(0.55f, 0.07f, 0f);
+        countBadgeObj.transform.localPosition = new Vector3(centerWidth * 0.5f + 0.05f, 0.07f, 0f);
 
         // Badge outer colored border
         GameObject badgeBg = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
