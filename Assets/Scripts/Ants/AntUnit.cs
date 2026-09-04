@@ -15,7 +15,6 @@ public class AntUnit : MonoBehaviour
     [SerializeField] private MeshRenderer bodyRenderer;
     [SerializeField] private Transform leftPupil;
     [SerializeField] private Transform rightPupil;
-    [SerializeField] private GameObject groundDotObj;
 
     private static readonly Vector3 DefaultPupilLocalPos = new Vector3(0f, 0.12f, 0.24f);
 
@@ -134,24 +133,7 @@ public class AntUnit : MonoBehaviour
             rightPupil = CreateEye(headPivot, new Vector3(0.11f, 0.08f, 0.15f), "RightEye", eyeScale);
         }
 
-        // 3. Smooth Circular Ground Dot Disc (Positioned directly below each ant on the board floor)
-        GameObject dotObj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        dotObj.name = "GroundDot";
-        dotObj.transform.SetParent(transform, false);
-        dotObj.transform.localPosition = new Vector3(0f, 0.01f, 0f);
-        dotObj.transform.localScale = new Vector3(0.68f, 0.006f, 0.68f);
-        SafeDestroy(dotObj.GetComponent<Collider>());
-
-        var dotRen = dotObj.GetComponent<MeshRenderer>();
-        if (dotRen != null)
-        {
-            dotRen.material = AntColorPalette.GetGroundDotMaterial();
-            dotRen.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            dotRen.receiveShadows = true;
-        }
-        groundDotObj = dotObj;
-
-        // 4. Interaction Raycast Collider
+        // 3. Interaction Raycast Collider
         var mainCollider = GetComponent<SphereCollider>();
         if (mainCollider == null) mainCollider = gameObject.AddComponent<SphereCollider>();
         mainCollider.center = new Vector3(0f, 0.22f, 0f);
@@ -244,7 +226,6 @@ public class AntUnit : MonoBehaviour
         rightPupil = null;
         headPivot = null;
         modelRoot = null;
-        groundDotObj = null;
 
         for (int i = transform.childCount - 1; i >= 0; i--)
         {

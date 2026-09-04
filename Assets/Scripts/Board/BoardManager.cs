@@ -101,7 +101,7 @@ public class BoardManager : MonoBehaviour
             GardenBackgroundManager.Instance.BuildEnvironment(width, height, cellSize);
         }
 
-        // 2. Spawn Grid Visual Tiles
+        // 2. Spawn Grid Visual Tiles & Static Ground Dots
         SpawnGridVisuals();
 
         // 3. Spawn Holes with initial capacity equal to matching queue ants
@@ -139,7 +139,7 @@ public class BoardManager : MonoBehaviour
         gridHolder.SetParent(parentTransform);
         gridHolder.localPosition = Vector3.zero;
 
-        // Clean, elegant studio floor backdrop
+        // 1. Clean, elegant studio floor backdrop
         GameObject floorObj = GameObject.CreatePrimitive(PrimitiveType.Plane);
         floorObj.name = "StudioFloor";
         floorObj.transform.SetParent(gridHolder);
@@ -154,6 +154,36 @@ public class BoardManager : MonoBehaviour
             mat.color = AntColorPalette.StudioBackground;
             if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.08f);
             floorRenderer.material = mat;
+        }
+
+        // 2. Static Circular Ground Dots across the Board (Fixed on the floor, do not move with ants)
+        Material dotMat = AntColorPalette.GetGroundDotMaterial();
+        GameObject dotsHolder = new GameObject("GroundDotsHolder");
+        dotsHolder.transform.SetParent(gridHolder);
+        dotsHolder.localPosition = Vector3.zero;
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                Vector2Int gridCoord = new Vector2Int(x, y);
+                Vector3 dotWorldPos = GridToWorldPosition(gridCoord, 0.005f);
+
+                GameObject dot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                dot.name = $"TileDot_{x}_{y}";
+                dot.transform.SetParent(dotsHolder.transform);
+                dot.transform.position = dotWorldPos;
+                dot.transform.localScale = new Vector3(0.36f * cellSize, 0.005f, 0.36f * cellSize);
+                SafeDestroy(dot.GetComponent<Collider>());
+
+                var dotRenderer = dot.GetComponent<MeshRenderer>();
+                if (dotRenderer != null)
+                {
+                    dotRenderer.material = dotMat;
+                    dotRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    dotRenderer.receiveShadows = true;
+                }
+            }
         }
     }
 
