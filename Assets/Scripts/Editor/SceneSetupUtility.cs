@@ -8,7 +8,7 @@ public static class SceneSetupUtility
     [MenuItem("SlitherAnts/Setup Main Scene Game Architecture")]
     public static void SetupScene()
     {
-        // 1. Camera: Top-down studio perspective perfectly framing the board with top UI headroom
+        // 1. Camera: Top-down studio perspective framing the board with top UI headroom
         Camera cam = Camera.main;
         if (cam == null)
         {
@@ -73,41 +73,42 @@ public static class SceneSetupUtility
             boardParentField.SetValue(boardMgr, boardObj.transform);
         }
 
-        // 5. Clean up old environment if any
-        GameObject envObj = GameObject.Find("GardenEnvironment");
-        if (envObj != null)
+        // 5. Ant Units Container
+        GameObject antsObj = GameObject.Find("Ants");
+        if (antsObj == null)
         {
-            GameObject.DestroyImmediate(envObj);
+            antsObj = new GameObject("Ants");
+        }
+        var antsParentField = typeof(BoardManager).GetField("antsParent", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (antsParentField != null)
+        {
+            antsParentField.SetValue(boardMgr, antsObj.transform);
         }
 
-        // 6. Ensure EventSystem exists with InputSystemUIInputModule
-        var es = Object.FindFirstObjectByType<EventSystem>();
-        if (es == null)
+        // 6. Food Box Container
+        GameObject foodBoxesObj = GameObject.Find("FoodBoxes");
+        if (foodBoxesObj == null)
         {
-            GameObject esObj = new GameObject("EventSystem");
-            es = esObj.AddComponent<EventSystem>();
-            esObj.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+            foodBoxesObj = new GameObject("FoodBoxes");
         }
-        else
+        var boxesParentField = typeof(BoardManager).GetField("boxesParent", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (boxesParentField != null)
         {
-            var standalone = es.GetComponent<StandaloneInputModule>();
-            if (standalone != null)
-            {
-                Object.DestroyImmediate(standalone);
-                if (es.GetComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>() == null)
-                {
-                    es.gameObject.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
-                }
-            }
+            boxesParentField.SetValue(boardMgr, foodBoxesObj.transform);
         }
 
         // 7. Setup UI Canvas matching the reference visual 100%
         SetupUICanvas();
 
-        EditorUtility.SetDirty(gameController);
-        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
+        // 8. Ensure EventSystem exists
+        if (Object.FindAnyObjectByType<EventSystem>() == null)
+        {
+            GameObject es = new GameObject("EventSystem");
+            es.AddComponent<EventSystem>();
+            es.AddComponent<StandaloneInputModule>();
+        }
 
-        Debug.Log("[SceneSetup] Polished Slither Jam architecture & HUD successfully configured!");
+        Debug.Log("<color=green><b>[SceneSetupUtility]</b> Scene Game Architecture & UI Successfully Configured!</color>");
     }
 
     private static void SetupUICanvas()
@@ -129,22 +130,48 @@ public static class SceneSetupUtility
 
         var uiMgr = canvasObj.AddComponent<GameUIManager>();
 
-        // Pre-generate procedural sprites for exact visual match (Sleek, reduced compact scale)
+        // Pre-generate procedural sprites for exact visual match
         Sprite roundedCardSprite = CreateRoundedRectSprite(640, 86, 32f, new Color(0.95f, 0.96f, 0.97f), new Color(0.98f, 0.62f, 0.12f), 4.5f);
         Sprite grayButtonSprite = CreateRoundedRectSprite(54, 54, 14f, new Color(0.81f, 0.83f, 0.86f), new Color(0.98f, 0.62f, 0.12f), 2.5f);
         Sprite timerPillSprite = CreateRoundedRectSprite(140, 54, 18f, new Color(0.72f, 0.74f, 0.78f), new Color(0.60f, 0.62f, 0.66f), 2f);
         Sprite heartSprite = CreateGlossyHeartSprite(128);
         Sprite stopwatchSprite = CreateStopwatchSprite(128);
         Sprite restartArrowSprite = CreateRestartArrowSprite(128);
+        Sprite gearSprite = CreateGearIconSprite(128);
+        Sprite modalCardSprite = CreateRoundedRectSprite(580, 520, 36f, new Color(0.96f, 0.97f, 0.98f), new Color(0.86f, 0.88f, 0.91f), 3.5f);
+        Sprite pillToggleSprite = CreateRoundedRectSprite(100, 46, 23f, Color.white, Color.clear, 0f);
+        Sprite greenBtnSprite = CreateRoundedRectSprite(480, 64, 20f, new Color(0.16f, 0.68f, 0.38f), Color.clear, 0f);
+        Sprite orangeBtnSprite = CreateRoundedRectSprite(480, 64, 20f, new Color(0.98f, 0.62f, 0.12f), Color.clear, 0f);
+        Sprite rowBgSprite = CreateRoundedRectSprite(480, 64, 18f, new Color(0.89f, 0.91f, 0.94f), Color.clear, 0f);
 
-        // Top Main Rounded Rectangle HUD Card Container (640 x 86)
+        // --- TOP-LEFT GEAR ICON BUTTON ---
+        GameObject gearBtnObj = new GameObject("GearSettingsButton");
+        gearBtnObj.transform.SetParent(canvasObj.transform, false);
+        var gearRect = gearBtnObj.AddComponent<RectTransform>();
+        gearRect.anchorMin = new Vector2(0f, 1f);
+        gearRect.anchorMax = new Vector2(0f, 1f);
+        gearRect.pivot = new Vector2(0f, 1f);
+        gearRect.anchoredPosition = new Vector2(48f, -48f);
+        gearRect.sizeDelta = new Vector2(68f, 68f);
+
+        var gearImg = gearBtnObj.AddComponent<Image>();
+        gearImg.sprite = gearSprite;
+        var gearBtn = gearBtnObj.AddComponent<Button>();
+        gearBtn.targetGraphic = gearImg;
+
+        var gearShadow = gearBtnObj.AddComponent<Shadow>();
+        gearShadow.effectColor = new Color(0f, 0f, 0f, 0.20f);
+        gearShadow.effectDistance = new Vector2(0f, -3f);
+
+        // --- TOP MAIN ROUNDED RECTANGLE HUD CARD (Moved slightly down to -140px) ---
         GameObject topCard = new GameObject("TopCardHUD");
         topCard.transform.SetParent(canvasObj.transform, false);
         var cardRect = topCard.AddComponent<RectTransform>();
-        cardRect.anchorMin = new Vector2(0.5f, 0.94f);
-        cardRect.anchorMax = new Vector2(0.5f, 0.94f);
-        cardRect.pivot = new Vector2(0.5f, 0.5f);
-        cardRect.sizeDelta = new Vector2(640, 86);
+        cardRect.anchorMin = new Vector2(0.5f, 1f);
+        cardRect.anchorMax = new Vector2(0.5f, 1f);
+        cardRect.pivot = new Vector2(0.5f, 1f);
+        cardRect.anchoredPosition = new Vector2(0f, -140f);
+        cardRect.sizeDelta = new Vector2(640f, 86f);
 
         var cardImg = topCard.AddComponent<Image>();
         cardImg.sprite = roundedCardSprite;
@@ -179,7 +206,7 @@ public static class SceneSetupUtility
         rIconImg.sprite = restartArrowSprite;
         rIconImg.color = Color.white;
 
-        // 2. Timer Widget Pill (Center-Left: x = -130) - 34px gap from Restart Button
+        // 2. Timer Widget Pill (Center-Left: x = -130)
         GameObject timerPill = new GameObject("TimerWidget");
         timerPill.transform.SetParent(topCard.transform, false);
         var timerRect = timerPill.AddComponent<RectTransform>();
@@ -224,7 +251,7 @@ public static class SceneSetupUtility
         tOutline.effectColor = new Color(0.20f, 0.22f, 0.25f, 0.95f);
         tOutline.effectDistance = new Vector2(1.8f, -1.8f);
 
-        // 3. Three 3D Glossy Candy Red Hearts in a STRICT HORIZONTAL LINE (Center-Right: x = 75) - 61px gap from Timer
+        // 3. Three 3D Glossy Candy Red Hearts in a STRICT HORIZONTAL LINE (Center-Right: x = 75)
         GameObject heartsContainer = new GameObject("HeartsContainer");
         heartsContainer.transform.SetParent(topCard.transform, false);
         var hLayoutRect = heartsContainer.AddComponent<RectTransform>();
@@ -255,7 +282,7 @@ public static class SceneSetupUtility
             heartImages[i] = hImg;
         }
 
-        // 4. Right Button / Badge (Level Number '2': x = 260) - 83px gap from Hearts
+        // 4. Right Button / Badge (Level Number '1': x = 260)
         GameObject levelBox = new GameObject("LevelBadge");
         levelBox.transform.SetParent(topCard.transform, false);
         var lvlRect = levelBox.AddComponent<RectTransform>();
@@ -286,12 +313,259 @@ public static class SceneSetupUtility
         lOutline.effectColor = new Color(0.20f, 0.22f, 0.25f, 0.95f);
         lOutline.effectDistance = new Vector2(2f, -2f);
 
-        // Win Panel Overlay
+        // --- SETTINGS MODAL POPUP DIALOG ---
+        GameObject settingsModal = new GameObject("SettingsModal");
+        settingsModal.transform.SetParent(canvasObj.transform, false);
+        var modalRect = settingsModal.AddComponent<RectTransform>();
+        modalRect.anchorMin = Vector2.zero;
+        modalRect.anchorMax = Vector2.one;
+        modalRect.offsetMin = Vector2.zero;
+        modalRect.offsetMax = Vector2.zero;
+
+        var modalBg = settingsModal.AddComponent<Image>();
+        modalBg.color = new Color(0.06f, 0.08f, 0.12f, 0.65f);
+        var backdropBtn = settingsModal.AddComponent<Button>();
+        backdropBtn.targetGraphic = modalBg;
+
+        // Modal Card Container (580 x 520)
+        GameObject settingsCard = new GameObject("SettingsCard");
+        settingsCard.transform.SetParent(settingsModal.transform, false);
+        var cardModalRect = settingsCard.AddComponent<RectTransform>();
+        cardModalRect.anchorMin = new Vector2(0.5f, 0.5f);
+        cardModalRect.anchorMax = new Vector2(0.5f, 0.5f);
+        cardModalRect.pivot = new Vector2(0.5f, 0.5f);
+        cardModalRect.anchoredPosition = Vector2.zero;
+        cardModalRect.sizeDelta = new Vector2(580f, 520f);
+
+        var cardModalImg = settingsCard.AddComponent<Image>();
+        cardModalImg.sprite = modalCardSprite;
+
+        var cardModalShadow = settingsCard.AddComponent<Shadow>();
+        cardModalShadow.effectColor = new Color(0f, 0f, 0f, 0.35f);
+        cardModalShadow.effectDistance = new Vector2(0f, -8f);
+
+        // Header Title: "SETTINGS"
+        GameObject titleObj = new GameObject("SettingsTitle");
+        titleObj.transform.SetParent(settingsCard.transform, false);
+        var titleRect = titleObj.AddComponent<RectTransform>();
+        titleRect.anchorMin = new Vector2(0.5f, 1f);
+        titleRect.anchorMax = new Vector2(0.5f, 1f);
+        titleRect.pivot = new Vector2(0.5f, 1f);
+        titleRect.anchoredPosition = new Vector2(0f, -34f);
+        titleRect.sizeDelta = new Vector2(400f, 50f);
+
+        var titleText = titleObj.AddComponent<Text>();
+        titleText.text = "SETTINGS";
+        titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        titleText.fontSize = 34;
+        titleText.fontStyle = FontStyle.Bold;
+        titleText.color = new Color(0.18f, 0.20f, 0.24f);
+        titleText.alignment = TextAnchor.MiddleCenter;
+
+        // Close 'X' Button at top-right
+        GameObject closeBtnObj = new GameObject("CloseButton");
+        closeBtnObj.transform.SetParent(settingsCard.transform, false);
+        var closeRect = closeBtnObj.AddComponent<RectTransform>();
+        closeRect.anchorMin = new Vector2(1f, 1f);
+        closeRect.anchorMax = new Vector2(1f, 1f);
+        closeRect.pivot = new Vector2(1f, 1f);
+        closeRect.anchoredPosition = new Vector2(-24f, -24f);
+        closeRect.sizeDelta = new Vector2(46f, 46f);
+
+        var closeBg = closeBtnObj.AddComponent<Image>();
+        closeBg.sprite = grayButtonSprite;
+        var closeBtn = closeBtnObj.AddComponent<Button>();
+        closeBtn.targetGraphic = closeBg;
+
+        GameObject closeTextObj = new GameObject("CloseText");
+        closeTextObj.transform.SetParent(closeBtnObj.transform, false);
+        var ctRect = closeTextObj.AddComponent<RectTransform>();
+        ctRect.anchorMin = Vector2.zero;
+        ctRect.anchorMax = Vector2.one;
+        ctRect.sizeDelta = Vector2.zero;
+        var closeText = closeTextObj.AddComponent<Text>();
+        closeText.text = "✕";
+        closeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        closeText.fontSize = 24;
+        closeText.fontStyle = FontStyle.Bold;
+        closeText.color = new Color(0.25f, 0.27f, 0.30f);
+        closeText.alignment = TextAnchor.MiddleCenter;
+
+        // Settings Content Container (Vertical Layout)
+        GameObject contentObj = new GameObject("ContentContainer");
+        contentObj.transform.SetParent(settingsCard.transform, false);
+        var contentRect = contentObj.AddComponent<RectTransform>();
+        contentRect.anchorMin = new Vector2(0.5f, 0.5f);
+        contentRect.anchorMax = new Vector2(0.5f, 0.5f);
+        contentRect.pivot = new Vector2(0.5f, 0.5f);
+        contentRect.anchoredPosition = new Vector2(0f, -22f);
+        contentRect.sizeDelta = new Vector2(480f, 360f);
+
+        var vLayout = contentObj.AddComponent<VerticalLayoutGroup>();
+        vLayout.childAlignment = TextAnchor.MiddleCenter;
+        vLayout.spacing = 16f;
+        vLayout.childControlWidth = true;
+        vLayout.childControlHeight = false;
+        vLayout.childForceExpandWidth = true;
+        vLayout.childForceExpandHeight = false;
+
+        // 1. Sound Row
+        GameObject soundRow = new GameObject("SoundRow");
+        soundRow.transform.SetParent(contentObj.transform, false);
+        var sRowRect = soundRow.AddComponent<RectTransform>();
+        sRowRect.sizeDelta = new Vector2(480f, 64f);
+        var sRowBg = soundRow.AddComponent<Image>();
+        sRowBg.sprite = rowBgSprite;
+
+        GameObject soundLabelObj = new GameObject("SoundLabel");
+        soundLabelObj.transform.SetParent(soundRow.transform, false);
+        var sLblRect = soundLabelObj.AddComponent<RectTransform>();
+        sLblRect.anchorMin = new Vector2(0f, 0f);
+        sLblRect.anchorMax = new Vector2(0.65f, 1f);
+        sLblRect.offsetMin = new Vector2(24f, 0f);
+        sLblRect.offsetMax = Vector2.zero;
+        var soundLabel = soundLabelObj.AddComponent<Text>();
+        soundLabel.text = "Sound SFX";
+        soundLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        soundLabel.fontSize = 24;
+        soundLabel.fontStyle = FontStyle.Bold;
+        soundLabel.color = new Color(0.20f, 0.22f, 0.25f);
+        soundLabel.alignment = TextAnchor.MiddleLeft;
+
+        GameObject soundToggleObj = new GameObject("SoundToggleButton");
+        soundToggleObj.transform.SetParent(soundRow.transform, false);
+        var sTglRect = soundToggleObj.AddComponent<RectTransform>();
+        sTglRect.anchorMin = new Vector2(1f, 0.5f);
+        sTglRect.anchorMax = new Vector2(1f, 0.5f);
+        sTglRect.pivot = new Vector2(1f, 0.5f);
+        sTglRect.anchoredPosition = new Vector2(-16f, 0f);
+        sTglRect.sizeDelta = new Vector2(100f, 46f);
+        var soundToggleBg = soundToggleObj.AddComponent<Image>();
+        soundToggleBg.sprite = pillToggleSprite;
+        soundToggleBg.color = new Color(0.18f, 0.72f, 0.32f);
+        var soundToggleBtn = soundToggleObj.AddComponent<Button>();
+        soundToggleBtn.targetGraphic = soundToggleBg;
+
+        GameObject sTglTextObj = new GameObject("SoundToggleText");
+        sTglTextObj.transform.SetParent(soundToggleObj.transform, false);
+        var stRect = sTglTextObj.AddComponent<RectTransform>();
+        stRect.anchorMin = Vector2.zero;
+        stRect.anchorMax = Vector2.one;
+        stRect.sizeDelta = Vector2.zero;
+        var soundToggleText = sTglTextObj.AddComponent<Text>();
+        soundToggleText.text = "ON";
+        soundToggleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        soundToggleText.fontSize = 22;
+        soundToggleText.fontStyle = FontStyle.Bold;
+        soundToggleText.color = Color.white;
+        soundToggleText.alignment = TextAnchor.MiddleCenter;
+
+        // 2. Music Row
+        GameObject musicRow = new GameObject("MusicRow");
+        musicRow.transform.SetParent(contentObj.transform, false);
+        var mRowRect = musicRow.AddComponent<RectTransform>();
+        mRowRect.sizeDelta = new Vector2(480f, 64f);
+        var mRowBg = musicRow.AddComponent<Image>();
+        mRowBg.sprite = rowBgSprite;
+
+        GameObject musicLabelObj = new GameObject("MusicLabel");
+        musicLabelObj.transform.SetParent(musicRow.transform, false);
+        var mLblRect = musicLabelObj.AddComponent<RectTransform>();
+        mLblRect.anchorMin = new Vector2(0f, 0f);
+        mLblRect.anchorMax = new Vector2(0.65f, 1f);
+        mLblRect.offsetMin = new Vector2(24f, 0f);
+        mLblRect.offsetMax = Vector2.zero;
+        var musicLabel = musicLabelObj.AddComponent<Text>();
+        musicLabel.text = "Music";
+        musicLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        musicLabel.fontSize = 24;
+        musicLabel.fontStyle = FontStyle.Bold;
+        musicLabel.color = new Color(0.20f, 0.22f, 0.25f);
+        musicLabel.alignment = TextAnchor.MiddleLeft;
+
+        GameObject musicToggleObj = new GameObject("MusicToggleButton");
+        musicToggleObj.transform.SetParent(musicRow.transform, false);
+        var mTglRect = musicToggleObj.AddComponent<RectTransform>();
+        mTglRect.anchorMin = new Vector2(1f, 0.5f);
+        mTglRect.anchorMax = new Vector2(1f, 0.5f);
+        mTglRect.pivot = new Vector2(1f, 0.5f);
+        mTglRect.anchoredPosition = new Vector2(-16f, 0f);
+        mTglRect.sizeDelta = new Vector2(100f, 46f);
+        var musicToggleBg = musicToggleObj.AddComponent<Image>();
+        musicToggleBg.sprite = pillToggleSprite;
+        musicToggleBg.color = new Color(0.18f, 0.72f, 0.32f);
+        var musicToggleBtn = musicToggleObj.AddComponent<Button>();
+        musicToggleBtn.targetGraphic = musicToggleBg;
+
+        GameObject mTglTextObj = new GameObject("MusicToggleText");
+        mTglTextObj.transform.SetParent(musicToggleObj.transform, false);
+        var mtRect = mTglTextObj.AddComponent<RectTransform>();
+        mtRect.anchorMin = Vector2.zero;
+        mtRect.anchorMax = Vector2.one;
+        mtRect.sizeDelta = Vector2.zero;
+        var musicToggleText = mTglTextObj.AddComponent<Text>();
+        musicToggleText.text = "ON";
+        musicToggleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        musicToggleText.fontSize = 22;
+        musicToggleText.fontStyle = FontStyle.Bold;
+        musicToggleText.color = Color.white;
+        musicToggleText.alignment = TextAnchor.MiddleCenter;
+
+        // 3. Restart Level Button inside Settings
+        GameObject settingsRestartObj = new GameObject("SettingsRestartButton");
+        settingsRestartObj.transform.SetParent(contentObj.transform, false);
+        var srRect = settingsRestartObj.AddComponent<RectTransform>();
+        srRect.sizeDelta = new Vector2(480f, 64f);
+        var srBg = settingsRestartObj.AddComponent<Image>();
+        srBg.sprite = orangeBtnSprite;
+        var settingsRestartBtn = settingsRestartObj.AddComponent<Button>();
+        settingsRestartBtn.targetGraphic = srBg;
+
+        GameObject srTextObj = new GameObject("SettingsRestartText");
+        srTextObj.transform.SetParent(settingsRestartObj.transform, false);
+        var srtRect = srTextObj.AddComponent<RectTransform>();
+        srtRect.anchorMin = Vector2.zero;
+        srtRect.anchorMax = Vector2.one;
+        srtRect.sizeDelta = Vector2.zero;
+        var srText = srTextObj.AddComponent<Text>();
+        srText.text = "Restart Level";
+        srText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        srText.fontSize = 24;
+        srText.fontStyle = FontStyle.Bold;
+        srText.color = Color.white;
+        srText.alignment = TextAnchor.MiddleCenter;
+
+        // 4. Resume Game Button inside Settings
+        GameObject resumeObj = new GameObject("ResumeButton");
+        resumeObj.transform.SetParent(contentObj.transform, false);
+        var resRect = resumeObj.AddComponent<RectTransform>();
+        resRect.sizeDelta = new Vector2(480f, 64f);
+        var resBg = resumeObj.AddComponent<Image>();
+        resBg.sprite = greenBtnSprite;
+        var resumeBtn = resumeObj.AddComponent<Button>();
+        resumeBtn.targetGraphic = resBg;
+
+        GameObject resTextObj = new GameObject("ResumeText");
+        resTextObj.transform.SetParent(resumeObj.transform, false);
+        var restRect = resTextObj.AddComponent<RectTransform>();
+        restRect.anchorMin = Vector2.zero;
+        restRect.anchorMax = Vector2.one;
+        restRect.sizeDelta = Vector2.zero;
+        var resText = resTextObj.AddComponent<Text>();
+        resText.text = "Resume";
+        resText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        resText.fontSize = 24;
+        resText.fontStyle = FontStyle.Bold;
+        resText.color = Color.white;
+        resText.alignment = TextAnchor.MiddleCenter;
+
+        settingsModal.SetActive(false);
+
+        // --- OVERLAY PANELS (WIN / LOSE) ---
         GameObject winPanel = CreateOverlayPanel(canvasObj.transform, "WinPanel", "Level Complete!", "Next Level", new Color(0.12f, 0.65f, 0.22f));
         winPanel.SetActive(false);
         var nextBtn = winPanel.GetComponentInChildren<Button>();
 
-        // Lose Panel Overlay
         GameObject losePanel = CreateOverlayPanel(canvasObj.transform, "LosePanel", "Level Failed!", "Try Again", new Color(0.95f, 0.26f, 0.28f));
         losePanel.SetActive(false);
         var retryBtn = losePanel.GetComponentInChildren<Button>();
@@ -301,6 +575,19 @@ public static class SceneSetupUtility
         SetField(uiMgr, "levelNumberText", lvlText);
         SetField(uiMgr, "heartImages", heartImages);
         SetField(uiMgr, "restartButton", restartBtn);
+        SetField(uiMgr, "gearSettingsButton", gearBtn);
+        SetField(uiMgr, "settingsModal", settingsModal);
+        SetField(uiMgr, "settingsCard", settingsCard.transform);
+        SetField(uiMgr, "soundToggleButton", soundToggleBtn);
+        SetField(uiMgr, "soundToggleText", soundToggleText);
+        SetField(uiMgr, "soundToggleBg", soundToggleBg);
+        SetField(uiMgr, "musicToggleButton", musicToggleBtn);
+        SetField(uiMgr, "musicToggleText", musicToggleText);
+        SetField(uiMgr, "musicToggleBg", musicToggleBg);
+        SetField(uiMgr, "closeSettingsButton", closeBtn);
+        SetField(uiMgr, "resumeButton", resumeBtn);
+        SetField(uiMgr, "settingsRestartButton", settingsRestartBtn);
+        SetField(uiMgr, "backdropCloseButton", backdropBtn);
         SetField(uiMgr, "winPanel", winPanel);
         SetField(uiMgr, "losePanel", losePanel);
         SetField(uiMgr, "nextLevelButton", nextBtn);
@@ -356,6 +643,91 @@ public static class SceneSetupUtility
         return Sprite.Create(tex, new Rect(0, 0, width, height), new Vector2(0.5f, 0.5f));
     }
 
+    private static Sprite CreateGearIconSprite(int size)
+    {
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Bilinear;
+        Color[] cols = new Color[size * size];
+
+        float cx = size * 0.5f;
+        float cy = size * 0.5f;
+        int numTeeth = 8;
+        float period = Mathf.PI * 2f / numTeeth;
+        float rOuter = size * 0.44f;
+        float rInner = size * 0.33f;
+        float rHole = size * 0.13f;
+        float borderW = size * 0.045f;
+
+        float toothW = period * 0.42f;
+        float transitionW = period * 0.10f;
+
+        Color fillCol = new Color(0.96f, 0.97f, 0.98f);
+        Color borderCol = new Color(0.20f, 0.22f, 0.25f);
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dx = (x + 0.5f) - cx;
+                float dy = (y + 0.5f) - cy;
+                float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                float theta = Mathf.Atan2(dy, dx);
+                if (theta < 0f) theta += Mathf.PI * 2f;
+
+                float normAngle = theta % period;
+                float dAngle = Mathf.Abs(normAngle - (period * 0.5f));
+
+                float currentR;
+                if (dAngle <= toothW * 0.5f)
+                {
+                    currentR = rOuter;
+                }
+                else if (dAngle <= toothW * 0.5f + transitionW)
+                {
+                    float t = (dAngle - toothW * 0.5f) / transitionW;
+                    currentR = Mathf.Lerp(rOuter, rInner, t);
+                }
+                else
+                {
+                    currentR = rInner;
+                }
+
+                float outerDist = dist - currentR;
+                float holeDist = rHole - dist;
+                float sdf = Mathf.Max(outerDist, holeDist);
+
+                if (sdf > 1.2f)
+                {
+                    cols[y * size + x] = Color.clear;
+                    continue;
+                }
+
+                float alpha = Mathf.Clamp01(0.5f - sdf);
+                if (alpha <= 0.01f)
+                {
+                    cols[y * size + x] = Color.clear;
+                    continue;
+                }
+
+                Color col;
+                if (outerDist > -borderW || holeDist > -borderW)
+                {
+                    col = borderCol;
+                }
+                else
+                {
+                    col = fillCol;
+                }
+                col.a *= alpha;
+                cols[y * size + x] = col;
+            }
+        }
+
+        tex.SetPixels(cols);
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
+    }
+
     private static Sprite CreateGlossyHeartSprite(int size)
     {
         Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
@@ -369,11 +741,9 @@ public static class SceneSetupUtility
         {
             for (int x = 0; x < size; x++)
             {
-                // Normalize to [-1.3, 1.3] coordinates centered on heart
                 float nx = (x - size * 0.5f) / (size * 0.40f);
                 float ny = (y - size * 0.45f) / (size * 0.40f);
 
-                // Parametric Heart function: (x^2 + y^2 - 1)^3 - x^2 * y^3 <= 0
                 float x2 = nx * nx;
                 float y2 = ny * ny;
                 float heartVal = Mathf.Pow(x2 + y2 - 1f, 3) - x2 * ny * y2;
@@ -384,7 +754,6 @@ public static class SceneSetupUtility
                     float gradY = (float)y / size;
                     Color baseCol = Color.Lerp(heartRedBottom, heartRedTop, gradY);
 
-                    // Specular glossy highlight on top-left lobe
                     float hx = nx + 0.42f;
                     float hy = ny - 0.42f;
                     float hDist = Mathf.Sqrt(hx * hx + hy * hy);
@@ -430,7 +799,6 @@ public static class SceneSetupUtility
                 float dy = y - center;
                 float dist = Mathf.Sqrt(dx * dx + dy * dy);
 
-                // Top winder button notch
                 bool isCrown = (Mathf.Abs(dx) < 6f && y > center + radius - 2f && y < center + radius + 12f);
 
                 if (dist <= radius || isCrown)
@@ -443,7 +811,6 @@ public static class SceneSetupUtility
                     {
                         col = whiteFace;
 
-                        // Needle pointing to 12 o'clock
                         if (Mathf.Abs(dx) < 3.5f && dy > -2f && dy < radius - 10f)
                         {
                             col = needleBlue;
@@ -485,10 +852,8 @@ public static class SceneSetupUtility
                 float angle = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
                 if (angle < 0) angle += 360f;
 
-                // 270 degree arc leaving gap for arrow head
                 bool inArc = (dist >= ringRadius - ringThick && dist <= ringRadius + ringThick && (angle > 45f && angle < 320f));
 
-                // Arrow head at top-left
                 float ax = dx + 12f;
                 float ay = dy - 20f;
                 bool inHead = (Mathf.Abs(ax) + Mathf.Abs(ay) < 14f && dx < 0);
@@ -519,59 +884,57 @@ public static class SceneSetupUtility
         rect.sizeDelta = Vector2.zero;
 
         var bg = panel.AddComponent<Image>();
-        bg.color = new Color(0.12f, 0.14f, 0.18f, 0.96f);
+        bg.color = new Color(0.08f, 0.10f, 0.14f, 0.88f);
 
-        // Header
-        GameObject hdrObj = new GameObject("Header");
-        hdrObj.transform.SetParent(panel.transform, false);
-        var hdrRect = hdrObj.AddComponent<RectTransform>();
-        hdrRect.anchorMin = new Vector2(0, 0.6f);
-        hdrRect.anchorMax = new Vector2(1, 0.9f);
-        hdrRect.sizeDelta = Vector2.zero;
+        GameObject titleObj = new GameObject("Title");
+        titleObj.transform.SetParent(panel.transform, false);
+        var tRect = titleObj.AddComponent<RectTransform>();
+        tRect.anchorMin = new Vector2(0.1f, 0.55f);
+        tRect.anchorMax = new Vector2(0.9f, 0.9f);
+        tRect.sizeDelta = Vector2.zero;
 
-        var hdrText = hdrObj.AddComponent<Text>();
-        hdrText.text = header;
-        hdrText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        hdrText.fontSize = 46;
-        hdrText.fontStyle = FontStyle.Bold;
-        hdrText.color = headerColor;
-        hdrText.alignment = TextAnchor.MiddleCenter;
+        var titleText = titleObj.AddComponent<Text>();
+        titleText.text = header;
+        titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        titleText.fontSize = 38;
+        titleText.fontStyle = FontStyle.Bold;
+        titleText.color = headerColor;
+        titleText.alignment = TextAnchor.MiddleCenter;
 
-        // Button
         GameObject btnObj = new GameObject("ActionButton");
         btnObj.transform.SetParent(panel.transform, false);
         var bRect = btnObj.AddComponent<RectTransform>();
-        bRect.anchorMin = new Vector2(0.5f, 0.3f);
-        bRect.anchorMax = new Vector2(0.5f, 0.3f);
-        bRect.pivot = new Vector2(0.5f, 0.5f);
-        bRect.sizeDelta = new Vector2(260, 80);
+        bRect.anchorMin = new Vector2(0.2f, 0.15f);
+        bRect.anchorMax = new Vector2(0.8f, 0.45f);
+        bRect.sizeDelta = Vector2.zero;
 
         var btnImg = btnObj.AddComponent<Image>();
         btnImg.color = headerColor;
+
         var btn = btnObj.AddComponent<Button>();
         btn.targetGraphic = btnImg;
 
-        GameObject textObj = new GameObject("Text");
-        textObj.transform.SetParent(btnObj.transform, false);
-        var textRect = textObj.AddComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.sizeDelta = Vector2.zero;
+        GameObject bTextObj = new GameObject("ButtonText");
+        bTextObj.transform.SetParent(btnObj.transform, false);
+        var btRect = bTextObj.AddComponent<RectTransform>();
+        btRect.anchorMin = Vector2.zero;
+        btRect.anchorMax = Vector2.one;
+        btRect.sizeDelta = Vector2.zero;
 
-        var text = textObj.AddComponent<Text>();
-        text.text = buttonLabel;
-        text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        text.fontSize = 32;
-        text.fontStyle = FontStyle.Bold;
-        text.color = Color.white;
-        text.alignment = TextAnchor.MiddleCenter;
+        var btnText = bTextObj.AddComponent<Text>();
+        btnText.text = buttonLabel;
+        btnText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        btnText.fontSize = 30;
+        btnText.fontStyle = FontStyle.Bold;
+        btnText.color = Color.white;
+        btnText.alignment = TextAnchor.MiddleCenter;
 
         return panel;
     }
 
     private static void SetField(object target, string fieldName, object value)
     {
-        var field = target.GetType().GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var field = target.GetType().GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
         if (field != null)
         {
             field.SetValue(target, value);

@@ -5,6 +5,7 @@ public class SoundManager : MonoBehaviour
     public static SoundManager Instance { get; private set; }
 
     [SerializeField] private bool isMuted = false;
+    [SerializeField] private bool isMusicMuted = false;
     [Range(0f, 1f)] [SerializeField] private float masterVolume = 0.8f;
 
     private AudioSource sfxSource;
@@ -17,6 +18,7 @@ public class SoundManager : MonoBehaviour
     private AudioClip loseClip;
 
     public bool IsMuted => isMuted;
+    public bool IsMusicMuted => isMusicMuted;
 
     private void Awake()
     {
@@ -54,6 +56,21 @@ public class SoundManager : MonoBehaviour
     public void ToggleMute()
     {
         isMuted = !isMuted;
+    }
+
+    public void ToggleMusic()
+    {
+        isMusicMuted = !isMusicMuted;
+    }
+
+    public void SetMuted(bool muted)
+    {
+        isMuted = muted;
+    }
+
+    public void SetMusicMuted(bool muted)
+    {
+        isMusicMuted = muted;
     }
 
     public void PlayTap()

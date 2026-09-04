@@ -1,4 +1,4 @@
-﻿using UnityEditor;
+using UnityEditor;
 using UnityEngine;
 
 [InitializeOnLoad]
@@ -23,9 +23,10 @@ public static class AutoAssetInitializer
             LevelGeneratorWindow.GenerateSampleLevelsAndDatabase();
         }
 
-        // 3. Automatically sync Play Mode Level 1 layout into Edit Mode hierarchy
+        // 3. Automatically sync UI architecture and Play Mode Level 1 layout into Edit Mode hierarchy
         if (!Application.isPlaying)
         {
+            SceneSetupUtility.SetupScene();
             LevelGeneratorWindow.BuildLevel1InSceneHierarchy();
         }
     }
