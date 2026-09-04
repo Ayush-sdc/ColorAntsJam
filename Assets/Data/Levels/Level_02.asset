@@ -13,11 +13,169 @@ MonoBehaviour:
   m_Name: Level_02
   m_EditorClassIdentifier: Assembly-CSharp::Level
   levelNumber: 2
-  levelName: Level 2
+  levelName: Color Slither Jam
   difficulty: Medium
   timeLimitInSeconds: 120
   gridWidth: 13
   gridHeight: 12
   cellSize: 1
-  holes: []
-  antQueues: []
+  holes:
+  - holeColor: 0
+    gridCoordinate: {x: 1, y: 9}
+    displayCount: 2
+  - holeColor: 1
+    gridCoordinate: {x: 10, y: 9}
+    displayCount: 2
+  - holeColor: 4
+    gridCoordinate: {x: 1, y: 0}
+    displayCount: 2
+  - holeColor: 5
+    gridCoordinate: {x: 5, y: 0}
+    displayCount: 2
+  - holeColor: 6
+    gridCoordinate: {x: 10, y: 2}
+    displayCount: 2
+  antQueues:
+  - queueId: Blue_Top
+    antColor: 0
+    antCount: 7
+    initialBodyCoordinates:
+    - {x: 3, y: 10}
+    - {x: 4, y: 10}
+    - {x: 5, y: 10}
+    - {x: 6, y: 10}
+    - {x: 7, y: 10}
+    - {x: 8, y: 10}
+    - {x: 9, y: 10}
+    fullPathToHole:
+    - {x: 3, y: 10}
+    - {x: 2, y: 10}
+    - {x: 1, y: 10}
+    - {x: 1, y: 9}
+  - queueId: Blue_Bottom
+    antColor: 0
+    antCount: 7
+    initialBodyCoordinates:
+    - {x: 3, y: 9}
+    - {x: 4, y: 9}
+    - {x: 5, y: 9}
+    - {x: 6, y: 9}
+    - {x: 7, y: 9}
+    - {x: 8, y: 9}
+    - {x: 9, y: 9}
+    fullPathToHole:
+    - {x: 3, y: 9}
+    - {x: 2, y: 9}
+    - {x: 1, y: 9}
+  - queueId: Green_Left
+    antColor: 1
+    antCount: 5
+    initialBodyCoordinates:
+    - {x: 10, y: 8}
+    - {x: 10, y: 7}
+    - {x: 10, y: 6}
+    - {x: 10, y: 5}
+    - {x: 10, y: 4}
+    fullPathToHole:
+    - {x: 10, y: 8}
+    - {x: 10, y: 9}
+  - queueId: Green_Right
+    antColor: 1
+    antCount: 5
+    initialBodyCoordinates:
+    - {x: 11, y: 8}
+    - {x: 11, y: 7}
+    - {x: 11, y: 6}
+    - {x: 11, y: 5}
+    - {x: 11, y: 4}
+    fullPathToHole:
+    - {x: 11, y: 8}
+    - {x: 11, y: 9}
+  - queueId: Red_Left
+    antColor: 4
+    antCount: 7
+    initialBodyCoordinates:
+    - {x: 1, y: 2}
+    - {x: 1, y: 3}
+    - {x: 1, y: 4}
+    - {x: 1, y: 5}
+    - {x: 1, y: 6}
+    - {x: 1, y: 7}
+    - {x: 1, y: 8}
+    fullPathToHole:
+    - {x: 1, y: 2}
+    - {x: 1, y: 1}
+    - {x: 1, y: 0}
+  - queueId: Red_Right
+    antColor: 4
+    antCount: 7
+    initialBodyCoordinates:
+    - {x: 2, y: 2}
+    - {x: 2, y: 3}
+    - {x: 2, y: 4}
+    - {x: 2, y: 5}
+    - {x: 2, y: 6}
+    - {x: 2, y: 7}
+    - {x: 2, y: 8}
+    fullPathToHole:
+    - {x: 2, y: 2}
+    - {x: 2, y: 1}
+    - {x: 1, y: 1}
+    - {x: 1, y: 0}
+  - queueId: Cyan_Top
+    antColor: 6
+    antCount: 7
+    initialBodyCoordinates:
+    - {x: 9, y: 3}
+    - {x: 8, y: 3}
+    - {x: 7, y: 3}
+    - {x: 6, y: 3}
+    - {x: 5, y: 3}
+    - {x: 4, y: 3}
+    - {x: 3, y: 3}
+    fullPathToHole:
+    - {x: 9, y: 3}
+    - {x: 10, y: 3}
+    - {x: 10, y: 2}
+  - queueId: Cyan_Bottom
+    antColor: 6
+    antCount: 7
+    initialBodyCoordinates:
+    - {x: 9, y: 2}
+    - {x: 8, y: 2}
+    - {x: 7, y: 2}
+    - {x: 6, y: 2}
+    - {x: 5, y: 2}
+    - {x: 4, y: 2}
+    - {x: 3, y: 2}
+    fullPathToHole:
+    - {x: 9, y: 2}
+    - {x: 10, y: 2}
+  - queueId: Orange_Left
+    antColor: 5
+    antCount: 4
+    initialBodyCoordinates:
+    - {x: 5, y: 4}
+    - {x: 5, y: 5}
+    - {x: 5, y: 6}
+    - {x: 5, y: 7}
+    fullPathToHole:
+    - {x: 5, y: 4}
+    - {x: 5, y: 3}
+    - {x: 5, y: 2}
+    - {x: 5, y: 1}
+    - {x: 5, y: 0}
+  - queueId: Orange_Right
+    antColor: 5
+    antCount: 4
+    initialBodyCoordinates:
+    - {x: 6, y: 4}
+    - {x: 6, y: 5}
+    - {x: 6, y: 6}
+    - {x: 6, y: 7}
+    fullPathToHole:
+    - {x: 6, y: 4}
+    - {x: 6, y: 3}
+    - {x: 6, y: 2}
+    - {x: 6, y: 1}
+    - {x: 6, y: 0}

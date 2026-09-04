@@ -225,10 +225,97 @@ public static class LevelGeneratorWindow
             AssetDatabase.CreateAsset(level, path);
         }
 
-        List<HoleData> holes = new List<HoleData>();
-        List<AntQueueData> queues = new List<AntQueueData>();
+        // 5 Food Boxes matching reference photo (2 ants capacity each)
+        List<HoleData> holes = new List<HoleData>()
+        {
+            new HoleData(AntColor.Blue, new Vector2Int(1, 9), 2),    // Top-Left Blue Box
+            new HoleData(AntColor.Green, new Vector2Int(10, 9), 2),  // Top-Right Green Box
+            new HoleData(AntColor.Red, new Vector2Int(1, 0), 2),     // Bottom-Left Red Box
+            new HoleData(AntColor.Orange, new Vector2Int(5, 0), 2),  // Bottom-Center Orange Box
+            new HoleData(AntColor.Cyan, new Vector2Int(10, 2), 2)    // Bottom-Right Cyan Box
+        };
 
-        level.SetLevelData(2, "Level 2", "Medium", 13, 12, 1.0f, holes, queues);
+        // 10 Ant Queues (5 Pairs of Parallel Ants)
+        // 1. Dark Blue (Top Horizontal, facing LEFT into Blue Box)
+        var blueTopBody = new List<Vector2Int> {
+            new Vector2Int(3, 10), new Vector2Int(4, 10), new Vector2Int(5, 10), new Vector2Int(6, 10),
+            new Vector2Int(7, 10), new Vector2Int(8, 10), new Vector2Int(9, 10)
+        };
+        var blueTopPath = new List<Vector2Int> { new Vector2Int(3, 10), new Vector2Int(2, 10), new Vector2Int(1, 10), new Vector2Int(1, 9) };
+
+        var blueBottomBody = new List<Vector2Int> {
+            new Vector2Int(3, 9), new Vector2Int(4, 9), new Vector2Int(5, 9), new Vector2Int(6, 9),
+            new Vector2Int(7, 9), new Vector2Int(8, 9), new Vector2Int(9, 9)
+        };
+        var blueBottomPath = new List<Vector2Int> { new Vector2Int(3, 9), new Vector2Int(2, 9), new Vector2Int(1, 9) };
+
+        // 2. Green (Right Vertical, facing UP into Green Box)
+        var greenLeftBody = new List<Vector2Int> {
+            new Vector2Int(10, 8), new Vector2Int(10, 7), new Vector2Int(10, 6), new Vector2Int(10, 5), new Vector2Int(10, 4)
+        };
+        var greenLeftPath = new List<Vector2Int> { new Vector2Int(10, 8), new Vector2Int(10, 9) };
+
+        var greenRightBody = new List<Vector2Int> {
+            new Vector2Int(11, 8), new Vector2Int(11, 7), new Vector2Int(11, 6), new Vector2Int(11, 5), new Vector2Int(11, 4)
+        };
+        var greenRightPath = new List<Vector2Int> { new Vector2Int(11, 8), new Vector2Int(11, 9) };
+
+        // 3. Red (Left Vertical, facing DOWN into Red Box)
+        var redLeftBody = new List<Vector2Int> {
+            new Vector2Int(1, 2), new Vector2Int(1, 3), new Vector2Int(1, 4), new Vector2Int(1, 5),
+            new Vector2Int(1, 6), new Vector2Int(1, 7), new Vector2Int(1, 8)
+        };
+        var redLeftPath = new List<Vector2Int> { new Vector2Int(1, 2), new Vector2Int(1, 1), new Vector2Int(1, 0) };
+
+        var redRightBody = new List<Vector2Int> {
+            new Vector2Int(2, 2), new Vector2Int(2, 3), new Vector2Int(2, 4), new Vector2Int(2, 5),
+            new Vector2Int(2, 6), new Vector2Int(2, 7), new Vector2Int(2, 8)
+        };
+        var redRightPath = new List<Vector2Int> { new Vector2Int(2, 2), new Vector2Int(2, 1), new Vector2Int(1, 1), new Vector2Int(1, 0) };
+
+        // 4. Cyan (Bottom Horizontal, facing RIGHT into Cyan Box)
+        var cyanTopBody = new List<Vector2Int> {
+            new Vector2Int(9, 3), new Vector2Int(8, 3), new Vector2Int(7, 3), new Vector2Int(6, 3),
+            new Vector2Int(5, 3), new Vector2Int(4, 3), new Vector2Int(3, 3)
+        };
+        var cyanTopPath = new List<Vector2Int> { new Vector2Int(9, 3), new Vector2Int(10, 3), new Vector2Int(10, 2) };
+
+        var cyanBottomBody = new List<Vector2Int> {
+            new Vector2Int(9, 2), new Vector2Int(8, 2), new Vector2Int(7, 2), new Vector2Int(6, 2),
+            new Vector2Int(5, 2), new Vector2Int(4, 2), new Vector2Int(3, 2)
+        };
+        var cyanBottomPath = new List<Vector2Int> { new Vector2Int(9, 2), new Vector2Int(10, 2) };
+
+        // 5. Orange (Center Vertical, facing DOWN into Orange Box)
+        var orangeLeftBody = new List<Vector2Int> {
+            new Vector2Int(5, 4), new Vector2Int(5, 5), new Vector2Int(5, 6), new Vector2Int(5, 7)
+        };
+        var orangeLeftPath = new List<Vector2Int> {
+            new Vector2Int(5, 4), new Vector2Int(5, 3), new Vector2Int(5, 2), new Vector2Int(5, 1), new Vector2Int(5, 0)
+        };
+
+        var orangeRightBody = new List<Vector2Int> {
+            new Vector2Int(6, 4), new Vector2Int(6, 5), new Vector2Int(6, 6), new Vector2Int(6, 7)
+        };
+        var orangeRightPath = new List<Vector2Int> {
+            new Vector2Int(6, 4), new Vector2Int(6, 3), new Vector2Int(6, 2), new Vector2Int(6, 1), new Vector2Int(6, 0)
+        };
+
+        List<AntQueueData> queues = new List<AntQueueData>()
+        {
+            new AntQueueData("Blue_Top", AntColor.Blue, blueTopBody.Count, blueTopBody, blueTopPath),
+            new AntQueueData("Blue_Bottom", AntColor.Blue, blueBottomBody.Count, blueBottomBody, blueBottomPath),
+            new AntQueueData("Green_Left", AntColor.Green, greenLeftBody.Count, greenLeftBody, greenLeftPath),
+            new AntQueueData("Green_Right", AntColor.Green, greenRightBody.Count, greenRightBody, greenRightPath),
+            new AntQueueData("Red_Left", AntColor.Red, redLeftBody.Count, redLeftBody, redLeftPath),
+            new AntQueueData("Red_Right", AntColor.Red, redRightBody.Count, redRightBody, redRightPath),
+            new AntQueueData("Cyan_Top", AntColor.Cyan, cyanTopBody.Count, cyanTopBody, cyanTopPath),
+            new AntQueueData("Cyan_Bottom", AntColor.Cyan, cyanBottomBody.Count, cyanBottomBody, cyanBottomPath),
+            new AntQueueData("Orange_Left", AntColor.Orange, orangeLeftBody.Count, orangeLeftBody, orangeLeftPath),
+            new AntQueueData("Orange_Right", AntColor.Orange, orangeRightBody.Count, orangeRightBody, orangeRightPath)
+        };
+
+        level.SetLevelData(2, "Color Slither Jam", "Medium", 13, 12, 1.0f, holes, queues);
         EditorUtility.SetDirty(level);
         AssetDatabase.SaveAssets();
         return level;
