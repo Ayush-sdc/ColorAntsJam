@@ -2,9 +2,22 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+[ExecuteAlways]
 public class BoardManager : MonoBehaviour
 {
-    public static BoardManager Instance { get; private set; }
+    private static BoardManager instance;
+    public static BoardManager Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                instance = UnityEngine.Object.FindFirstObjectByType<BoardManager>();
+            }
+            return instance;
+        }
+        private set => instance = value;
+    }
 
     [Header("Board Configuration")]
     [SerializeField] private Transform boardParent;
@@ -12,8 +25,8 @@ public class BoardManager : MonoBehaviour
     [SerializeField] private GameObject holePrefab;
     [SerializeField] private GameObject antQueuePrefab;
 
-    [SerializeField] private int width;
-    [SerializeField] private int height;
+    [SerializeField] private int width = 9;
+    [SerializeField] private int height = 6;
     [SerializeField] private float cellSize = 1.0f;
 
     private readonly Dictionary<Vector2Int, HoleController> holesMap = new Dictionary<Vector2Int, HoleController>();
@@ -29,12 +42,20 @@ public class BoardManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
+        if (instance != null && instance != this && Application.isPlaying)
         {
             SafeDestroy(gameObject);
             return;
         }
-        Instance = this;
+        instance = this;
+    }
+
+    private void OnEnable()
+    {
+        if (instance == null)
+        {
+            instance = this;
+        }
     }
 
     /// <summary>
@@ -42,8 +63,11 @@ public class BoardManager : MonoBehaviour
     /// </summary>
     public Vector3 GridToWorldPosition(Vector2Int gridPos, float yOffset = 0f)
     {
-        float x = (gridPos.x - (width - 1) * 0.5f) * cellSize;
-        float z = (gridPos.y - (height - 1) * 0.5f) * cellSize;
+        int w = width > 0 ? width : 9;
+        int h = height > 0 ? height : 6;
+        float cs = cellSize > 0 ? cellSize : 1.0f;
+        float x = (gridPos.x - (w - 1) * 0.5f) * cs;
+        float z = (gridPos.y - (h - 1) * 0.5f) * cs;
         return new Vector3(x, yOffset, z);
     }
 
@@ -52,13 +76,17 @@ public class BoardManager : MonoBehaviour
     /// </summary>
     public Vector2Int WorldToGridPosition(Vector3 worldPos)
     {
-        int x = Mathf.RoundToInt(worldPos.x / cellSize + (width - 1) * 0.5f);
-        int y = Mathf.RoundToInt(worldPos.z / cellSize + (height - 1) * 0.5f);
+        int w = width > 0 ? width : 9;
+        int h = height > 0 ? height : 6;
+        float cs = cellSize > 0 ? cellSize : 1.0f;
+        int x = Mathf.RoundToInt(worldPos.x / cs + (w - 1) * 0.5f);
+        int y = Mathf.RoundToInt(worldPos.z / cs + (h - 1) * 0.5f);
         return new Vector2Int(x, y);
     }
 
     public void SetupBoard(Level level)
     {
+        instance = this;
         ClearBoard();
 
         width = level.GridWidth;
@@ -152,7 +180,8 @@ public class BoardManager : MonoBehaviour
             controller = holeObj.AddComponent<HoleController>();
         }
 
-        controller.Initialize(holeData.HoleColor, holeData.GridCoordinate, initialCount);
+        bool isRightSide = holeData.GridCoordinate.x >= 4;
+        controller.Initialize(holeData.HoleColor, holeData.GridCoordinate, initialCount, isRightSide);
         holesMap[holeData.GridCoordinate] = controller;
         
         // Register secondary cell of the 2-cell wide slot

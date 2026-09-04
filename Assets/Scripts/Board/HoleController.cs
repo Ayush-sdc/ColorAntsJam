@@ -1,6 +1,7 @@
-using UnityEngine;
+﻿using UnityEngine;
 using DG.Tweening;
 
+[ExecuteAlways]
 public class HoleController : MonoBehaviour
 {
     [Header("Configuration")]
@@ -8,6 +9,7 @@ public class HoleController : MonoBehaviour
     [SerializeField] private Vector2Int gridCoordinate;
     [SerializeField] private int initialCapacity = 1;
     [SerializeField] private int remainingCount = 1;
+    [SerializeField] private bool isRightSide = true;
 
     [Header("Visual Components")]
     [SerializeField] private Transform slotRoot;
@@ -15,33 +17,54 @@ public class HoleController : MonoBehaviour
     [SerializeField] private TextMesh countTextMesh;
     [SerializeField] private MeshRenderer badgeBackgroundRenderer;
 
+    private static GameObject swallowVfxPrefab;
+
     public AntColor Color => holeColor;
     public Vector2Int GridCoordinate => gridCoordinate;
     public int RemainingCount => remainingCount;
     public int InitialCapacity => initialCapacity;
     public bool IsFull => remainingCount <= 0;
 
-    public void Initialize(AntColor color, Vector2Int coordinate, int capacity = 1)
+    private void Awake()
+    {
+        if (slotRoot == null || transform.childCount == 0)
+        {
+            BuildCapsuleSlotVisuals(isRightSide);
+            UpdateBadgeDisplay();
+        }
+    }
+
+    public void Initialize(AntColor color, Vector2Int coordinate, int capacity = 1, bool isRightSideSlot = true)
     {
         this.holeColor = color;
         this.gridCoordinate = coordinate;
         this.initialCapacity = Mathf.Max(0, capacity);
         this.remainingCount = initialCapacity;
+        this.isRightSide = isRightSideSlot;
 
-        BuildCapsuleSlotVisuals();
+        BuildCapsuleSlotVisuals(isRightSideSlot);
         UpdateBadgeDisplay();
     }
 
-    private void BuildCapsuleSlotVisuals()
+    public void BuildCapsuleSlotVisuals(bool rightSide = true)
     {
         if (slotRoot != null)
         {
             SafeDestroy(slotRoot.gameObject);
         }
 
+        // Also clean up any lingering child objects
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+            SafeDestroy(transform.GetChild(i).gameObject);
+        }
+
         slotRoot = new GameObject("CapsuleSlotRoot").transform;
         slotRoot.SetParent(transform, false);
         slotRoot.localPosition = Vector3.zero;
+
+        // Rotate root so the open entrance pit is ALWAYS on the side facing the oncoming ants
+        slotRoot.localRotation = Quaternion.Euler(0f, rightSide ? 0f : 180f, 0f);
 
         // The tray is a horizontal stadium/capsule spanning width ~2.1 units and height ~1.05 units
         float capRadius = 0.52f;
@@ -62,7 +85,7 @@ public class HoleController : MonoBehaviour
         GameObject rimHolder = new GameObject("SlotRim");
         rimHolder.transform.SetParent(slotRoot, false);
 
-        // Left rim curve
+        // Left rim curve (Entrance pit side when unrotated)
         GameObject leftRim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         leftRim.name = "LeftRim";
         leftRim.transform.SetParent(rimHolder.transform, false);
@@ -71,7 +94,7 @@ public class HoleController : MonoBehaviour
         SafeDestroy(leftRim.GetComponent<Collider>());
         leftRim.GetComponent<MeshRenderer>().material = rimMat;
 
-        // Right rim curve
+        // Right rim curve (Badge side when unrotated)
         GameObject rightRim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         rightRim.name = "RightRim";
         rightRim.transform.SetParent(rimHolder.transform, false);
@@ -118,9 +141,9 @@ public class HoleController : MonoBehaviour
         centerPit.transform.localPosition = new Vector3(0f, 0.038f, 0f);
         centerPit.transform.localScale = new Vector3(innerWidth, pitHeight, innerRadius * 2f);
         SafeDestroy(centerPit.GetComponent<Collider>());
-        centerPit.GetComponent<MeshRenderer>().material = pitMat;
+        if (centerPit.GetComponent<MeshRenderer>() != null) centerPit.GetComponent<MeshRenderer>().material = pitMat;
 
-        // 3. Right-aligned Stylized Numeric Badge
+        // 3. Stylized Numeric Badge (Placed on outer end of tray)
         countBadgeObj = new GameObject("SlotCounterBadge");
         countBadgeObj.transform.SetParent(slotRoot, false);
         countBadgeObj.transform.localPosition = new Vector3(0.55f, 0.07f, 0f);
@@ -150,11 +173,11 @@ public class HoleController : MonoBehaviour
         innerMat.color = new UnityEngine.Color(0.12f, 0.14f, 0.18f);
         innerBadge.GetComponent<MeshRenderer>().material = innerMat;
 
-        // Stylized Number Text (facing top camera)
+        // Stylized Number Text (Always oriented upright to the top camera)
         GameObject textObj = new GameObject("BadgeCountText");
         textObj.transform.SetParent(countBadgeObj.transform, false);
         textObj.transform.localPosition = new Vector3(0f, 0.035f, 0f);
-        textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        textObj.transform.localRotation = Quaternion.Euler(90f, rightSide ? 0f : 180f, 0f);
 
         countTextMesh = textObj.AddComponent<TextMesh>();
         countTextMesh.alignment = TextAlignment.Center;
@@ -182,6 +205,7 @@ public class HoleController : MonoBehaviour
         remainingCount = Mathf.Max(0, remainingCount - 1);
         UpdateBadgeDisplay();
         PlaySwallowEffect();
+        SpawnSwallowVFX();
 
         if (remainingCount == 0)
         {
@@ -191,6 +215,21 @@ public class HoleController : MonoBehaviour
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.PlaySwallow();
+        }
+    }
+
+    private void SpawnSwallowVFX()
+    {
+        if (swallowVfxPrefab == null)
+        {
+            swallowVfxPrefab = Resources.Load<GameObject>("Ants/Prefabs/ant_dis");
+        }
+
+        if (swallowVfxPrefab != null)
+        {
+            Vector3 spawnPos = transform.position + new Vector3(0f, 0.15f, 0f);
+            GameObject fx = Instantiate(swallowVfxPrefab, spawnPos, Quaternion.identity);
+            Destroy(fx, 1.2f);
         }
     }
 
@@ -228,4 +267,18 @@ public class HoleController : MonoBehaviour
         if (Application.isPlaying) Destroy(obj);
         else DestroyImmediate(obj);
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        UnityEditor.EditorApplication.delayCall += () =>
+        {
+            if (this != null && !Application.isPlaying)
+            {
+                BuildCapsuleSlotVisuals(isRightSide);
+                UpdateBadgeDisplay();
+            }
+        };
+    }
+#endif
 }

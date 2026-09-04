@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 
+[ExecuteAlways]
 public class AntQueueController : MonoBehaviour
 {
     [Header("Queue Data")]
@@ -34,6 +35,29 @@ public class AntQueueController : MonoBehaviour
     public static event Action<AntQueueController> OnQueueMoveStarted;
     public static event Action<AntQueueController> OnQueueMoveCompleted;
     public static event Action<AntQueueController> OnQueueBlockedFeedback;
+
+    private Vector3 GetWorldPositionForGrid(Vector2Int coord, float yOffset = 0f)
+    {
+        if (BoardManager.Instance != null)
+        {
+            return BoardManager.Instance.GridToWorldPosition(coord, yOffset);
+        }
+        // Standard centered board fallback (9x6, cellSize = 1)
+        float x = (coord.x - 4.0f) * 1.0f;
+        float z = (coord.y - 2.5f) * 1.0f;
+        return new Vector3(x, yOffset, z);
+    }
+
+    private void Awake()
+    {
+        if (antUnits.Count == 0 || transform.childCount == 0)
+        {
+            if (currentBodyCoordinates != null && currentBodyCoordinates.Count > 0)
+            {
+                SpawnAnts();
+            }
+        }
+    }
 
     public void Initialize(AntQueueData data)
     {
@@ -66,7 +90,7 @@ public class AntQueueController : MonoBehaviour
         for (int i = 0; i < currentBodyCoordinates.Count; i++)
         {
             Vector2Int coord = currentBodyCoordinates[i];
-            Vector3 worldPos = BoardManager.Instance != null ? BoardManager.Instance.GridToWorldPosition(coord) : new Vector3(coord.x, 0, coord.y);
+            Vector3 worldPos = GetWorldPositionForGrid(coord);
 
             GameObject antObj = new GameObject($"Ant_{queueId}_{i}");
             antObj.transform.SetParent(transform, false);
@@ -74,6 +98,7 @@ public class AntQueueController : MonoBehaviour
 
             var antUnit = antObj.AddComponent<AntUnit>();
             antUnit.Setup(antColor, (i == 0), (i == currentBodyCoordinates.Count - 1));
+
             antUnits.Add(antUnit);
         }
 
@@ -81,7 +106,7 @@ public class AntQueueController : MonoBehaviour
     }
 
     /// <summary>
-    /// Strictly aligns every individual AntUnit to face the segment directly ahead of it (or the next path step).
+    /// Aligns each ant segment's body to naturally face the leader ahead of it.
     /// </summary>
     public void UpdateAntOrientations()
     {
@@ -94,16 +119,16 @@ public class AntQueueController : MonoBehaviour
 
             if (i == 0)
             {
-                // Lead ant faces the next step on the path towards the goal tray
+                // Head faces the next step on the path towards the hole
                 if (remainingPath != null && remainingPath.Count > 1)
                 {
-                    Vector3 nextPos = BoardManager.Instance != null ? BoardManager.Instance.GridToWorldPosition(remainingPath[1]) : new Vector3(remainingPath[1].x, 0, remainingPath[1].y);
+                    Vector3 nextPos = GetWorldPositionForGrid(remainingPath[1]);
                     lookDir = nextPos - unit.transform.position;
                 }
                 else if (currentBodyCoordinates.Count > 1)
                 {
                     // Fallback: face away from the segment behind it
-                    Vector3 behindPos = BoardManager.Instance != null ? BoardManager.Instance.GridToWorldPosition(currentBodyCoordinates[1]) : new Vector3(currentBodyCoordinates[1].x, 0, currentBodyCoordinates[1].y);
+                    Vector3 behindPos = GetWorldPositionForGrid(currentBodyCoordinates[1]);
                     lookDir = unit.transform.position - behindPos;
                 }
             }
@@ -144,7 +169,7 @@ public class AntQueueController : MonoBehaviour
         if (isMoving) return false;
 
         // Check path validity against BoardManager
-        if (!BoardManager.Instance.IsPathClearForQueue(this))
+        if (BoardManager.Instance != null && !BoardManager.Instance.IsPathClearForQueue(this))
         {
             PlayBlockedShake();
             OnQueueBlockedFeedback?.Invoke(this);
@@ -174,11 +199,12 @@ public class AntQueueController : MonoBehaviour
     private IEnumerator MoveRoutine()
     {
         isMoving = true;
+        foreach (var u in antUnits) { if (u != null) u.IsMoving = true; }
         OnQueueMoveStarted?.Invoke(this);
 
         Vector2Int holeCoord = remainingPath[remainingPath.Count - 1];
-        HoleController hole = BoardManager.Instance.GetHoleAt(holeCoord);
-        Vector3 holeWorldPos = BoardManager.Instance.GridToWorldPosition(holeCoord);
+        HoleController hole = BoardManager.Instance != null ? BoardManager.Instance.GetHoleAt(holeCoord) : null;
+        Vector3 holeWorldPos = GetWorldPositionForGrid(holeCoord);
 
         // Precompute the complete unbroken path of coordinates that each ant must traverse
         // For Ant 0: [ remainingPath[1], remainingPath[2], ..., holeCoord ]
@@ -245,7 +271,7 @@ public class AntQueueController : MonoBehaviour
                     else
                     {
                         // Strict 1-tile hop along the grid
-                        Vector3 targetPos = BoardManager.Instance.GridToWorldPosition(targetCoord);
+                        Vector3 targetPos = GetWorldPositionForGrid(targetCoord);
                         Vector3 moveDir = targetPos - unit.transform.position;
                         moveDir.y = 0;
 
@@ -287,7 +313,10 @@ public class AntQueueController : MonoBehaviour
 
         isMoving = false;
         OnQueueMoveCompleted?.Invoke(this);
-        BoardManager.Instance.OnQueueCompleted(this);
+        if (BoardManager.Instance != null)
+        {
+            BoardManager.Instance.OnQueueCompleted(this);
+        }
     }
 
     private void SafeDestroy(UnityEngine.Object obj)
@@ -300,10 +329,13 @@ public class AntQueueController : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (!Application.isPlaying && antUnits.Count > 0)
+        UnityEditor.EditorApplication.delayCall += () =>
         {
-            UpdateAntOrientations();
-        }
+            if (this != null && !Application.isPlaying && antUnits.Count > 0)
+            {
+                UpdateAntOrientations();
+            }
+        };
     }
 #endif
 }

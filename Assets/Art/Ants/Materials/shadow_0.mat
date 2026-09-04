@@ -1,0 +1,203 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: shadow
+  m_Shader: {fileID: 10764, guid: 0000000000000000f000000000000000, type: 0}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - AMBIENT
+  - ANIME_SOFT
+  - DIFFUSE
+  - FOG
+  - MATCAP_PERSPECTIVE
+  - OUTLINE_PASS_DISABLED
+  - SHADOWS_ENABLED
+  - SPECULAR
+  - _DETAILBLEND_MULTIPLY
+  - _DETAILUV_UV1
+  - _EMISSION
+  - _GLOSSYREFLECTIONS_OFF
+  - _HEIGHTCOLORSBLEND_ALPHA_BLEND
+  - _LAYER1BLEND_ALPHA_BLEND
+  - _LAYER2BLEND_ALPHA_BLEND
+  - _LAYER3BLEND_ALPHA_BLEND
+  - _LIGHTMAPUV_UV1
+  - _MATCAPBLEND_MULTIPLY
+  - _NORMALUV_UV1
+  - _OPTFALLBACK_ALL
+  - _OPTFOG_ALL
+  - _OPTLIGHTMAPPING_ALL
+  - _OPTPOINTLIGHTS_ALL
+  - _OPTSHADOW_ALL
+  - _PLANTTYPE_PLANT
+  - _RIMBLEND_ADDITIVE
+  - _SHADOWOVERLAYANIMATION_SCROLL
+  - _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+  - _SPECULARUV_UV1
+  - _SPECULAR_SETUP
+  m_LightmapFlags: 2
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses:
+  - ALWAYS
+  m_LockedProperties:
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+      _MainTex:
+        m_Texture: {fileID: 2800000, guid: b4e3510ccbcad0a4eb72802315e8e558, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: {}
+    m_Floats:
+      _AmbientBrightness: 1
+      _Anime: 0
+      _AnimeSoftness: 0.01
+      _AnimeThreshold1: 0.45
+      _AnimeThreshold2: 0.85
+      _BlendOp: 0
+      _Brightness: 1
+      _BumpScale: 1
+      _ColorMask: 15
+      _Contrast: 1
+      _Cull: 2
+      _Cutoff: 0.288
+      _Cutout: 0
+      _DestBlend: 10
+      _DetailBlend: 2
+      _DetailBrightness: 1
+      _DetailContrast: 1
+      _DetailLighting: 0
+      _DetailNormalMapScale: 1
+      _DetailUV: 0
+      _DetailVertexColors: 0
+      _Diffuse: 1
+      _DiffuseBrightness: 2.4
+      _DiffuseContrast: 1.4
+      _DiffusePerPixel: 0
+      _DiffuseWrap: 0.36
+      _DstBlend: 0
+      _Flat: 0
+      _Fog: 1
+      _GlossMapScale: 0
+      _Glossiness: 0
+      _GlossyReflections: 0
+      _HeightColors: 0
+      _HeightColorsAlpha: 1
+      _HeightColorsBlend: 0
+      _HeightColorsEdgeThickness: 1
+      _HeightColorsHeight: 0
+      _HeightColorsSpace: 0
+      _HeightColorsThickness: 0
+      _IgnoreMainTexAlpha: 0
+      _Layer1Alpha: 1
+      _Layer1Blend: 0
+      _Layer1Brightness: 1
+      _Layer1VertexColor: 0
+      _Layer2Alpha: 1
+      _Layer2Blend: 0
+      _Layer2Brightness: 1
+      _Layer2VertexColor: 0
+      _Layer3Alpha: 1
+      _Layer3Blend: 0
+      _Layer3Brightness: 1
+      _Layer3VertexColor: 0
+      _LightmapBrightness: 1
+      _LightmapUV: 0
+      _MatCapBlend: 0
+      _MatCapBrightness: 1
+      _MatCapContrast: 1
+      _MatCapPerspective: 1
+      _MatCapStatic: 0
+      _Metallic: 0
+      _Mode: 0
+      _NormalStrength: 1
+      _NormalUV: 0
+      _OcclusionStrength: 1
+      _OptFallback: 0
+      _OptFog: 0
+      _OptLightmapping: 0
+      _OptPointLights: 0
+      _OptShadow: 0
+      _Outline: 0
+      _OutlineWidth: 0.05
+      _Parallax: 0.005
+      _Plant: 0
+      _PlantBaseHeight: 0
+      _PlantPhaseVariation: 0.3
+      _PlantSwayAmount: 0.15
+      _PlantSwaySpeed: 1
+      _PlantType: 0
+      _Preset: 0
+      _Reflection: 0
+      _ReflectionAmount: 1
+      _ReflectionRim: 0
+      _Rim: 0
+      _RimAmount: 7
+      _RimBlend: 1
+      _RimContrast: 3.2
+      _RimInverse: 0
+      _Saturation: 1
+      _ShadowOverlayAnimation: 0
+      _ShadowOverlayBrightness: 1
+      _ShadowOverlaySpeedU: 0.1
+      _ShadowOverlaySpeedV: 0.03
+      _ShadowOverlaySwayAmount: 0.01
+      _ShadowsEnabled: 1
+      _SmoothnessTextureChannel: 1
+      _SourceBlend: 5
+      _Specular: 1
+      _SpecularBrightness: 5.2
+      _SpecularHair: 0
+      _SpecularHighlights: 1
+      _SpecularSmoothness: 11
+      _SpecularUV: 0
+      _SrcBlend: 1
+      _Stencil: 0
+      _StencilComp: 8
+      _StencilOp: 0
+      _StencilReadMask: 255
+      _StencilWriteMask: 255
+      _TransparencyMaskAmount: 1
+      _TransparencyMaskContrast: 1
+      _UVSec: 0
+      _UseUIAlphaClip: 0
+      _VertexColors: 0
+      _VertexColorsAmount: 1
+      _VertexColorsContrast: 1
+      _ZOffset: 0
+      _ZTest: 4
+      _ZWrite: 1
+    m_Colors:
+      _AnimeColor1: {r: 1, g: 1, b: 1, a: 1}
+      _AnimeColor2: {r: 1.35, g: 1.35, b: 1.35, a: 1}
+      _AnimeColor3: {r: 2, g: 2, b: 2, a: 1}
+      _Color: {r: 1, g: 0.92941177, b: 0.8627451, a: 1}
+      _DetailColor: {r: 1, g: 1, b: 1, a: 1}
+      _EmissionColor: {r: 0.1509434, g: 0.007831969, b: 0.007831969, a: 1}
+      _Emissive: {r: 0, g: 0, b: 0, a: 0}
+      _HeightColorsColor: {r: 1, g: 1, b: 1, a: 1}
+      _Layer1Color: {r: 1, g: 1, b: 1, a: 1}
+      _Layer2Color: {r: 1, g: 1, b: 1, a: 1}
+      _Layer3Color: {r: 1, g: 1, b: 1, a: 1}
+      _LightmapColor: {r: 1, g: 1, b: 1, a: 1}
+      _MatCapColor: {r: 1, g: 1, b: 1, a: 1}
+      _MatCapRot: {r: 0, g: 0, b: 0, a: 0}
+      _OutlineColor: {r: 0.21698111, g: 0.06712365, b: 0, a: 1}
+      _ReflectionColor: {r: 1, g: 1, b: 1, a: 1}
+      _RimColor: {r: 1, g: 1, b: 1, a: 1}
+      _RimDirection: {r: 0, g: 0, b: 0, a: 0}
+      _ShadowColor: {r: 0.3, g: 0.3, b: 0.3, a: 1}
+      _Specular: {r: 0, g: 0, b: 0, a: 1}
+      _SpecularColor: {r: 0.1792453, g: 0.1792453, b: 0.1792453, a: 1}
+  m_BuildTextureStacks: []

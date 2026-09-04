@@ -9,11 +9,18 @@ public static class LevelGeneratorWindow
     private const string Level01AssetPath = "Assets/Data/Levels/Level_01.asset";
     private const string DatabaseAssetPath = "Assets/Data/Levels/LevelDatabase.asset";
 
+    [MenuItem("SlitherAnts/Sync Play Mode Layout to Edit Mode")]
     [MenuItem("SlitherAnts/Build Level 1 in Scene (Edit Mode)")]
     public static void BuildLevel1InSceneHierarchy()
     {
         EnsureDataFolders();
-        Level level1 = CreateOrUpdateLevel1Asset();
+
+        Level level1 = AssetDatabase.LoadAssetAtPath<Level>(Level01AssetPath);
+        if (level1 == null)
+        {
+            level1 = CreateOrUpdateLevel1Asset();
+        }
+
         SceneSetupUtility.SetupScene();
 
         BoardManager boardMgr = Object.FindFirstObjectByType<BoardManager>();
@@ -35,15 +42,25 @@ public static class LevelGeneratorWindow
             boardParentField.SetValue(boardMgr, boardObj.transform);
         }
 
+        // Setup the board using the exact same code that runs in Play Mode!
         boardMgr.SetupBoard(level1);
 
-        EditorUtility.SetDirty(level1);
+        // Mark all generated scene objects dirty so Unity persists them in Edit Mode
         EditorUtility.SetDirty(boardMgr);
+        if (boardObj != null)
+        {
+            EditorUtility.SetDirty(boardObj);
+            foreach (Transform child in boardObj.GetComponentsInChildren<Transform>(true))
+            {
+                EditorUtility.SetDirty(child.gameObject);
+            }
+        }
+
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         EditorSceneManager.SaveOpenScenes();
         AssetDatabase.SaveAssets();
 
-        Debug.Log("[LevelGenerator] Successfully instantiated and permanently saved Level 1 in Scene Hierarchy in Edit Mode!");
+        Debug.Log("[LevelGenerator] Successfully synced and baked Play Mode Level 1 layout into Edit Mode Scene!");
     }
 
     [MenuItem("SlitherAnts/Generate All Levels and Database")]
@@ -53,7 +70,11 @@ public static class LevelGeneratorWindow
 
         List<Level> generatedLevels = new List<Level>();
 
-        Level level1 = CreateOrUpdateLevel1Asset();
+        Level level1 = AssetDatabase.LoadAssetAtPath<Level>(Level01AssetPath);
+        if (level1 == null)
+        {
+            level1 = CreateOrUpdateLevel1Asset();
+        }
         generatedLevels.Add(level1);
 
         Level level2 = CreateLevel2Asset();
@@ -80,72 +101,6 @@ public static class LevelGeneratorWindow
         AssetDatabase.Refresh();
 
         Debug.Log($"[LevelGenerator] Successfully generated {generatedLevels.Count} Levels and configured LevelDatabase!");
-    }
-
-    [MenuItem("SlitherAnts/Save Scene Hierarchy to Level_01 Asset")]
-    public static void SaveSceneHierarchyToLevel01Asset()
-    {
-        Level level1 = AssetDatabase.LoadAssetAtPath<Level>(Level01AssetPath);
-        if (level1 == null)
-        {
-            level1 = ScriptableObject.CreateInstance<Level>();
-            AssetDatabase.CreateAsset(level1, Level01AssetPath);
-        }
-
-        BoardManager boardMgr = Object.FindFirstObjectByType<BoardManager>();
-        if (boardMgr == null)
-        {
-            return;
-        }
-
-        var holesInScene = Object.FindObjectsByType<HoleController>(FindObjectsSortMode.None);
-        List<HoleData> holeDataList = new List<HoleData>();
-        foreach (var h in holesInScene)
-        {
-            if (h == null) continue;
-            holeDataList.Add(new HoleData(h.Color, h.GridCoordinate, h.InitialCapacity));
-        }
-
-        var queuesInScene = Object.FindObjectsByType<AntQueueController>(FindObjectsSortMode.None);
-        List<AntQueueData> queueDataList = new List<AntQueueData>();
-        foreach (var q in queuesInScene)
-        {
-            if (q == null) continue;
-
-            List<Vector2Int> bodyCoords = new List<Vector2Int>();
-            var units = q.GetComponentsInChildren<AntUnit>();
-            if (units != null && units.Length > 0)
-            {
-                foreach (var u in units)
-                {
-                    if (u != null)
-                    {
-                        bodyCoords.Add(boardMgr.WorldToGridPosition(u.transform.position));
-                    }
-                }
-            }
-            else
-            {
-                bodyCoords = new List<Vector2Int>(q.CurrentBodyCoordinates);
-            }
-
-            List<Vector2Int> pathCoords = new List<Vector2Int>(q.RemainingPath);
-            if (bodyCoords.Count > 0 && pathCoords.Count > 0)
-            {
-                pathCoords[0] = bodyCoords[0];
-            }
-
-            queueDataList.Add(new AntQueueData(q.QueueId, q.Color, bodyCoords.Count, bodyCoords, pathCoords));
-        }
-
-        if (holeDataList.Count > 0 && queueDataList.Count > 0)
-        {
-            level1.SetLevelData(1, "Color Slither Jam", "Easy", boardMgr.Width > 0 ? boardMgr.Width : 9, boardMgr.Height > 0 ? boardMgr.Height : 6, boardMgr.CellSize > 0 ? boardMgr.CellSize : 1.0f, holeDataList, queueDataList);
-
-            EditorUtility.SetDirty(level1);
-            AssetDatabase.SaveAssets();
-            Debug.Log($"[LevelGenerator] Auto-saved {holeDataList.Count} Holes and {queueDataList.Count} Queues from Scene Hierarchy into {Level01AssetPath}!");
-        }
     }
 
     private static Level CreateOrUpdateLevel1Asset()
@@ -180,45 +135,53 @@ public static class LevelGeneratorWindow
             new Vector2Int(0, 2),
             new Vector2Int(0, 1)  // Tail
         };
-        var yellowPath1 = new List<Vector2Int> { new Vector2Int(5, 4), new Vector2Int(6, 4) };
-        var yellowQueue1 = new AntQueueData("Yellow_Slither", AntColor.Yellow, yellowBody1.Count, yellowBody1, yellowPath1);
+        var yellowPath1 = new List<Vector2Int> {
+            new Vector2Int(5, 4),
+            new Vector2Int(6, 4)  // Into Yellow hole (6,4)
+        };
 
-        // 2. Green Slither (Length 7): Nested inside Yellow, runs down column 1 and across row 3 to (5,3) facing Green tray
+        // 2. Green Slither (Length 7): S-turn around column 1 up to (5,3) facing Green tray
         var greenBody1 = new List<Vector2Int> {
             new Vector2Int(5, 3), // Head
             new Vector2Int(4, 3),
             new Vector2Int(3, 3),
             new Vector2Int(2, 3),
-            new Vector2Int(1, 3), // Corner
+            new Vector2Int(1, 3),
             new Vector2Int(1, 2),
             new Vector2Int(1, 1)  // Tail
         };
-        var greenPath1 = new List<Vector2Int> { new Vector2Int(5, 3), new Vector2Int(6, 3) };
-        var greenQueue1 = new AntQueueData("Green_Slither", AntColor.Green, greenBody1.Count, greenBody1, greenPath1);
+        var greenPath1 = new List<Vector2Int> {
+            new Vector2Int(5, 3),
+            new Vector2Int(6, 3)  // Into Green hole (6,3)
+        };
 
-        // 3. Blue Slither (Length 5): Nested inside Green, runs down column 2 and across row 2 to (5,2) facing Blue tray
+        // 3. Blue Slither (Length 5): Straight across row 2 up to (5,2) facing Blue tray
         var blueBody1 = new List<Vector2Int> {
             new Vector2Int(5, 2), // Head
             new Vector2Int(4, 2),
             new Vector2Int(3, 2),
-            new Vector2Int(2, 2), // Corner
+            new Vector2Int(2, 2),
             new Vector2Int(2, 1)  // Tail
         };
-        var bluePath1 = new List<Vector2Int> { new Vector2Int(5, 2), new Vector2Int(6, 2) };
-        var blueQueue1 = new AntQueueData("Blue_Slither", AntColor.Blue, blueBody1.Count, blueBody1, bluePath1);
+        var bluePath1 = new List<Vector2Int> {
+            new Vector2Int(5, 2),
+            new Vector2Int(6, 2)  // Into Blue hole (6,2)
+        };
 
-        // 4. Brown Slither (Length 3): Short worm nested inside Blue, straight across row 1 to (5,1) facing Brown tray
+        // 4. Brown Slither (Length 3): Compact 3-ant line across row 1 to (5,1) facing Brown tray
         var brownBody1 = new List<Vector2Int> {
             new Vector2Int(5, 1), // Head
             new Vector2Int(4, 1),
             new Vector2Int(3, 1)  // Tail
         };
-        var brownPath1 = new List<Vector2Int> { new Vector2Int(5, 1), new Vector2Int(6, 1) };
-        var brownQueue1 = new AntQueueData("Brown_Slither", AntColor.Brown, brownBody1.Count, brownBody1, brownPath1);
+        var brownPath1 = new List<Vector2Int> {
+            new Vector2Int(5, 1),
+            new Vector2Int(6, 1)  // Into Brown hole (6,1)
+        };
 
-        // 5. Red Slither (Length 11): Outer perimeter wrapping row 0 (bottom) and column 8 (right) behind all trays
+        // 5. Red Slither (Length 11): Perimeter blocker starting at (2,0) facing LEFT into Red tray at (1,0)
         var redBody1 = new List<Vector2Int> {
-            new Vector2Int(2, 0), // Head entering Red tray at (1,0)
+            new Vector2Int(2, 0), // Head
             new Vector2Int(3, 0),
             new Vector2Int(4, 0),
             new Vector2Int(5, 0),
@@ -230,11 +193,21 @@ public static class LevelGeneratorWindow
             new Vector2Int(8, 3),
             new Vector2Int(8, 4)  // Tail
         };
-        var redPath1 = new List<Vector2Int> { new Vector2Int(2, 0), new Vector2Int(1, 0) };
-        var redQueue1 = new AntQueueData("Red_Slither", AntColor.Red, redBody1.Count, redBody1, redPath1);
+        var redPath1 = new List<Vector2Int> {
+            new Vector2Int(2, 0),
+            new Vector2Int(1, 0)  // Into Red hole (1,0)
+        };
 
-        level1.SetLevelData(1, "Color Slither Jam", "Easy", 9, 6, 1.0f, holes1, new List<AntQueueData> { yellowQueue1, greenQueue1, blueQueue1, brownQueue1, redQueue1 });
+        List<AntQueueData> queues1 = new List<AntQueueData>()
+        {
+            new AntQueueData("Green_Slither", AntColor.Green, greenBody1.Count, greenBody1, greenPath1),
+            new AntQueueData("Red_Slither", AntColor.Red, redBody1.Count, redBody1, redPath1),
+            new AntQueueData("Yellow_Slither", AntColor.Yellow, yellowBody1.Count, yellowBody1, yellowPath1),
+            new AntQueueData("Brown_Slither", AntColor.Brown, brownBody1.Count, brownBody1, brownPath1),
+            new AntQueueData("Blue_Slither", AntColor.Blue, blueBody1.Count, blueBody1, bluePath1)
+        };
 
+        level1.SetLevelData(1, "Color Slither Jam", "Easy", 9, 6, 1.0f, holes1, queues1);
         EditorUtility.SetDirty(level1);
         AssetDatabase.SaveAssets();
 
@@ -244,93 +217,66 @@ public static class LevelGeneratorWindow
     private static Level CreateLevel2Asset()
     {
         string path = $"{DataFolder}/Level_02.asset";
-        Level level2 = AssetDatabase.LoadAssetAtPath<Level>(path);
-        if (level2 == null)
+        Level level = AssetDatabase.LoadAssetAtPath<Level>(path);
+        if (level == null)
         {
-            level2 = ScriptableObject.CreateInstance<Level>();
-            level2.name = "Level_02";
-            AssetDatabase.CreateAsset(level2, path);
+            level = ScriptableObject.CreateInstance<Level>();
+            level.name = "Level_02";
+            AssetDatabase.CreateAsset(level, path);
         }
 
-        List<HoleData> holes2 = new List<HoleData>()
+        List<HoleData> holes = new List<HoleData>()
         {
-            new HoleData(AntColor.Yellow, new Vector2Int(6, 4), 4),
-            new HoleData(AntColor.Blue, new Vector2Int(6, 2), 4),
-            new HoleData(AntColor.Green, new Vector2Int(1, 4), 4),
-            new HoleData(AntColor.Red, new Vector2Int(1, 1), 4)
+            new HoleData(AntColor.Purple, new Vector2Int(6, 4), 6),
+            new HoleData(AntColor.Orange, new Vector2Int(6, 2), 6),
+            new HoleData(AntColor.Cyan, new Vector2Int(6, 0), 4)
         };
 
-        var yelBody2 = new List<Vector2Int> { new Vector2Int(5, 4), new Vector2Int(4, 4), new Vector2Int(3, 4), new Vector2Int(2, 4) };
-        var yelPath2 = new List<Vector2Int> { new Vector2Int(5, 4), new Vector2Int(6, 4) };
-        var yelQueue2 = new AntQueueData("Yellow_2", AntColor.Yellow, yelBody2.Count, yelBody2, yelPath2);
+        var purpleBody = new List<Vector2Int> { new Vector2Int(5, 4), new Vector2Int(4, 4), new Vector2Int(3, 4), new Vector2Int(2, 4), new Vector2Int(1, 4), new Vector2Int(0, 4) };
+        var orangeBody = new List<Vector2Int> { new Vector2Int(5, 2), new Vector2Int(4, 2), new Vector2Int(3, 2), new Vector2Int(2, 2), new Vector2Int(1, 2), new Vector2Int(0, 2) };
+        var cyanBody = new List<Vector2Int> { new Vector2Int(5, 0), new Vector2Int(4, 0), new Vector2Int(3, 0), new Vector2Int(2, 0) };
 
-        var bluBody2 = new List<Vector2Int> { new Vector2Int(5, 2), new Vector2Int(4, 2), new Vector2Int(3, 2), new Vector2Int(2, 2) };
-        var bluPath2 = new List<Vector2Int> { new Vector2Int(5, 2), new Vector2Int(6, 2) };
-        var bluQueue2 = new AntQueueData("Blue_2", AntColor.Blue, bluBody2.Count, bluBody2, bluPath2);
+        List<AntQueueData> queues = new List<AntQueueData>()
+        {
+            new AntQueueData("Purple_Slither", AntColor.Purple, purpleBody.Count, purpleBody, new List<Vector2Int> { new Vector2Int(5, 4), new Vector2Int(6, 4) }),
+            new AntQueueData("Orange_Slither", AntColor.Orange, orangeBody.Count, orangeBody, new List<Vector2Int> { new Vector2Int(5, 2), new Vector2Int(6, 2) }),
+            new AntQueueData("Cyan_Slither", AntColor.Cyan, cyanBody.Count, cyanBody, new List<Vector2Int> { new Vector2Int(5, 0), new Vector2Int(6, 0) })
+        };
 
-        var grnBody2 = new List<Vector2Int> { new Vector2Int(2, 3), new Vector2Int(3, 3), new Vector2Int(4, 3), new Vector2Int(5, 3) };
-        var grnPath2 = new List<Vector2Int> { new Vector2Int(2, 3), new Vector2Int(2, 4), new Vector2Int(1, 4) };
-        var grnQueue2 = new AntQueueData("Green_2", AntColor.Green, grnBody2.Count, grnBody2, grnPath2);
-
-        var redBody2 = new List<Vector2Int> { new Vector2Int(2, 1), new Vector2Int(3, 1), new Vector2Int(4, 1), new Vector2Int(5, 1) };
-        var redPath2 = new List<Vector2Int> { new Vector2Int(2, 1), new Vector2Int(1, 1) };
-        var redQueue2 = new AntQueueData("Red_2", AntColor.Red, redBody2.Count, redBody2, redPath2);
-
-        level2.SetLevelData(2, "S-Curve Interlock", "Medium", 9, 6, 1.0f, holes2, new List<AntQueueData> { yelQueue2, bluQueue2, grnQueue2, redQueue2 });
-
-        EditorUtility.SetDirty(level2);
-        AssetDatabase.SaveAssets();
-        return level2;
+        level.SetLevelData(2, "Traffic Slither", "Medium", 8, 6, 1.0f, holes, queues);
+        EditorUtility.SetDirty(level);
+        return level;
     }
 
     private static Level CreateLevel3Asset()
     {
         string path = $"{DataFolder}/Level_03.asset";
-        Level level3 = AssetDatabase.LoadAssetAtPath<Level>(path);
-        if (level3 == null)
+        Level level = AssetDatabase.LoadAssetAtPath<Level>(path);
+        if (level == null)
         {
-            level3 = ScriptableObject.CreateInstance<Level>();
-            level3.name = "Level_03";
-            AssetDatabase.CreateAsset(level3, path);
+            level = ScriptableObject.CreateInstance<Level>();
+            level.name = "Level_03";
+            AssetDatabase.CreateAsset(level, path);
         }
 
-        List<HoleData> holes3 = new List<HoleData>()
+        List<HoleData> holes = new List<HoleData>()
         {
-            new HoleData(AntColor.Yellow, new Vector2Int(6, 4), 6),
-            new HoleData(AntColor.Blue, new Vector2Int(6, 2), 6),
-            new HoleData(AntColor.Red, new Vector2Int(1, 0), 11)
+            new HoleData(AntColor.Yellow, new Vector2Int(6, 3), 4),
+            new HoleData(AntColor.Red, new Vector2Int(6, 1), 4)
         };
 
-        // Yellow 3A (Front): (5,4), (4,4), (3,4)
-        var yelBody3A = new List<Vector2Int> { new Vector2Int(5, 4), new Vector2Int(4, 4), new Vector2Int(3, 4) };
-        var yelPath3A = new List<Vector2Int> { new Vector2Int(5, 4), new Vector2Int(6, 4) };
-        var yelQ3A = new AntQueueData("Yellow_3A", AntColor.Yellow, 3, yelBody3A, yelPath3A);
+        var yBody = new List<Vector2Int> { new Vector2Int(5, 3), new Vector2Int(4, 3), new Vector2Int(3, 3), new Vector2Int(2, 3) };
+        var rBody = new List<Vector2Int> { new Vector2Int(5, 1), new Vector2Int(4, 1), new Vector2Int(3, 1), new Vector2Int(2, 1) };
 
-        // Yellow 3B (Back - blocked by 3A): (2,4), (1,4), (0,4) - on row 4, safely away from holes
-        var yelBody3B = new List<Vector2Int> { new Vector2Int(2, 4), new Vector2Int(1, 4), new Vector2Int(0, 4) };
-        var yelPath3B = new List<Vector2Int> { new Vector2Int(2, 4), new Vector2Int(3, 4), new Vector2Int(4, 4), new Vector2Int(5, 4), new Vector2Int(6, 4) };
-        var yelQ3B = new AntQueueData("Yellow_3B", AntColor.Yellow, 3, yelBody3B, yelPath3B);
+        List<AntQueueData> queues = new List<AntQueueData>()
+        {
+            new AntQueueData("Y_Slither", AntColor.Yellow, yBody.Count, yBody, new List<Vector2Int> { new Vector2Int(5, 3), new Vector2Int(6, 3) }),
+            new AntQueueData("R_Slither", AntColor.Red, rBody.Count, rBody, new List<Vector2Int> { new Vector2Int(5, 1), new Vector2Int(6, 1) })
+        };
 
-        // Blue 3A (Front): (5,2), (4,2), (3,2)
-        var bluBody3A = new List<Vector2Int> { new Vector2Int(5, 2), new Vector2Int(4, 2), new Vector2Int(3, 2) };
-        var bluPath3A = new List<Vector2Int> { new Vector2Int(5, 2), new Vector2Int(6, 2) };
-        var bluQ3A = new AntQueueData("Blue_3A", AntColor.Blue, 3, bluBody3A, bluPath3A);
-
-        // Blue 3B (Back - blocked by 3A): (2,2), (1,2), (0,2) - on row 2, safely away from Red hole at row 0
-        var bluBody3B = new List<Vector2Int> { new Vector2Int(2, 2), new Vector2Int(1, 2), new Vector2Int(0, 2) };
-        var bluPath3B = new List<Vector2Int> { new Vector2Int(2, 2), new Vector2Int(3, 2), new Vector2Int(4, 2), new Vector2Int(5, 2), new Vector2Int(6, 2) };
-        var bluQ3B = new AntQueueData("Blue_3B", AntColor.Blue, 3, bluBody3B, bluPath3B);
-
-        // Red Slither (Outer perimeter): (2,0) to (8,4)
-        var redBody3 = new List<Vector2Int> { new Vector2Int(2, 0), new Vector2Int(3, 0), new Vector2Int(4, 0), new Vector2Int(5, 0), new Vector2Int(6, 0), new Vector2Int(7, 0), new Vector2Int(8, 0), new Vector2Int(8, 1), new Vector2Int(8, 2), new Vector2Int(8, 3), new Vector2Int(8, 4) };
-        var redPath3 = new List<Vector2Int> { new Vector2Int(2, 0), new Vector2Int(1, 0) };
-        var redQ3 = new AntQueueData("Red_3", AntColor.Red, redBody3.Count, redBody3, redPath3);
-
-        level3.SetLevelData(3, "Twin Worms Jam", "Medium", 9, 6, 1.0f, holes3, new List<AntQueueData> { yelQ3A, bluQ3A, yelQ3B, bluQ3B, redQ3 });
-
-        EditorUtility.SetDirty(level3);
-        AssetDatabase.SaveAssets();
-        return level3;
+        level.SetLevelData(3, "Crossroad Jam", "Hard", 8, 5, 1.0f, holes, queues);
+        EditorUtility.SetDirty(level);
+        return level;
     }
 
     private static void EnsureDataFolders()
