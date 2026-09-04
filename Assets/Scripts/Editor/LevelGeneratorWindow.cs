@@ -225,26 +225,12 @@ public static class LevelGeneratorWindow
             AssetDatabase.CreateAsset(level, path);
         }
 
-        List<HoleData> holes = new List<HoleData>()
-        {
-            new HoleData(AntColor.Purple, new Vector2Int(6, 4), 6),
-            new HoleData(AntColor.Orange, new Vector2Int(6, 2), 6),
-            new HoleData(AntColor.Cyan, new Vector2Int(6, 0), 4)
-        };
+        List<HoleData> holes = new List<HoleData>();
+        List<AntQueueData> queues = new List<AntQueueData>();
 
-        var purpleBody = new List<Vector2Int> { new Vector2Int(5, 4), new Vector2Int(4, 4), new Vector2Int(3, 4), new Vector2Int(2, 4), new Vector2Int(1, 4), new Vector2Int(0, 4) };
-        var orangeBody = new List<Vector2Int> { new Vector2Int(5, 2), new Vector2Int(4, 2), new Vector2Int(3, 2), new Vector2Int(2, 2), new Vector2Int(1, 2), new Vector2Int(0, 2) };
-        var cyanBody = new List<Vector2Int> { new Vector2Int(5, 0), new Vector2Int(4, 0), new Vector2Int(3, 0), new Vector2Int(2, 0) };
-
-        List<AntQueueData> queues = new List<AntQueueData>()
-        {
-            new AntQueueData("Purple_Slither", AntColor.Purple, purpleBody.Count, purpleBody, new List<Vector2Int> { new Vector2Int(5, 4), new Vector2Int(6, 4) }),
-            new AntQueueData("Orange_Slither", AntColor.Orange, orangeBody.Count, orangeBody, new List<Vector2Int> { new Vector2Int(5, 2), new Vector2Int(6, 2) }),
-            new AntQueueData("Cyan_Slither", AntColor.Cyan, cyanBody.Count, cyanBody, new List<Vector2Int> { new Vector2Int(5, 0), new Vector2Int(6, 0) })
-        };
-
-        level.SetLevelData(2, "Traffic Slither", "Medium", 8, 6, 1.0f, holes, queues);
+        level.SetLevelData(2, "Level 2", "Medium", 13, 12, 1.0f, holes, queues);
         EditorUtility.SetDirty(level);
+        AssetDatabase.SaveAssets();
         return level;
     }
 

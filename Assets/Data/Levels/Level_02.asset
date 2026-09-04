@@ -13,68 +13,11 @@ MonoBehaviour:
   m_Name: Level_02
   m_EditorClassIdentifier: Assembly-CSharp::Level
   levelNumber: 2
-  levelName: S-Curve Interlock
+  levelName: Level 2
   difficulty: Medium
   timeLimitInSeconds: 120
-  gridWidth: 9
-  gridHeight: 6
+  gridWidth: 13
+  gridHeight: 12
   cellSize: 1
-  holes:
-  - holeColor: 3
-    gridCoordinate: {x: 6, y: 4}
-    displayCount: 1
-  - holeColor: 0
-    gridCoordinate: {x: 6, y: 2}
-    displayCount: 1
-  - holeColor: 1
-    gridCoordinate: {x: 1, y: 4}
-    displayCount: 1
-  - holeColor: 4
-    gridCoordinate: {x: 1, y: 1}
-    displayCount: 1
-  antQueues:
-  - queueId: Yellow_2
-    antColor: 3
-    antCount: 4
-    initialBodyCoordinates:
-    - {x: 5, y: 4}
-    - {x: 4, y: 4}
-    - {x: 3, y: 4}
-    - {x: 2, y: 4}
-    fullPathToHole:
-    - {x: 5, y: 4}
-    - {x: 6, y: 4}
-  - queueId: Blue_2
-    antColor: 0
-    antCount: 4
-    initialBodyCoordinates:
-    - {x: 5, y: 2}
-    - {x: 4, y: 2}
-    - {x: 3, y: 2}
-    - {x: 2, y: 2}
-    fullPathToHole:
-    - {x: 5, y: 2}
-    - {x: 6, y: 2}
-  - queueId: Green_2
-    antColor: 1
-    antCount: 4
-    initialBodyCoordinates:
-    - {x: 2, y: 3}
-    - {x: 3, y: 3}
-    - {x: 4, y: 3}
-    - {x: 5, y: 3}
-    fullPathToHole:
-    - {x: 2, y: 3}
-    - {x: 2, y: 4}
-    - {x: 1, y: 4}
-  - queueId: Red_2
-    antColor: 4
-    antCount: 4
-    initialBodyCoordinates:
-    - {x: 2, y: 1}
-    - {x: 3, y: 1}
-    - {x: 4, y: 1}
-    - {x: 5, y: 1}
-    fullPathToHole:
-    - {x: 2, y: 1}
-    - {x: 1, y: 1}
+  holes: []
+  antQueues: []
