@@ -160,7 +160,7 @@ public class BoardManager : MonoBehaviour
         Material dotMat = AntColorPalette.GetGroundDotMaterial();
         GameObject dotsHolder = new GameObject("GroundDotsHolder");
         dotsHolder.transform.SetParent(gridHolder);
-        dotsHolder.localPosition = Vector3.zero;
+        dotsHolder.transform.localPosition = Vector3.zero;
 
         for (int y = 0; y < height; y++)
         {
