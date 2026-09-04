@@ -31,7 +31,7 @@ public class HoleController : MonoBehaviour
     {
         if (slotRoot == null || transform.childCount == 0)
         {
-            BuildCapsuleSlotVisuals(isRightSide, parallelRows);
+            BuildRoundedRectangleSlotVisuals(isRightSide, parallelRows);
             UpdateBadgeDisplay();
         }
     }
@@ -45,11 +45,14 @@ public class HoleController : MonoBehaviour
         this.isRightSide = isRightSideSlot;
         this.parallelRows = Mathf.Max(1, rowCount);
 
-        BuildCapsuleSlotVisuals(isRightSideSlot, this.parallelRows);
+        BuildRoundedRectangleSlotVisuals(isRightSideSlot, this.parallelRows);
         UpdateBadgeDisplay();
     }
 
-    public void BuildCapsuleSlotVisuals(bool rightSide = true, int rows = 1)
+    /// <summary>
+    /// Builds a glossy rounded-corner rectangle food box with a dark recessed pit and a small square counter badge.
+    /// </summary>
+    public void BuildRoundedRectangleSlotVisuals(bool rightSide = true, int rows = 1)
     {
         if (slotRoot != null)
         {
@@ -62,19 +65,22 @@ public class HoleController : MonoBehaviour
             SafeDestroy(transform.GetChild(i).gameObject);
         }
 
-        slotRoot = new GameObject("CapsuleSlotRoot").transform;
+        slotRoot = new GameObject("RoundedSlotRoot").transform;
         slotRoot.SetParent(transform, false);
         slotRoot.localPosition = Vector3.zero;
+        slotRoot.localRotation = Quaternion.identity;
 
-        // Rotate root so entrance pit faces oncoming ants
-        slotRoot.localRotation = Quaternion.Euler(0f, rightSide ? 0f : 180f, 0f);
-
-        // Dimensions: if 2 parallel rows, double the width across rows!
-        float baseCapRadius = (rows >= 2) ? 1.02f : 0.52f;
-        float baseCenterWidth = 1.0f;
-        float baseInnerRadius = (rows >= 2) ? 0.88f : 0.40f;
+        // Dimensions
+        float outerW = (rows >= 2) ? 2.05f : 1.95f;
+        float outerH = (rows >= 2) ? 2.05f : 0.95f;
+        float cornerR = 0.35f;
+        float rimThick = 0.14f;
         float rimH = 0.06f;
         float pitH = 0.065f;
+
+        float innerW = outerW - 2f * rimThick;
+        float innerH = outerH - 2f * rimThick;
+        float innerR = Mathf.Max(0.06f, cornerR - rimThick);
 
         Material rimMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
         rimMat.color = AntColorPalette.GetColor(holeColor);
@@ -85,80 +91,107 @@ public class HoleController : MonoBehaviour
         pitMat.color = AntColorPalette.HolePitColor;
         if (pitMat.HasProperty("_Smoothness")) pitMat.SetFloat("_Smoothness", 0.20f);
 
-        // 1. Glossy Colored Border (SlotRim)
+        // 1. Glossy Colored Border (SlotRim - Rounded Corner Rectangle)
         GameObject rimHolder = new GameObject("SlotRim");
         rimHolder.transform.SetParent(slotRoot, false);
 
-        // Left rim curve
-        GameObject leftRim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        leftRim.name = "LeftRim";
-        leftRim.transform.SetParent(rimHolder.transform, false);
-        leftRim.transform.localPosition = new Vector3(-baseCenterWidth * 0.5f, 0.02f, 0f);
-        leftRim.transform.localScale = new Vector3(baseCapRadius * 2f, rimH, baseCapRadius * 2f);
-        SafeDestroy(leftRim.GetComponent<Collider>());
-        leftRim.GetComponent<MeshRenderer>().material = rimMat;
+        float cx = outerW * 0.5f - cornerR;
+        float cz = outerH * 0.5f - cornerR;
 
-        // Right rim curve
-        GameObject rightRim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        rightRim.name = "RightRim";
-        rightRim.transform.SetParent(rimHolder.transform, false);
-        rightRim.transform.localPosition = new Vector3(baseCenterWidth * 0.5f, 0.02f, 0f);
-        rightRim.transform.localScale = new Vector3(baseCapRadius * 2f, rimH, baseCapRadius * 2f);
-        SafeDestroy(rightRim.GetComponent<Collider>());
-        rightRim.GetComponent<MeshRenderer>().material = rimMat;
+        // 4 Corner Cylinders for smooth rounded corners
+        Vector3[] cornerPositions = new Vector3[]
+        {
+            new Vector3(-cx, 0.02f,  cz), // Top-Left
+            new Vector3( cx, 0.02f,  cz), // Top-Right
+            new Vector3(-cx, 0.02f, -cz), // Bottom-Left
+            new Vector3( cx, 0.02f, -cz)  // Bottom-Right
+        };
 
-        // Center rim box
-        GameObject centerRim = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        centerRim.name = "CenterRim";
-        centerRim.transform.SetParent(rimHolder.transform, false);
-        centerRim.transform.localPosition = new Vector3(0f, 0.02f, 0f);
-        centerRim.transform.localScale = new Vector3(baseCenterWidth, rimH, baseCapRadius * 2f);
-        SafeDestroy(centerRim.GetComponent<Collider>());
-        centerRim.GetComponent<MeshRenderer>().material = rimMat;
+        for (int i = 0; i < 4; i++)
+        {
+            GameObject corner = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            corner.name = $"RimCorner_{i}";
+            corner.transform.SetParent(rimHolder.transform, false);
+            corner.transform.localPosition = cornerPositions[i];
+            corner.transform.localScale = new Vector3(cornerR * 2f, rimH, cornerR * 2f);
+            SafeDestroy(corner.GetComponent<Collider>());
+            corner.GetComponent<MeshRenderer>().material = rimMat;
+        }
 
-        // 2. Dark Recessed Well / Floor (SlotPit)
+        // Horizontal center slab
+        GameObject hBox = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        hBox.name = "RimCenterH";
+        hBox.transform.SetParent(rimHolder.transform, false);
+        hBox.transform.localPosition = new Vector3(0f, 0.02f, 0f);
+        hBox.transform.localScale = new Vector3(outerW, rimH, outerH - 2f * cornerR);
+        SafeDestroy(hBox.GetComponent<Collider>());
+        hBox.GetComponent<MeshRenderer>().material = rimMat;
+
+        // Vertical center slab
+        GameObject vBox = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        vBox.name = "RimCenterV";
+        vBox.transform.SetParent(rimHolder.transform, false);
+        vBox.transform.localPosition = new Vector3(0f, 0.02f, 0f);
+        vBox.transform.localScale = new Vector3(outerW - 2f * cornerR, rimH, outerH);
+        SafeDestroy(vBox.GetComponent<Collider>());
+        vBox.GetComponent<MeshRenderer>().material = rimMat;
+
+        // 2. Dark Recessed Well / Floor (SlotPit - Inner Rounded Rectangle)
         GameObject pitHolder = new GameObject("SlotPit");
         pitHolder.transform.SetParent(slotRoot, false);
 
-        GameObject leftPit = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        leftPit.name = "LeftPit";
-        leftPit.transform.SetParent(pitHolder.transform, false);
-        leftPit.transform.localPosition = new Vector3(-baseCenterWidth * 0.5f, 0.038f, 0f);
-        leftPit.transform.localScale = new Vector3(baseInnerRadius * 2f, pitH, baseInnerRadius * 2f);
-        SafeDestroy(leftPit.GetComponent<Collider>());
-        leftPit.GetComponent<MeshRenderer>().material = pitMat;
+        float icx = innerW * 0.5f - innerR;
+        float icz = innerH * 0.5f - innerR;
 
-        GameObject rightPit = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        rightPit.name = "RightPit";
-        rightPit.transform.SetParent(pitHolder.transform, false);
-        rightPit.transform.localPosition = new Vector3(baseCenterWidth * 0.5f, 0.038f, 0f);
-        rightPit.transform.localScale = new Vector3(baseInnerRadius * 2f, pitH, baseInnerRadius * 2f);
-        SafeDestroy(rightPit.GetComponent<Collider>());
-        rightPit.GetComponent<MeshRenderer>().material = pitMat;
+        Vector3[] innerCornerPositions = new Vector3[]
+        {
+            new Vector3(-icx, 0.038f,  icz),
+            new Vector3( icx, 0.038f,  icz),
+            new Vector3(-icx, 0.038f, -icz),
+            new Vector3( icx, 0.038f, -icz)
+        };
 
-        GameObject centerPit = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        centerPit.name = "CenterPit";
-        centerPit.transform.SetParent(pitHolder.transform, false);
-        centerPit.transform.localPosition = new Vector3(0f, 0.038f, 0f);
-        centerPit.transform.localScale = new Vector3(baseCenterWidth, pitH, baseInnerRadius * 2f);
-        SafeDestroy(centerPit.GetComponent<Collider>());
-        if (centerPit.GetComponent<MeshRenderer>() != null) centerPit.GetComponent<MeshRenderer>().material = pitMat;
+        for (int i = 0; i < 4; i++)
+        {
+            GameObject icorner = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            icorner.name = $"PitCorner_{i}";
+            icorner.transform.SetParent(pitHolder.transform, false);
+            icorner.transform.localPosition = innerCornerPositions[i];
+            icorner.transform.localScale = new Vector3(innerR * 2f, pitH, innerR * 2f);
+            SafeDestroy(icorner.GetComponent<Collider>());
+            icorner.GetComponent<MeshRenderer>().material = pitMat;
+        }
 
-        // 3. Stylized Numeric Badge
+        GameObject pitHBox = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        pitHBox.name = "PitCenterH";
+        pitHBox.transform.SetParent(pitHolder.transform, false);
+        pitHBox.transform.localPosition = new Vector3(0f, 0.038f, 0f);
+        pitHBox.transform.localScale = new Vector3(innerW, pitH, innerH - 2f * innerR);
+        SafeDestroy(pitHBox.GetComponent<Collider>());
+        pitHBox.GetComponent<MeshRenderer>().material = pitMat;
+
+        GameObject pitVBox = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        pitVBox.name = "PitCenterV";
+        pitVBox.transform.SetParent(pitHolder.transform, false);
+        pitVBox.transform.localPosition = new Vector3(0f, 0.038f, 0f);
+        pitVBox.transform.localScale = new Vector3(innerW - 2f * innerR, pitH, innerH);
+        SafeDestroy(pitVBox.GetComponent<Collider>());
+        pitVBox.GetComponent<MeshRenderer>().material = pitMat;
+
+        // 3. Small Square Counter Badge at the bottom-right corner of the rectangle
         countBadgeObj = new GameObject("SlotCounterBadge");
         countBadgeObj.transform.SetParent(slotRoot, false);
 
-        Vector3 badgePos = (rows >= 2)
-            ? new Vector3(baseCenterWidth * 0.5f + 0.30f, 0.07f, -baseCapRadius + 0.40f)
-            : new Vector3(baseCenterWidth * 0.5f + 0.05f, 0.07f, 0f);
-        countBadgeObj.transform.localPosition = badgePos;
+        float badgeX = (rows >= 2) ? (outerW * 0.5f - 0.32f) : (outerW * 0.5f - 0.28f);
+        float badgeZ = (rows >= 2) ? (-outerH * 0.5f + 0.32f) : 0f;
+        countBadgeObj.transform.localPosition = new Vector3(badgeX, 0.07f, badgeZ);
 
-        // Badge outer colored border
-        GameObject badgeBg = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        badgeBg.name = "BadgeBackground";
+        // Small Square Outer Border
+        GameObject badgeBg = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        badgeBg.name = "BadgeSquareBackground";
         badgeBg.transform.SetParent(countBadgeObj.transform, false);
         badgeBg.transform.localPosition = Vector3.zero;
-        badgeBg.transform.localScale = new Vector3(0.58f, 0.02f, 0.58f);
+        badgeBg.transform.localScale = new Vector3(0.48f, 0.025f, 0.48f);
         SafeDestroy(badgeBg.GetComponent<Collider>());
 
         var badgeMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
@@ -167,28 +200,28 @@ public class HoleController : MonoBehaviour
         badgeBg.GetComponent<MeshRenderer>().material = badgeMat;
         badgeBackgroundRenderer = badgeBg.GetComponent<MeshRenderer>();
 
-        // Inner dark contrast circle
-        GameObject innerBadge = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        innerBadge.name = "InnerBadgeCircle";
+        // Inner Dark Square Contrast
+        GameObject innerBadge = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        innerBadge.name = "InnerBadgeSquare";
         innerBadge.transform.SetParent(countBadgeObj.transform, false);
-        innerBadge.transform.localPosition = new Vector3(0f, 0.015f, 0f);
-        innerBadge.transform.localScale = new Vector3(0.48f, 0.02f, 0.48f);
+        innerBadge.transform.localPosition = new Vector3(0f, 0.012f, 0f);
+        innerBadge.transform.localScale = new Vector3(0.40f, 0.025f, 0.40f);
         SafeDestroy(innerBadge.GetComponent<Collider>());
         var innerMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
         innerMat.color = new UnityEngine.Color(0.12f, 0.14f, 0.18f);
         innerBadge.GetComponent<MeshRenderer>().material = innerMat;
 
-        // Stylized Number Text
+        // Stylized Number Text (Always oriented upright facing top camera)
         GameObject textObj = new GameObject("BadgeCountText");
         textObj.transform.SetParent(countBadgeObj.transform, false);
-        textObj.transform.localPosition = new Vector3(0f, 0.035f, 0f);
-        textObj.transform.localRotation = Quaternion.Euler(90f, rightSide ? 0f : 180f, 0f);
+        textObj.transform.localPosition = new Vector3(0f, 0.025f, 0f);
+        textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
 
         countTextMesh = textObj.AddComponent<TextMesh>();
         countTextMesh.alignment = TextAlignment.Center;
         countTextMesh.anchor = TextAnchor.MiddleCenter;
         countTextMesh.fontSize = 54;
-        countTextMesh.characterSize = 0.095f;
+        countTextMesh.characterSize = 0.090f;
         countTextMesh.fontStyle = FontStyle.Bold;
         countTextMesh.color = UnityEngine.Color.white;
     }
@@ -198,7 +231,7 @@ public class HoleController : MonoBehaviour
         if (countTextMesh == null) return;
 
         countTextMesh.text = remainingCount.ToString();
-        countTextMesh.characterSize = remainingCount >= 10 ? 0.082f : 0.095f;
+        countTextMesh.characterSize = remainingCount >= 10 ? 0.078f : 0.090f;
         countTextMesh.color = remainingCount > 0 ? UnityEngine.Color.white : new UnityEngine.Color(1f, 1f, 1f, 0.85f);
     }
 
@@ -240,7 +273,7 @@ public class HoleController : MonoBehaviour
         if (slotRoot == null) return;
 
         slotRoot.DOKill();
-        slotRoot.DOScale(new Vector3(1.10f, 0.90f, 1.10f), 0.08f)
+        slotRoot.DOScale(new Vector3(1.08f, 0.92f, 1.08f), 0.08f)
             .SetEase(Ease.OutQuad)
             .OnComplete(() =>
             {
@@ -258,7 +291,7 @@ public class HoleController : MonoBehaviour
     {
         if (slotRoot == null) return;
 
-        slotRoot.DOScale(new Vector3(1.15f, 1.0f, 1.15f), 0.2f)
+        slotRoot.DOScale(new Vector3(1.12f, 1.0f, 1.12f), 0.2f)
             .SetLoops(2, LoopType.Yoyo)
             .SetEase(Ease.OutBack);
     }
@@ -277,7 +310,7 @@ public class HoleController : MonoBehaviour
         {
             if (this != null && !Application.isPlaying)
             {
-                BuildCapsuleSlotVisuals(isRightSide, parallelRows);
+                BuildRoundedRectangleSlotVisuals(isRightSide, parallelRows);
                 UpdateBadgeDisplay();
             }
         };
