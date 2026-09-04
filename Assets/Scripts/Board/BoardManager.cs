@@ -101,8 +101,8 @@ public class BoardManager : MonoBehaviour
             GardenBackgroundManager.Instance.BuildEnvironment(width, height, cellSize);
         }
 
-        // 2. Spawn Grid Visual Tiles & Static Ground Dots
-        SpawnGridVisuals();
+        // 2. Spawn Grid Visual Tiles & Static Ground Dots ONLY at ant coordinates
+        SpawnGridVisuals(level);
 
         // 3. Spawn Holes with initial capacity equal to matching queue ants
         foreach (var holeData in level.Holes)
@@ -132,7 +132,7 @@ public class BoardManager : MonoBehaviour
         OnBoardStateChanged?.Invoke();
     }
 
-    private void SpawnGridVisuals()
+    private void SpawnGridVisuals(Level level)
     {
         Transform parentTransform = boardParent != null ? boardParent : transform;
         Transform gridHolder = new GameObject("TilesHolder").transform;
@@ -156,33 +156,44 @@ public class BoardManager : MonoBehaviour
             floorRenderer.material = mat;
         }
 
-        // 2. Static Circular Ground Dots across the Board (Fixed on the floor, do not move with ants)
+        // 2. Static Circular Ground Dots ONLY at exact coordinates where ants exist (dots = ants)
         Material dotMat = AntColorPalette.GetGroundDotMaterial();
         GameObject dotsHolder = new GameObject("GroundDotsHolder");
         dotsHolder.transform.SetParent(gridHolder);
         dotsHolder.transform.localPosition = Vector3.zero;
 
-        for (int y = 0; y < height; y++)
+        HashSet<Vector2Int> antCoordinates = new HashSet<Vector2Int>();
+        if (level != null && level.AntQueues != null)
         {
-            for (int x = 0; x < width; x++)
+            foreach (var q in level.AntQueues)
             {
-                Vector2Int gridCoord = new Vector2Int(x, y);
-                Vector3 dotWorldPos = GridToWorldPosition(gridCoord, 0.005f);
-
-                GameObject dot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                dot.name = $"TileDot_{x}_{y}";
-                dot.transform.SetParent(dotsHolder.transform);
-                dot.transform.position = dotWorldPos;
-                dot.transform.localScale = new Vector3(0.36f * cellSize, 0.005f, 0.36f * cellSize);
-                SafeDestroy(dot.GetComponent<Collider>());
-
-                var dotRenderer = dot.GetComponent<MeshRenderer>();
-                if (dotRenderer != null)
+                if (q.InitialBodyCoordinates != null)
                 {
-                    dotRenderer.material = dotMat;
-                    dotRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                    dotRenderer.receiveShadows = true;
+                    foreach (var coord in q.InitialBodyCoordinates)
+                    {
+                        antCoordinates.Add(coord);
+                    }
                 }
+            }
+        }
+
+        foreach (var coord in antCoordinates)
+        {
+            Vector3 dotWorldPos = GridToWorldPosition(coord, 0.005f);
+
+            GameObject dot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            dot.name = $"TileDot_{coord.x}_{coord.y}";
+            dot.transform.SetParent(dotsHolder.transform);
+            dot.transform.position = dotWorldPos;
+            dot.transform.localScale = new Vector3(0.36f * cellSize, 0.005f, 0.36f * cellSize);
+            SafeDestroy(dot.GetComponent<Collider>());
+
+            var dotRenderer = dot.GetComponent<MeshRenderer>();
+            if (dotRenderer != null)
+            {
+                dotRenderer.material = dotMat;
+                dotRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                dotRenderer.receiveShadows = true;
             }
         }
     }

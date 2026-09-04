@@ -139,7 +139,7 @@ public static class AntColorPalette
     }
 
     /// <summary>
-    /// Smooth, neutral slate grey circular ground dot material matching the reference image.
+    /// Soft, low-opacity subtle neutral grey ground dot material.
     /// </summary>
     public static Material GetGroundDotMaterial()
     {
@@ -148,8 +148,8 @@ public static class AntColorPalette
             Shader uLitShader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
             groundDotMaterial = new Material(uLitShader);
             groundDotMaterial.name = "GroundDotMat";
-            groundDotMaterial.color = new Color(0.50f, 0.52f, 0.55f); // Smooth neutral grey
-            if (groundDotMaterial.HasProperty("_Smoothness")) groundDotMaterial.SetFloat("_Smoothness", 0.05f);
+            groundDotMaterial.color = new Color(0.72f, 0.71f, 0.70f); // Soft, subtle low-contrast grey on studio floor
+            if (groundDotMaterial.HasProperty("_Smoothness")) groundDotMaterial.SetFloat("_Smoothness", 0.0f);
             if (groundDotMaterial.HasProperty("_Metallic")) groundDotMaterial.SetFloat("_Metallic", 0f);
         }
         return groundDotMaterial;
