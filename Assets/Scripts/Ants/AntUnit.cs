@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using DG.Tweening;
 
 [ExecuteAlways]
@@ -15,6 +15,7 @@ public class AntUnit : MonoBehaviour
     [SerializeField] private MeshRenderer bodyRenderer;
     [SerializeField] private Transform leftPupil;
     [SerializeField] private Transform rightPupil;
+    [SerializeField] private GameObject groundDotObj;
 
     private static readonly Vector3 DefaultPupilLocalPos = new Vector3(0f, 0.12f, 0.24f);
 
@@ -77,7 +78,7 @@ public class AntUnit : MonoBehaviour
             headPivotObj.transform.localPosition = new Vector3(0f, 0.25f, 0.20f);
             headPivot = headPivotObj.transform;
 
-            // Expressive Googly Eyes
+            // Expressive Googly Eyes (Sockets positioned in front of antennae roots)
             float eyeScale = isHead ? 0.22f : 0.18f;
             Vector3 leftEyePos = new Vector3(-0.12f, -0.02f, 0.12f);
             Vector3 rightEyePos = new Vector3(0.12f, -0.02f, 0.12f);
@@ -133,19 +134,19 @@ public class AntUnit : MonoBehaviour
             rightPupil = CreateEye(headPivot, new Vector3(0.11f, 0.08f, 0.15f), "RightEye", eyeScale);
         }
 
-        // 3. Stylized Blob Drop Shadow
-        Sprite shadowSprite = AntColorPalette.GetShadowSprite();
-        if (shadowSprite != null)
+        // 3. Smooth Circular Ground Dot Marker (Positioned directly below each ant on the floor)
+        Sprite dotSprite = AntColorPalette.GetGroundDotSprite();
+        if (dotSprite != null)
         {
-            GameObject shadowObj = new GameObject("BlobShadow");
-            shadowObj.transform.SetParent(transform, false);
-            shadowObj.transform.localPosition = new Vector3(0f, 0.015f, 0.03f);
-            shadowObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            shadowObj.transform.localScale = new Vector3(0.78f, 0.78f, 0.78f);
+            groundDotObj = new GameObject("GroundDot");
+            groundDotObj.transform.SetParent(transform, false);
+            groundDotObj.transform.localPosition = new Vector3(0f, 0.008f, 0f);
+            groundDotObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            groundDotObj.transform.localScale = new Vector3(0.46f, 0.46f, 0.46f);
 
-            var sr = shadowObj.AddComponent<SpriteRenderer>();
-            sr.sprite = shadowSprite;
-            sr.color = new Color(0f, 0f, 0f, 0.38f);
+            var sr = groundDotObj.AddComponent<SpriteRenderer>();
+            sr.sprite = dotSprite;
+            sr.sortingOrder = 1;
         }
 
         // 4. Interaction Raycast Collider
@@ -241,6 +242,7 @@ public class AntUnit : MonoBehaviour
         rightPupil = null;
         headPivot = null;
         modelRoot = null;
+        groundDotObj = null;
 
         for (int i = transform.childCount - 1; i >= 0; i--)
         {

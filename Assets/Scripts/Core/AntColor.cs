@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum AntColor
@@ -28,6 +28,7 @@ public static class AntColorPalette
     private static readonly Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>();
     private static Mesh workerMesh;
     private static Sprite shadowSprite;
+    private static Sprite groundDotSprite;
 
     public static Color GetColor(AntColor antColor)
     {
@@ -135,5 +136,54 @@ public static class AntColorPalette
             }
         }
         return shadowSprite;
+    }
+
+    /// <summary>
+    /// Smooth, antialiased neutral grey circular dot marker on the board floor directly below each ant.
+    /// </summary>
+    public static Sprite GetGroundDotSprite()
+    {
+        if (groundDotSprite == null)
+        {
+            int size = 128;
+            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Bilinear;
+            tex.wrapMode = TextureWrapMode.Clamp;
+            Color[] cols = new Color[size * size];
+
+            float center = (size - 1) * 0.5f;
+            float radius = size * 0.44f;
+            float edgeSoftness = 3.0f;
+
+            Color dotColor = new Color(0.48f, 0.50f, 0.53f, 0.88f); // Soft neutral slate grey matching reference
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dist = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
+                    if (dist <= radius - edgeSoftness)
+                    {
+                        cols[y * size + x] = dotColor;
+                    }
+                    else if (dist < radius)
+                    {
+                        float alpha = Mathf.Clamp01((radius - dist) / edgeSoftness);
+                        Color c = dotColor;
+                        c.a *= alpha;
+                        cols[y * size + x] = c;
+                    }
+                    else
+                    {
+                        cols[y * size + x] = Color.clear;
+                    }
+                }
+            }
+
+            tex.SetPixels(cols);
+            tex.Apply();
+            groundDotSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
+        }
+        return groundDotSprite;
     }
 }
