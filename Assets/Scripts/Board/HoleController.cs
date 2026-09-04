@@ -136,47 +136,17 @@ public class HoleController : MonoBehaviour
         SafeDestroy(vBox.GetComponent<Collider>());
         vBox.GetComponent<MeshRenderer>().material = rimMat;
 
-        // 2. Dark Recessed Well / Floor (SlotPit - Inner Rounded Rectangle)
+        // 2. Dark Recessed Well / Floor (SlotPit - Clean Flat Square/Rectangular Pit Floor)
         GameObject pitHolder = new GameObject("SlotPit");
         pitHolder.transform.SetParent(slotRoot, false);
 
-        float icx = innerW * 0.5f - innerR;
-        float icz = innerH * 0.5f - innerR;
-
-        Vector3[] innerCornerPositions = new Vector3[]
-        {
-            new Vector3(-icx, 0.038f,  icz),
-            new Vector3( icx, 0.038f,  icz),
-            new Vector3(-icx, 0.038f, -icz),
-            new Vector3( icx, 0.038f, -icz)
-        };
-
-        for (int i = 0; i < 4; i++)
-        {
-            GameObject icorner = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            icorner.name = $"PitCorner_{i}";
-            icorner.transform.SetParent(pitHolder.transform, false);
-            icorner.transform.localPosition = innerCornerPositions[i];
-            icorner.transform.localScale = new Vector3(innerR * 2f, pitH, innerR * 2f);
-            SafeDestroy(icorner.GetComponent<Collider>());
-            icorner.GetComponent<MeshRenderer>().material = pitMat;
-        }
-
-        GameObject pitHBox = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        pitHBox.name = "PitCenterH";
-        pitHBox.transform.SetParent(pitHolder.transform, false);
-        pitHBox.transform.localPosition = new Vector3(0f, 0.038f, 0f);
-        pitHBox.transform.localScale = new Vector3(innerW, pitH, innerH - 2f * innerR);
-        SafeDestroy(pitHBox.GetComponent<Collider>());
-        pitHBox.GetComponent<MeshRenderer>().material = pitMat;
-
-        GameObject pitVBox = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        pitVBox.name = "PitCenterV";
-        pitVBox.transform.SetParent(pitHolder.transform, false);
-        pitVBox.transform.localPosition = new Vector3(0f, 0.038f, 0f);
-        pitVBox.transform.localScale = new Vector3(innerW - 2f * innerR, pitH, innerH);
-        SafeDestroy(pitVBox.GetComponent<Collider>());
-        pitVBox.GetComponent<MeshRenderer>().material = pitMat;
+        GameObject pitSquare = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        pitSquare.name = "PitCenterSquare";
+        pitSquare.transform.SetParent(pitHolder.transform, false);
+        pitSquare.transform.localPosition = new Vector3(0f, 0.038f, 0f);
+        pitSquare.transform.localScale = new Vector3(innerW, pitH, innerH);
+        SafeDestroy(pitSquare.GetComponent<Collider>());
+        pitSquare.GetComponent<MeshRenderer>().material = pitMat;
 
         // 3. Small Square Counter Badge at the bottom-right corner of the rectangle
         countBadgeObj = new GameObject("SlotCounterBadge");
