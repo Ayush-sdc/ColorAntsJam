@@ -31,7 +31,7 @@ public class HoleController : MonoBehaviour
     {
         if (slotRoot == null || transform.childCount == 0)
         {
-            BuildRoundedRectangleSlotVisuals(isRightSide, parallelRows);
+            BuildSquareSlotVisuals(isRightSide, parallelRows);
             UpdateBadgeDisplay();
         }
     }
@@ -45,14 +45,14 @@ public class HoleController : MonoBehaviour
         this.isRightSide = isRightSideSlot;
         this.parallelRows = Mathf.Max(1, rowCount);
 
-        BuildRoundedRectangleSlotVisuals(isRightSideSlot, this.parallelRows);
+        BuildSquareSlotVisuals(isRightSideSlot, this.parallelRows);
         UpdateBadgeDisplay();
     }
 
     /// <summary>
-    /// Builds a glossy rounded-corner rectangle food box with a dark recessed pit and a small square counter badge.
+    /// Builds a glossy square/rectangular food box with a dark recessed square pit and a small square counter badge.
     /// </summary>
-    public void BuildRoundedRectangleSlotVisuals(bool rightSide = true, int rows = 1)
+    public void BuildSquareSlotVisuals(bool rightSide = true, int rows = 1)
     {
         if (slotRoot != null)
         {
@@ -65,7 +65,7 @@ public class HoleController : MonoBehaviour
             SafeDestroy(transform.GetChild(i).gameObject);
         }
 
-        slotRoot = new GameObject("RoundedSlotRoot").transform;
+        slotRoot = new GameObject("SquareSlotRoot").transform;
         slotRoot.SetParent(transform, false);
         slotRoot.localPosition = Vector3.zero;
         slotRoot.localRotation = Quaternion.identity;
@@ -73,14 +73,12 @@ public class HoleController : MonoBehaviour
         // Dimensions
         float outerW = (rows >= 2) ? 2.05f : 1.95f;
         float outerH = (rows >= 2) ? 2.05f : 0.95f;
-        float cornerR = 0.35f;
         float rimThick = 0.14f;
         float rimH = 0.06f;
         float pitH = 0.065f;
 
         float innerW = outerW - 2f * rimThick;
         float innerH = outerH - 2f * rimThick;
-        float innerR = Mathf.Max(0.06f, cornerR - rimThick);
 
         Material rimMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
         rimMat.color = AntColorPalette.GetColor(holeColor);
@@ -91,52 +89,19 @@ public class HoleController : MonoBehaviour
         pitMat.color = AntColorPalette.HolePitColor;
         if (pitMat.HasProperty("_Smoothness")) pitMat.SetFloat("_Smoothness", 0.20f);
 
-        // 1. Glossy Colored Border (SlotRim - Rounded Corner Rectangle)
+        // 1. Glossy Colored Border (SlotRim - Clean Square / Rectangle Outer Base)
         GameObject rimHolder = new GameObject("SlotRim");
         rimHolder.transform.SetParent(slotRoot, false);
 
-        float cx = outerW * 0.5f - cornerR;
-        float cz = outerH * 0.5f - cornerR;
+        GameObject rimSquare = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        rimSquare.name = "RimCenterSquare";
+        rimSquare.transform.SetParent(rimHolder.transform, false);
+        rimSquare.transform.localPosition = new Vector3(0f, 0.02f, 0f);
+        rimSquare.transform.localScale = new Vector3(outerW, rimH, outerH);
+        SafeDestroy(rimSquare.GetComponent<Collider>());
+        rimSquare.GetComponent<MeshRenderer>().material = rimMat;
 
-        // 4 Corner Cylinders for smooth rounded corners
-        Vector3[] cornerPositions = new Vector3[]
-        {
-            new Vector3(-cx, 0.02f,  cz), // Top-Left
-            new Vector3( cx, 0.02f,  cz), // Top-Right
-            new Vector3(-cx, 0.02f, -cz), // Bottom-Left
-            new Vector3( cx, 0.02f, -cz)  // Bottom-Right
-        };
-
-        for (int i = 0; i < 4; i++)
-        {
-            GameObject corner = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            corner.name = $"RimCorner_{i}";
-            corner.transform.SetParent(rimHolder.transform, false);
-            corner.transform.localPosition = cornerPositions[i];
-            corner.transform.localScale = new Vector3(cornerR * 2f, rimH, cornerR * 2f);
-            SafeDestroy(corner.GetComponent<Collider>());
-            corner.GetComponent<MeshRenderer>().material = rimMat;
-        }
-
-        // Horizontal center slab
-        GameObject hBox = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        hBox.name = "RimCenterH";
-        hBox.transform.SetParent(rimHolder.transform, false);
-        hBox.transform.localPosition = new Vector3(0f, 0.02f, 0f);
-        hBox.transform.localScale = new Vector3(outerW, rimH, outerH - 2f * cornerR);
-        SafeDestroy(hBox.GetComponent<Collider>());
-        hBox.GetComponent<MeshRenderer>().material = rimMat;
-
-        // Vertical center slab
-        GameObject vBox = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        vBox.name = "RimCenterV";
-        vBox.transform.SetParent(rimHolder.transform, false);
-        vBox.transform.localPosition = new Vector3(0f, 0.02f, 0f);
-        vBox.transform.localScale = new Vector3(outerW - 2f * cornerR, rimH, outerH);
-        SafeDestroy(vBox.GetComponent<Collider>());
-        vBox.GetComponent<MeshRenderer>().material = rimMat;
-
-        // 2. Dark Recessed Well / Floor (SlotPit - Clean Flat Square/Rectangular Pit Floor)
+        // 2. Dark Recessed Well / Floor (SlotPit - Clean Square / Rectangular Recessed Pit)
         GameObject pitHolder = new GameObject("SlotPit");
         pitHolder.transform.SetParent(slotRoot, false);
 
@@ -148,7 +113,7 @@ public class HoleController : MonoBehaviour
         SafeDestroy(pitSquare.GetComponent<Collider>());
         pitSquare.GetComponent<MeshRenderer>().material = pitMat;
 
-        // 3. Small Square Counter Badge at the bottom-right corner of the rectangle
+        // 3. Small Square Counter Badge at the bottom-right corner
         countBadgeObj = new GameObject("SlotCounterBadge");
         countBadgeObj.transform.SetParent(slotRoot, false);
 
@@ -280,7 +245,7 @@ public class HoleController : MonoBehaviour
         {
             if (this != null && !Application.isPlaying)
             {
-                BuildRoundedRectangleSlotVisuals(isRightSide, parallelRows);
+                BuildSquareSlotVisuals(isRightSide, parallelRows);
                 UpdateBadgeDisplay();
             }
         };
