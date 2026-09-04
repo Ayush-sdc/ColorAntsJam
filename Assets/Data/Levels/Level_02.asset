@@ -51,7 +51,6 @@ MonoBehaviour:
     - {x: 3, y: 10}
     - {x: 2, y: 10}
     - {x: 1, y: 10}
-    - {x: 1, y: 9}
   - queueId: Blue_Bottom
     antColor: 0
     antCount: 7
@@ -120,8 +119,7 @@ MonoBehaviour:
     fullPathToHole:
     - {x: 2, y: 2}
     - {x: 2, y: 1}
-    - {x: 1, y: 1}
-    - {x: 1, y: 0}
+    - {x: 2, y: 0}
   - queueId: Cyan_Top
     antColor: 6
     antCount: 7
@@ -136,7 +134,6 @@ MonoBehaviour:
     fullPathToHole:
     - {x: 9, y: 3}
     - {x: 10, y: 3}
-    - {x: 10, y: 2}
   - queueId: Cyan_Bottom
     antColor: 6
     antCount: 7

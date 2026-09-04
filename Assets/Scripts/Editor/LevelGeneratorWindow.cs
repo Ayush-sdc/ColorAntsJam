@@ -225,7 +225,7 @@ public static class LevelGeneratorWindow
             AssetDatabase.CreateAsset(level, path);
         }
 
-        // 5 Food Boxes matching reference photo (2 ants capacity each)
+        // 5 Food Boxes matching reference photo (2 parallel ants capacity each)
         List<HoleData> holes = new List<HoleData>()
         {
             new HoleData(AntColor.Blue, new Vector2Int(1, 9), 2),    // Top-Left Blue Box
@@ -241,7 +241,7 @@ public static class LevelGeneratorWindow
             new Vector2Int(3, 10), new Vector2Int(4, 10), new Vector2Int(5, 10), new Vector2Int(6, 10),
             new Vector2Int(7, 10), new Vector2Int(8, 10), new Vector2Int(9, 10)
         };
-        var blueTopPath = new List<Vector2Int> { new Vector2Int(3, 10), new Vector2Int(2, 10), new Vector2Int(1, 10), new Vector2Int(1, 9) };
+        var blueTopPath = new List<Vector2Int> { new Vector2Int(3, 10), new Vector2Int(2, 10), new Vector2Int(1, 10) };
 
         var blueBottomBody = new List<Vector2Int> {
             new Vector2Int(3, 9), new Vector2Int(4, 9), new Vector2Int(5, 9), new Vector2Int(6, 9),
@@ -271,14 +271,14 @@ public static class LevelGeneratorWindow
             new Vector2Int(2, 2), new Vector2Int(2, 3), new Vector2Int(2, 4), new Vector2Int(2, 5),
             new Vector2Int(2, 6), new Vector2Int(2, 7), new Vector2Int(2, 8)
         };
-        var redRightPath = new List<Vector2Int> { new Vector2Int(2, 2), new Vector2Int(2, 1), new Vector2Int(1, 1), new Vector2Int(1, 0) };
+        var redRightPath = new List<Vector2Int> { new Vector2Int(2, 2), new Vector2Int(2, 1), new Vector2Int(2, 0) };
 
         // 4. Cyan (Bottom Horizontal, facing RIGHT into Cyan Box)
         var cyanTopBody = new List<Vector2Int> {
             new Vector2Int(9, 3), new Vector2Int(8, 3), new Vector2Int(7, 3), new Vector2Int(6, 3),
             new Vector2Int(5, 3), new Vector2Int(4, 3), new Vector2Int(3, 3)
         };
-        var cyanTopPath = new List<Vector2Int> { new Vector2Int(9, 3), new Vector2Int(10, 3), new Vector2Int(10, 2) };
+        var cyanTopPath = new List<Vector2Int> { new Vector2Int(9, 3), new Vector2Int(10, 3) };
 
         var cyanBottomBody = new List<Vector2Int> {
             new Vector2Int(9, 2), new Vector2Int(8, 2), new Vector2Int(7, 2), new Vector2Int(6, 2),

@@ -202,9 +202,31 @@ public class BoardManager : MonoBehaviour
     {
         Transform parentTransform = boardParent != null ? boardParent : transform;
 
-        // Capsule slots span 2 cells. For right-side slots (x >= 4), offset center +0.5 cellSize; for left-side (x <= 2), offset -0.5 cellSize
-        float xOffset = holeData.GridCoordinate.x >= 4 ? 0.5f : -0.5f;
-        Vector3 worldPos = GridToWorldPosition(holeData.GridCoordinate, 0.01f) + new Vector3(xOffset * cellSize, 0f, 0f);
+        // Multiple parallel rows check (e.g. 2 parallel rows double the width)
+        int rowCount = holeData.DisplayCount >= 2 ? 2 : 1;
+
+        Vector3 worldPos;
+        bool isRightSide = holeData.GridCoordinate.x >= 4;
+
+        if (rowCount >= 2)
+        {
+            // For 2 parallel rows, center over the 2x2 grid cell area
+            float xOffset = (holeData.GridCoordinate.x >= 4 ? 0.5f : 0.5f) * cellSize;
+            // For top-left blue box (x=1, y=9), red box (x=1, y=0), green box (x=10, y=9), orange (x=5, y=0), cyan (x=10, y=2)
+            if (holeData.GridCoordinate.x == 1 && holeData.GridCoordinate.y >= 8)
+            {
+                // Top-left blue box spans x=0..1, y=9..10 -> center at x=0.5, y=9.5
+                xOffset = -0.5f * cellSize;
+            }
+            float zOffset = 0.5f * cellSize;
+            worldPos = GridToWorldPosition(holeData.GridCoordinate, 0.01f) + new Vector3(xOffset, 0f, zOffset);
+        }
+        else
+        {
+            float xOffset = holeData.GridCoordinate.x >= 4 ? 0.5f : -0.5f;
+            worldPos = GridToWorldPosition(holeData.GridCoordinate, 0.01f) + new Vector3(xOffset * cellSize, 0f, 0f);
+        }
+
         GameObject holeObj;
         HoleController controller;
 
@@ -221,13 +243,24 @@ public class BoardManager : MonoBehaviour
             controller = holeObj.AddComponent<HoleController>();
         }
 
-        bool isRightSide = holeData.GridCoordinate.x >= 4;
-        controller.Initialize(holeData.HoleColor, holeData.GridCoordinate, initialCount, isRightSide);
+        controller.Initialize(holeData.HoleColor, holeData.GridCoordinate, initialCount, isRightSide, rowCount);
+        
+        // Register primary coordinate
         holesMap[holeData.GridCoordinate] = controller;
         
         // Register secondary cell of the 2-cell wide slot
-        Vector2Int secondaryCoord = holeData.GridCoordinate + new Vector2Int(holeData.GridCoordinate.x >= 4 ? 1 : -1, 0);
+        int xDir = (holeData.GridCoordinate.x == 1 && holeData.GridCoordinate.y >= 8) ? -1 : (holeData.GridCoordinate.x >= 4 ? 1 : 1);
+        Vector2Int secondaryCoord = holeData.GridCoordinate + new Vector2Int(xDir, 0);
         holesMap[secondaryCoord] = controller;
+
+        // If 2 parallel rows, also register upper row coordinates
+        if (rowCount >= 2)
+        {
+            Vector2Int upperPrimary = holeData.GridCoordinate + new Vector2Int(0, 1);
+            Vector2Int upperSecondary = secondaryCoord + new Vector2Int(0, 1);
+            holesMap[upperPrimary] = controller;
+            holesMap[upperSecondary] = controller;
+        }
     }
 
     private void SpawnAntQueue(AntQueueData data)

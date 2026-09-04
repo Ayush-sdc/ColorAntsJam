@@ -10,18 +10,7 @@ public class HoleController : MonoBehaviour
     [SerializeField] private int initialCapacity = 1;
     [SerializeField] private int remainingCount = 1;
     [SerializeField] private bool isRightSide = true;
-
-    [Header("Slot Dimensions")]
-    [Tooltip("Center box width between capsule end caps.")]
-    [SerializeField] private float centerWidth = 1.25f;
-    [Tooltip("Outer rim radius / thickness.")]
-    [SerializeField] private float capRadius = 0.62f;
-    [Tooltip("Inner dark pit radius.")]
-    [SerializeField] private float innerRadius = 0.50f;
-    [Tooltip("Rim border height.")]
-    [SerializeField] private float rimHeight = 0.06f;
-    [Tooltip("Pit floor height.")]
-    [SerializeField] private float pitHeight = 0.065f;
+    [SerializeField] private int parallelRows = 1;
 
     [Header("Visual Components")]
     [SerializeField] private Transform slotRoot;
@@ -36,40 +25,38 @@ public class HoleController : MonoBehaviour
     public int RemainingCount => remainingCount;
     public int InitialCapacity => initialCapacity;
     public bool IsFull => remainingCount <= 0;
-
-    public float CenterWidth { get => centerWidth; set { centerWidth = value; BuildCapsuleSlotVisuals(isRightSide); } }
-    public float CapRadius { get => capRadius; set { capRadius = value; BuildCapsuleSlotVisuals(isRightSide); } }
-    public float InnerRadius { get => innerRadius; set { innerRadius = value; BuildCapsuleSlotVisuals(isRightSide); } }
+    public int ParallelRows => parallelRows;
 
     private void Awake()
     {
         if (slotRoot == null || transform.childCount == 0)
         {
-            BuildCapsuleSlotVisuals(isRightSide);
+            BuildCapsuleSlotVisuals(isRightSide, parallelRows);
             UpdateBadgeDisplay();
         }
     }
 
-    public void Initialize(AntColor color, Vector2Int coordinate, int capacity = 1, bool isRightSideSlot = true)
+    public void Initialize(AntColor color, Vector2Int coordinate, int capacity = 1, bool isRightSideSlot = true, int rowCount = 1)
     {
         this.holeColor = color;
         this.gridCoordinate = coordinate;
         this.initialCapacity = Mathf.Max(0, capacity);
         this.remainingCount = initialCapacity;
         this.isRightSide = isRightSideSlot;
+        this.parallelRows = Mathf.Max(1, rowCount);
 
-        BuildCapsuleSlotVisuals(isRightSideSlot);
+        BuildCapsuleSlotVisuals(isRightSideSlot, this.parallelRows);
         UpdateBadgeDisplay();
     }
 
-    public void BuildCapsuleSlotVisuals(bool rightSide = true)
+    public void BuildCapsuleSlotVisuals(bool rightSide = true, int rows = 1)
     {
         if (slotRoot != null)
         {
             SafeDestroy(slotRoot.gameObject);
         }
 
-        // Clean up any lingering child objects
+        // Clean up lingering child objects
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
             SafeDestroy(transform.GetChild(i).gameObject);
@@ -79,8 +66,15 @@ public class HoleController : MonoBehaviour
         slotRoot.SetParent(transform, false);
         slotRoot.localPosition = Vector3.zero;
 
-        // Rotate root so the open entrance pit is ALWAYS on the side facing the oncoming ants
+        // Rotate root so entrance pit faces oncoming ants
         slotRoot.localRotation = Quaternion.Euler(0f, rightSide ? 0f : 180f, 0f);
+
+        // Dimensions: if 2 parallel rows, double the width across rows!
+        float baseCapRadius = (rows >= 2) ? 1.02f : 0.52f;
+        float baseCenterWidth = 1.0f;
+        float baseInnerRadius = (rows >= 2) ? 0.88f : 0.40f;
+        float rimH = 0.06f;
+        float pitH = 0.065f;
 
         Material rimMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
         rimMat.color = AntColorPalette.GetColor(holeColor);
@@ -91,25 +85,25 @@ public class HoleController : MonoBehaviour
         pitMat.color = AntColorPalette.HolePitColor;
         if (pitMat.HasProperty("_Smoothness")) pitMat.SetFloat("_Smoothness", 0.20f);
 
-        // 1. Glossy Colored Border (Left cylinder, Right cylinder, Center quad/box)
+        // 1. Glossy Colored Border (SlotRim)
         GameObject rimHolder = new GameObject("SlotRim");
         rimHolder.transform.SetParent(slotRoot, false);
 
-        // Left rim curve (Entrance pit side when unrotated)
+        // Left rim curve
         GameObject leftRim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         leftRim.name = "LeftRim";
         leftRim.transform.SetParent(rimHolder.transform, false);
-        leftRim.transform.localPosition = new Vector3(-centerWidth * 0.5f, 0.02f, 0f);
-        leftRim.transform.localScale = new Vector3(capRadius * 2f, rimHeight, capRadius * 2f);
+        leftRim.transform.localPosition = new Vector3(-baseCenterWidth * 0.5f, 0.02f, 0f);
+        leftRim.transform.localScale = new Vector3(baseCapRadius * 2f, rimH, baseCapRadius * 2f);
         SafeDestroy(leftRim.GetComponent<Collider>());
         leftRim.GetComponent<MeshRenderer>().material = rimMat;
 
-        // Right rim curve (Badge side when unrotated)
+        // Right rim curve
         GameObject rightRim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         rightRim.name = "RightRim";
         rightRim.transform.SetParent(rimHolder.transform, false);
-        rightRim.transform.localPosition = new Vector3(centerWidth * 0.5f, 0.02f, 0f);
-        rightRim.transform.localScale = new Vector3(capRadius * 2f, rimHeight, capRadius * 2f);
+        rightRim.transform.localPosition = new Vector3(baseCenterWidth * 0.5f, 0.02f, 0f);
+        rightRim.transform.localScale = new Vector3(baseCapRadius * 2f, rimH, baseCapRadius * 2f);
         SafeDestroy(rightRim.GetComponent<Collider>());
         rightRim.GetComponent<MeshRenderer>().material = rimMat;
 
@@ -118,29 +112,27 @@ public class HoleController : MonoBehaviour
         centerRim.name = "CenterRim";
         centerRim.transform.SetParent(rimHolder.transform, false);
         centerRim.transform.localPosition = new Vector3(0f, 0.02f, 0f);
-        centerRim.transform.localScale = new Vector3(centerWidth, rimHeight, capRadius * 2f);
+        centerRim.transform.localScale = new Vector3(baseCenterWidth, rimH, baseCapRadius * 2f);
         SafeDestroy(centerRim.GetComponent<Collider>());
         centerRim.GetComponent<MeshRenderer>().material = rimMat;
 
-        // 2. Dark Recessed Well / Floor (Seamless continuous dark stadium)
-        float innerWidth = centerWidth;
-
+        // 2. Dark Recessed Well / Floor (SlotPit)
         GameObject pitHolder = new GameObject("SlotPit");
         pitHolder.transform.SetParent(slotRoot, false);
 
         GameObject leftPit = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         leftPit.name = "LeftPit";
         leftPit.transform.SetParent(pitHolder.transform, false);
-        leftPit.transform.localPosition = new Vector3(-innerWidth * 0.5f, 0.038f, 0f);
-        leftPit.transform.localScale = new Vector3(innerRadius * 2f, pitHeight, innerRadius * 2f);
+        leftPit.transform.localPosition = new Vector3(-baseCenterWidth * 0.5f, 0.038f, 0f);
+        leftPit.transform.localScale = new Vector3(baseInnerRadius * 2f, pitH, baseInnerRadius * 2f);
         SafeDestroy(leftPit.GetComponent<Collider>());
         leftPit.GetComponent<MeshRenderer>().material = pitMat;
 
         GameObject rightPit = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         rightPit.name = "RightPit";
         rightPit.transform.SetParent(pitHolder.transform, false);
-        rightPit.transform.localPosition = new Vector3(innerWidth * 0.5f, 0.038f, 0f);
-        rightPit.transform.localScale = new Vector3(innerRadius * 2f, pitHeight, innerRadius * 2f);
+        rightPit.transform.localPosition = new Vector3(baseCenterWidth * 0.5f, 0.038f, 0f);
+        rightPit.transform.localScale = new Vector3(baseInnerRadius * 2f, pitH, baseInnerRadius * 2f);
         SafeDestroy(rightPit.GetComponent<Collider>());
         rightPit.GetComponent<MeshRenderer>().material = pitMat;
 
@@ -148,14 +140,18 @@ public class HoleController : MonoBehaviour
         centerPit.name = "CenterPit";
         centerPit.transform.SetParent(pitHolder.transform, false);
         centerPit.transform.localPosition = new Vector3(0f, 0.038f, 0f);
-        centerPit.transform.localScale = new Vector3(innerWidth, pitHeight, innerRadius * 2f);
+        centerPit.transform.localScale = new Vector3(baseCenterWidth, pitH, baseInnerRadius * 2f);
         SafeDestroy(centerPit.GetComponent<Collider>());
         if (centerPit.GetComponent<MeshRenderer>() != null) centerPit.GetComponent<MeshRenderer>().material = pitMat;
 
-        // 3. Stylized Numeric Badge (Placed on outer end of tray)
+        // 3. Stylized Numeric Badge
         countBadgeObj = new GameObject("SlotCounterBadge");
         countBadgeObj.transform.SetParent(slotRoot, false);
-        countBadgeObj.transform.localPosition = new Vector3(centerWidth * 0.5f + 0.05f, 0.07f, 0f);
+
+        Vector3 badgePos = (rows >= 2)
+            ? new Vector3(baseCenterWidth * 0.5f + 0.30f, 0.07f, -baseCapRadius + 0.40f)
+            : new Vector3(baseCenterWidth * 0.5f + 0.05f, 0.07f, 0f);
+        countBadgeObj.transform.localPosition = badgePos;
 
         // Badge outer colored border
         GameObject badgeBg = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -182,7 +178,7 @@ public class HoleController : MonoBehaviour
         innerMat.color = new UnityEngine.Color(0.12f, 0.14f, 0.18f);
         innerBadge.GetComponent<MeshRenderer>().material = innerMat;
 
-        // Stylized Number Text (Always oriented upright to the top camera)
+        // Stylized Number Text
         GameObject textObj = new GameObject("BadgeCountText");
         textObj.transform.SetParent(countBadgeObj.transform, false);
         textObj.transform.localPosition = new Vector3(0f, 0.035f, 0f);
@@ -206,9 +202,6 @@ public class HoleController : MonoBehaviour
         countTextMesh.color = remainingCount > 0 ? UnityEngine.Color.white : new UnityEngine.Color(1f, 1f, 1f, 0.85f);
     }
 
-    /// <summary>
-    /// Called when an individual ant enters this hole. Decrements count by 1 and triggers swallow pulse.
-    /// </summary>
     public void OnAntSwallowed()
     {
         remainingCount = Mathf.Max(0, remainingCount - 1);
@@ -284,7 +277,7 @@ public class HoleController : MonoBehaviour
         {
             if (this != null && !Application.isPlaying)
             {
-                BuildCapsuleSlotVisuals(isRightSide);
+                BuildCapsuleSlotVisuals(isRightSide, parallelRows);
                 UpdateBadgeDisplay();
             }
         };
