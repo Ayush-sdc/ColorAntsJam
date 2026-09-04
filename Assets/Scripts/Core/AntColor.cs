@@ -28,7 +28,7 @@ public static class AntColorPalette
     private static readonly Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>();
     private static Mesh workerMesh;
     private static Sprite shadowSprite;
-    private static Sprite groundDotSprite;
+    private static Material groundDotMaterial;
 
     public static Color GetColor(AntColor antColor)
     {
@@ -139,51 +139,19 @@ public static class AntColorPalette
     }
 
     /// <summary>
-    /// Smooth, antialiased neutral grey circular dot marker on the board floor directly below each ant.
+    /// Smooth, neutral slate grey circular ground dot material matching the reference image.
     /// </summary>
-    public static Sprite GetGroundDotSprite()
+    public static Material GetGroundDotMaterial()
     {
-        if (groundDotSprite == null)
+        if (groundDotMaterial == null)
         {
-            int size = 128;
-            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            tex.filterMode = FilterMode.Bilinear;
-            tex.wrapMode = TextureWrapMode.Clamp;
-            Color[] cols = new Color[size * size];
-
-            float center = (size - 1) * 0.5f;
-            float radius = size * 0.44f;
-            float edgeSoftness = 3.0f;
-
-            Color dotColor = new Color(0.48f, 0.50f, 0.53f, 0.88f); // Soft neutral slate grey matching reference
-
-            for (int y = 0; y < size; y++)
-            {
-                for (int x = 0; x < size; x++)
-                {
-                    float dist = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
-                    if (dist <= radius - edgeSoftness)
-                    {
-                        cols[y * size + x] = dotColor;
-                    }
-                    else if (dist < radius)
-                    {
-                        float alpha = Mathf.Clamp01((radius - dist) / edgeSoftness);
-                        Color c = dotColor;
-                        c.a *= alpha;
-                        cols[y * size + x] = c;
-                    }
-                    else
-                    {
-                        cols[y * size + x] = Color.clear;
-                    }
-                }
-            }
-
-            tex.SetPixels(cols);
-            tex.Apply();
-            groundDotSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
+            Shader uLitShader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            groundDotMaterial = new Material(uLitShader);
+            groundDotMaterial.name = "GroundDotMat";
+            groundDotMaterial.color = new Color(0.50f, 0.52f, 0.55f); // Smooth neutral grey
+            if (groundDotMaterial.HasProperty("_Smoothness")) groundDotMaterial.SetFloat("_Smoothness", 0.05f);
+            if (groundDotMaterial.HasProperty("_Metallic")) groundDotMaterial.SetFloat("_Metallic", 0f);
         }
-        return groundDotSprite;
+        return groundDotMaterial;
     }
 }

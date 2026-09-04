@@ -134,20 +134,22 @@ public class AntUnit : MonoBehaviour
             rightPupil = CreateEye(headPivot, new Vector3(0.11f, 0.08f, 0.15f), "RightEye", eyeScale);
         }
 
-        // 3. Smooth Circular Ground Dot Marker (Positioned directly below each ant on the floor)
-        Sprite dotSprite = AntColorPalette.GetGroundDotSprite();
-        if (dotSprite != null)
-        {
-            groundDotObj = new GameObject("GroundDot");
-            groundDotObj.transform.SetParent(transform, false);
-            groundDotObj.transform.localPosition = new Vector3(0f, 0.008f, 0f);
-            groundDotObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            groundDotObj.transform.localScale = new Vector3(0.46f, 0.46f, 0.46f);
+        // 3. Smooth Circular Ground Dot Disc (Positioned directly below each ant on the board floor)
+        GameObject dotObj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        dotObj.name = "GroundDot";
+        dotObj.transform.SetParent(transform, false);
+        dotObj.transform.localPosition = new Vector3(0f, 0.01f, 0f);
+        dotObj.transform.localScale = new Vector3(0.68f, 0.006f, 0.68f);
+        SafeDestroy(dotObj.GetComponent<Collider>());
 
-            var sr = groundDotObj.AddComponent<SpriteRenderer>();
-            sr.sprite = dotSprite;
-            sr.sortingOrder = 1;
+        var dotRen = dotObj.GetComponent<MeshRenderer>();
+        if (dotRen != null)
+        {
+            dotRen.material = AntColorPalette.GetGroundDotMaterial();
+            dotRen.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            dotRen.receiveShadows = true;
         }
+        groundDotObj = dotObj;
 
         // 4. Interaction Raycast Collider
         var mainCollider = GetComponent<SphereCollider>();
