@@ -83,7 +83,7 @@ public class HoleController : MonoBehaviour
     {
         if (IsPrefabAsset()) return;
 
-        bool needsRebuild = slotRoot == null || 
+        bool hasCapsule = slotRoot != null && slotRoot.Find("SlotPit/Capsule") != null; bool needsRebuild = !hasCapsule || slotRoot == null || 
                             slotRoot.childCount == 0 || 
                             rimMeshRenderer == null || 
                             rimMeshRenderer.sharedMaterial == null ||
@@ -276,6 +276,17 @@ public class HoleController : MonoBehaviour
         countTextMesh.characterSize = (rows >= 2) ? 0.080f : 0.092f;
         countTextMesh.fontStyle = FontStyle.Bold;
         countTextMesh.color = UnityEngine.Color.white;
+#if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(gameObject);
+        if (slotRoot != null)
+        {
+            UnityEditor.EditorUtility.SetDirty(slotRoot.gameObject);
+            foreach (Transform t in slotRoot.GetComponentsInChildren<Transform>(true))
+            {
+                UnityEditor.EditorUtility.SetDirty(t.gameObject);
+            }
+        }
+#endif
     }
 
     /// <summary>

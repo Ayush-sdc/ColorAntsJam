@@ -7,7 +7,7 @@ public static class ModelCreationUtility
     [MenuItem("SlitherAnts/Refresh All Holes In Scene")]
     public static void RefreshAllHolesInScene()
     {
-        HoleController[] holes = Object.FindObjectsByType<HoleController>(FindObjectsSortMode.None);
+        HoleController[] holes = Object.FindObjectsByType<HoleController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (HoleController hole in holes)
         {
             hole.BuildStadiumSlotVisuals();
