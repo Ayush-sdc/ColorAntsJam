@@ -267,7 +267,7 @@ public class HoleController : MonoBehaviour
         float textX = rightSide ? centerBadgeX : -centerBadgeX;
         float textZ = 0f;
         textObj.transform.localPosition = new Vector3(textX, 0.17f, textZ);
-        textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 90f);
+        textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
 
         countTextMesh = textObj.AddComponent<TextMesh>();
         countTextMesh.alignment = TextAlignment.Center;
@@ -631,7 +631,7 @@ public class HoleController : MonoBehaviour
 
         countTextMesh.text = remainingCount.ToString();
         countTextMesh.characterSize = remainingCount >= 10 ? 0.080f : 0.092f;
-        countTextMesh.color = remainingCount > 0 ? UnityEngine.Color.white : new UnityEngine.Color(1f, 1f, 1f, 0.85f); Vector3 lp = countTextMesh.transform.localPosition; if (Mathf.Abs(lp.y - 0.17f) > 0.001f) countTextMesh.transform.localPosition = new Vector3(lp.x, 0.17f, lp.z);
+        countTextMesh.color = remainingCount > 0 ? UnityEngine.Color.white : new UnityEngine.Color(1f, 1f, 1f, 0.85f); Vector3 lp = countTextMesh.transform.localPosition; if (Mathf.Abs(lp.y - 0.17f) > 0.001f) countTextMesh.transform.localPosition = new Vector3(lp.x, 0.17f, lp.z); countTextMesh.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
     }
 
     public void OnAntSwallowed()
