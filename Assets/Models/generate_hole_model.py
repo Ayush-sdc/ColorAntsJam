@@ -326,8 +326,8 @@ def generate_hole_obj(output_obj_path, output_mtl_path):
         
         # Mat_Pit_Dark
         f.write("newmtl Mat_Pit_Dark\n")
-        f.write("Ka 0.12 0.14 0.17\n")
-        f.write("Kd 0.12 0.14 0.17\n")
+        f.write("Ka 0.0 0.0 0.0\n")
+        f.write("Kd 0.0 0.0 0.0\n")
         f.write("Ks 0.12 0.12 0.12\n")
         f.write("Ns 15.0\n")
         f.write("d 1.0\n")

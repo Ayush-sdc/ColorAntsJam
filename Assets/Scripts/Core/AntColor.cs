@@ -19,7 +19,7 @@ public enum AntColor
 public static class AntColorPalette
 {
     public static Color LegColor => new Color(0.20f, 0.22f, 0.26f);           // Dark graphite bead feet #333842
-    public static Color HolePitColor => new Color(0.11f, 0.14f, 0.18f);       // Deep dark slot interior #1C232E
+    public static Color HolePitColor => Color.black;       // Deep dark slot interior #1C232E
     public static Color StudioBackground => new Color(0.87f, 0.86f, 0.84f);   // Clean light grey-beige studio backdrop #DEDCD6
     public static Color StudioBackgroundTop => new Color(0.91f, 0.90f, 0.88f);
     public static Color StudioBackgroundBottom => new Color(0.83f, 0.82f, 0.80f);

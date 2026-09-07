@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 
@@ -129,7 +129,7 @@ public class HoleController : MonoBehaviour
         if (rimMat.HasProperty("_Metallic")) rimMat.SetFloat("_Metallic", 0.05f);
 
         Material pitMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-        pitMat.color = new UnityEngine.Color(0.12f, 0.14f, 0.17f);
+        pitMat.color = UnityEngine.Color.black; if (pitMat.HasProperty("_BaseColor")) pitMat.SetColor("_BaseColor", UnityEngine.Color.black);
         if (pitMat.HasProperty("_Smoothness")) pitMat.SetFloat("_Smoothness", 0.12f);
 
         // 1. Tubular Stadium Pill Rim
