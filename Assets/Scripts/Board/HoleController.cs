@@ -30,6 +30,7 @@ public class HoleController : MonoBehaviour
     [SerializeField] private MeshRenderer rimMeshRenderer;
 
     private static GameObject swallowVfxPrefab;
+    private static Sprite capsuleSprite;
 
     public AntColor Color => holeColor;
     public Vector2Int GridCoordinate => gridCoordinate;
@@ -63,9 +64,37 @@ public class HoleController : MonoBehaviour
     private void Awake()
     {
         if (IsPrefabAsset()) return;
-        if (slotRoot == null || transform.childCount == 0)
+        EnsureVisuals();
+    }
+
+    private void Start()
+    {
+        if (IsPrefabAsset()) return;
+        EnsureVisuals();
+    }
+
+    private void OnEnable()
+    {
+        if (IsPrefabAsset()) return;
+        EnsureVisuals();
+    }
+
+    public void EnsureVisuals()
+    {
+        if (IsPrefabAsset()) return;
+
+        bool needsRebuild = slotRoot == null || 
+                            slotRoot.childCount == 0 || 
+                            rimMeshRenderer == null || 
+                            rimMeshRenderer.sharedMaterial == null ||
+                            countTextMesh == null;
+
+        if (needsRebuild)
         {
             BuildStadiumSlotVisuals(isRightSide, parallelRows);
+        }
+        else
+        {
             UpdateBadgeDisplay();
         }
     }
@@ -87,10 +116,49 @@ public class HoleController : MonoBehaviour
     }
 
     /// <summary>
-    /// Builds the sleek horizontal stadium capsule slot matching the reference photo:
-    /// 1. Smooth tubular torus rim (SlotRim) in glossy primary color with continuous top specular highlight.
-    /// 2. Recessed dark stadium pit cavity (SlotPit) in matte dark charcoal.
-    /// 3. Integrated counter badge always positioned OPPOSITE to the ant-facing entrance side of the hole.
+    /// Returns or generates a crisp anti-aliased 2D capsule sprite with normalized PPU (256) -> width 1.0, height 2.0.
+    /// </summary>
+    public static Sprite GetCapsuleSprite()
+    {
+        if (capsuleSprite != null) return capsuleSprite;
+
+        int w = 256;
+        int h = 512;
+        Texture2D tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+        tex.name = "CapsuleShadowTexture";
+        Color[] colors = new Color[w * h];
+        float radius = (w - 2) * 0.5f;
+        float centerX = w * 0.5f;
+        float topCenterY = h - radius - 1;
+        float botCenterY = radius + 1;
+
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                float dx = x - centerX;
+                float dy = 0f;
+                if (y > topCenterY) dy = y - topCenterY;
+                else if (y < botCenterY) dy = y - botCenterY;
+
+                float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                float alpha = Mathf.Clamp01((radius - dist) + 0.5f);
+                colors[y * w + x] = new Color(1f, 1f, 1f, alpha);
+            }
+        }
+        tex.SetPixels(colors);
+        tex.Apply();
+        capsuleSprite = Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 256f);
+        return capsuleSprite;
+    }
+
+    /// <summary>
+    /// Builds the sleek horizontal stadium capsule slot matching HOLEE and reference photo:
+    /// 1. Smooth tubular torus rim (SlotRim) in glossy color.
+    /// 2. Recessed dark stadium pit cavity floor (SlotPit) in pure black.
+    /// 3. Inner Capsule Shadow Sprite (SlotPit > Capsule) with transform (0.02, 0, 0), rotation (90, 0, 90), scale (0.64208, 0.92615, 1).
+    /// 4. Integrated counter badge always positioned OPPOSITE to the ant-facing entrance side of the hole.
+    /// 5. Crisp bold white number text.
     /// </summary>
     [ContextMenu("Rebuild Stadium Visuals")]
     public void BuildStadiumSlotVisuals()
@@ -129,7 +197,8 @@ public class HoleController : MonoBehaviour
         if (rimMat.HasProperty("_Metallic")) rimMat.SetFloat("_Metallic", 0.05f);
 
         Material pitMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-        pitMat.color = UnityEngine.Color.black; if (pitMat.HasProperty("_BaseColor")) pitMat.SetColor("_BaseColor", UnityEngine.Color.black);
+        pitMat.color = UnityEngine.Color.black;
+        if (pitMat.HasProperty("_BaseColor")) pitMat.SetColor("_BaseColor", UnityEngine.Color.black);
         if (pitMat.HasProperty("_Smoothness")) pitMat.SetFloat("_Smoothness", 0.12f);
 
         // 1. Tubular Stadium Pill Rim
@@ -151,6 +220,22 @@ public class HoleController : MonoBehaviour
         pitFilter.sharedMesh = CreateStadiumPitMesh(outerW, outerH, tubeRadius, 0.012f, 24);
         var pitRenderer = pitObj.AddComponent<MeshRenderer>();
         pitRenderer.material = pitMat;
+
+        // 2b. Inner Capsule Shadow / Pit Sprite (SlotPit > Capsule) matching HOLEE
+        GameObject capsuleObj = new GameObject("Capsule");
+        capsuleObj.transform.SetParent(pitObj.transform, false);
+        capsuleObj.transform.localPosition = new Vector3(0.02f, 0.014f, 0f);
+        capsuleObj.transform.localRotation = Quaternion.Euler(90f, 0f, 90f);
+
+        float capScaleX = (rows >= 2) ? 1.45f : 0.64208f;
+        float capScaleY = 0.92615f;
+        capsuleObj.transform.localScale = new Vector3(capScaleX, capScaleY, 1f);
+
+        SpriteRenderer sr = capsuleObj.AddComponent<SpriteRenderer>();
+        sr.sprite = GetCapsuleSprite();
+        sr.color = UnityEngine.Color.black;
+        sr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        sr.receiveShadows = false;
 
         // 3. Integrated Counter Badge (Placed opposite to the ant facing entrance)
         countBadgeObj = new GameObject("SlotCounterBadge");
@@ -182,7 +267,7 @@ public class HoleController : MonoBehaviour
         float textX = rightSide ? centerBadgeX : -centerBadgeX;
         float textZ = 0f;
         textObj.transform.localPosition = new Vector3(textX, 0.035f, textZ);
-        textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 90f);
 
         countTextMesh = textObj.AddComponent<TextMesh>();
         countTextMesh.alignment = TextAlignment.Center;
