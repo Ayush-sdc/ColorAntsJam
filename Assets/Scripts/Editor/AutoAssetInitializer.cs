@@ -12,7 +12,7 @@ public static class AutoAssetInitializer
     private static void Initialize()
     {
         // 1. Ensure Prefabs exist
-        if (!System.IO.File.Exists("Assets/Prefabs/AntUnit.prefab"))
+        if (!System.IO.File.Exists("Assets/Prefabs/AntUnit.prefab") || !System.IO.File.Exists("Assets/Prefabs/Hole.prefab"))
         {
             PrefabCreationUtility.GeneratePrefabs();
         }
@@ -28,6 +28,10 @@ public static class AutoAssetInitializer
         {
             SceneSetupUtility.SetupScene();
             LevelGeneratorWindow.BuildLevel1InSceneHierarchy();
+            if (!System.IO.File.Exists("Assets/Prefabs/Hole_Red_New.prefab"))
+            {
+                ModelCreationUtility.CreateHoleRedNewInScene();
+            }
         }
     }
 }

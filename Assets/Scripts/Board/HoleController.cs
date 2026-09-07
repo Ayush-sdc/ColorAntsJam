@@ -1,3 +1,4 @@
+﻿using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 
@@ -5,18 +6,28 @@ using DG.Tweening;
 public class HoleController : MonoBehaviour
 {
     [Header("Configuration")]
-    [SerializeField] private AntColor holeColor;
+    [SerializeField] private AntColor holeColor = AntColor.Red;
     [SerializeField] private Vector2Int gridCoordinate;
     [SerializeField] private int initialCapacity = 1;
     [SerializeField] private int remainingCount = 1;
+    [Tooltip("True if hole is on the right side (ants enter from left, badge on right). False if hole is on the left side (ants enter from right, badge on left).")]
     [SerializeField] private bool isRightSide = true;
     [SerializeField] private int parallelRows = 1;
+
+    [Header("Stadium Dimensions")]
+    [SerializeField] private float singleRowWidth = 2.05f;
+    [SerializeField] private float singleRowHeight = 0.88f;
+    [SerializeField] private float multiRowWidth = 2.05f;
+    [SerializeField] private float multiRowHeight = 1.90f;
+    [SerializeField] private float tubeRadius = 0.095f;
+    [SerializeField] private float tubeHeight = 0.085f;
 
     [Header("Visual Components")]
     [SerializeField] private Transform slotRoot;
     [SerializeField] private GameObject countBadgeObj;
     [SerializeField] private TextMesh countTextMesh;
     [SerializeField] private MeshRenderer badgeBackgroundRenderer;
+    [SerializeField] private MeshRenderer rimMeshRenderer;
 
     private static GameObject swallowVfxPrefab;
 
@@ -26,12 +37,35 @@ public class HoleController : MonoBehaviour
     public int InitialCapacity => initialCapacity;
     public bool IsFull => remainingCount <= 0;
     public int ParallelRows => parallelRows;
+    public bool IsRightSide
+    {
+        get => isRightSide;
+        set
+        {
+            isRightSide = value;
+            if (!IsPrefabAsset())
+            {
+                BuildStadiumSlotVisuals(isRightSide, parallelRows);
+                UpdateBadgeDisplay();
+            }
+        }
+    }
+
+    private bool IsPrefabAsset()
+    {
+#if UNITY_EDITOR
+        return UnityEditor.PrefabUtility.IsPartOfPrefabAsset(gameObject) || !gameObject.scene.IsValid();
+#else
+        return false;
+#endif
+    }
 
     private void Awake()
     {
+        if (IsPrefabAsset()) return;
         if (slotRoot == null || transform.childCount == 0)
         {
-            BuildRoundedRimSquarePitSlotVisuals(isRightSide, parallelRows);
+            BuildStadiumSlotVisuals(isRightSide, parallelRows);
             UpdateBadgeDisplay();
         }
     }
@@ -45,15 +79,30 @@ public class HoleController : MonoBehaviour
         this.isRightSide = isRightSideSlot;
         this.parallelRows = Mathf.Max(1, rowCount);
 
-        BuildRoundedRimSquarePitSlotVisuals(isRightSideSlot, this.parallelRows);
-        UpdateBadgeDisplay();
+        if (!IsPrefabAsset())
+        {
+            BuildStadiumSlotVisuals(isRightSideSlot, this.parallelRows);
+            UpdateBadgeDisplay();
+        }
     }
 
     /// <summary>
-    /// Builds a glossy rounded-corner rectangle SlotRim with a flat square PitCenter and a small square corner badge.
+    /// Builds the sleek horizontal stadium capsule slot matching the reference photo:
+    /// 1. Smooth tubular torus rim (SlotRim) in glossy primary color with continuous top specular highlight.
+    /// 2. Recessed dark stadium pit cavity (SlotPit) in matte dark charcoal.
+    /// 3. Integrated counter badge always positioned OPPOSITE to the ant-facing entrance side of the hole.
     /// </summary>
-    public void BuildRoundedRimSquarePitSlotVisuals(bool rightSide = true, int rows = 1)
+    [ContextMenu("Rebuild Stadium Visuals")]
+    public void BuildStadiumSlotVisuals()
     {
+        BuildStadiumSlotVisuals(isRightSide, parallelRows);
+        UpdateBadgeDisplay();
+    }
+
+    public void BuildStadiumSlotVisuals(bool rightSide, int rows)
+    {
+        if (IsPrefabAsset()) return;
+
         if (slotRoot != null)
         {
             SafeDestroy(slotRoot.gameObject);
@@ -71,128 +120,413 @@ public class HoleController : MonoBehaviour
         slotRoot.localRotation = Quaternion.identity;
 
         // Dimensions
-        float outerW = (rows >= 2) ? 2.05f : 1.95f;
-        float outerH = (rows >= 2) ? 2.05f : 0.95f;
-        float cornerR = 0.35f;
-        float rimThick = 0.14f;
-        float rimH = 0.06f;
-        float pitH = 0.065f;
-
-        float innerW = outerW - 2f * rimThick;
-        float innerH = outerH - 2f * rimThick;
+        float outerW = (rows >= 2) ? multiRowWidth : singleRowWidth;
+        float outerH = (rows >= 2) ? multiRowHeight : singleRowHeight;
 
         Material rimMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
         rimMat.color = AntColorPalette.GetColor(holeColor);
-        if (rimMat.HasProperty("_Smoothness")) rimMat.SetFloat("_Smoothness", 0.90f);
-        if (rimMat.HasProperty("_Metallic")) rimMat.SetFloat("_Metallic", 0.04f);
+        if (rimMat.HasProperty("_Smoothness")) rimMat.SetFloat("_Smoothness", 0.94f);
+        if (rimMat.HasProperty("_Metallic")) rimMat.SetFloat("_Metallic", 0.05f);
 
         Material pitMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-        pitMat.color = AntColorPalette.HolePitColor;
-        if (pitMat.HasProperty("_Smoothness")) pitMat.SetFloat("_Smoothness", 0.20f);
+        pitMat.color = new UnityEngine.Color(0.12f, 0.14f, 0.17f);
+        if (pitMat.HasProperty("_Smoothness")) pitMat.SetFloat("_Smoothness", 0.12f);
 
-        // 1. Glossy Colored Border (SlotRim - Rounded Corner Rectangle)
-        GameObject rimHolder = new GameObject("SlotRim");
-        rimHolder.transform.SetParent(slotRoot, false);
+        // 1. Tubular Stadium Pill Rim
+        GameObject rimObj = new GameObject("SlotRim");
+        rimObj.transform.SetParent(slotRoot, false);
+        rimObj.transform.localPosition = Vector3.zero;
 
-        float cx = outerW * 0.5f - cornerR;
-        float cz = outerH * 0.5f - cornerR;
+        MeshFilter rimFilter = rimObj.AddComponent<MeshFilter>();
+        rimFilter.sharedMesh = CreateStadiumTubeMesh(outerW, outerH, tubeRadius, tubeHeight, 64, 16);
+        rimMeshRenderer = rimObj.AddComponent<MeshRenderer>();
+        rimMeshRenderer.material = rimMat;
 
-        // 4 Corner Cylinders for smooth rounded corners of the rim
-        Vector3[] cornerPositions = new Vector3[]
-        {
-            new Vector3(-cx, 0.02f,  cz), // Top-Left
-            new Vector3( cx, 0.02f,  cz), // Top-Right
-            new Vector3(-cx, 0.02f, -cz), // Bottom-Left
-            new Vector3( cx, 0.02f, -cz)  // Bottom-Right
-        };
+        // 2. Dark Recessed Stadium Pit Floor
+        GameObject pitObj = new GameObject("SlotPit");
+        pitObj.transform.SetParent(slotRoot, false);
+        pitObj.transform.localPosition = Vector3.zero;
 
-        for (int i = 0; i < 4; i++)
-        {
-            GameObject corner = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            corner.name = $"RimCorner_{i}";
-            corner.transform.SetParent(rimHolder.transform, false);
-            corner.transform.localPosition = cornerPositions[i];
-            corner.transform.localScale = new Vector3(cornerR * 2f, rimH, cornerR * 2f);
-            SafeDestroy(corner.GetComponent<Collider>());
-            corner.GetComponent<MeshRenderer>().material = rimMat;
-        }
+        MeshFilter pitFilter = pitObj.AddComponent<MeshFilter>();
+        pitFilter.sharedMesh = CreateStadiumPitMesh(outerW, outerH, tubeRadius, 0.012f, 24);
+        var pitRenderer = pitObj.AddComponent<MeshRenderer>();
+        pitRenderer.material = pitMat;
 
-        // Horizontal center slab
-        GameObject hBox = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        hBox.name = "RimCenterH";
-        hBox.transform.SetParent(rimHolder.transform, false);
-        hBox.transform.localPosition = new Vector3(0f, 0.02f, 0f);
-        hBox.transform.localScale = new Vector3(outerW, rimH, outerH - 2f * cornerR);
-        SafeDestroy(hBox.GetComponent<Collider>());
-        hBox.GetComponent<MeshRenderer>().material = rimMat;
-
-        // Vertical center slab
-        GameObject vBox = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        vBox.name = "RimCenterV";
-        vBox.transform.SetParent(rimHolder.transform, false);
-        vBox.transform.localPosition = new Vector3(0f, 0.02f, 0f);
-        vBox.transform.localScale = new Vector3(outerW - 2f * cornerR, rimH, outerH);
-        SafeDestroy(vBox.GetComponent<Collider>());
-        vBox.GetComponent<MeshRenderer>().material = rimMat;
-
-        // 2. Dark Recessed Well / Floor (SlotPit - Flat Square Floor)
-        GameObject pitHolder = new GameObject("SlotPit");
-        pitHolder.transform.SetParent(slotRoot, false);
-
-        GameObject pitSquare = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        pitSquare.name = "PitCenterSquare";
-        pitSquare.transform.SetParent(pitHolder.transform, false);
-        pitSquare.transform.localPosition = new Vector3(0f, 0.038f, 0f);
-        pitSquare.transform.localScale = new Vector3(innerW, pitH, innerH);
-        SafeDestroy(pitSquare.GetComponent<Collider>());
-        pitSquare.GetComponent<MeshRenderer>().material = pitMat;
-
-        // 3. Small Square Counter Badge at the bottom-right corner
+        // 3. Integrated Counter Badge (Placed opposite to the ant facing entrance)
         countBadgeObj = new GameObject("SlotCounterBadge");
         countBadgeObj.transform.SetParent(slotRoot, false);
+        countBadgeObj.transform.localPosition = Vector3.zero;
 
-        float badgeX = (rows >= 2) ? (outerW * 0.5f - 0.32f) : (outerW * 0.5f - 0.28f);
-        float badgeZ = (rows >= 2) ? (-outerH * 0.5f + 0.32f) : 0f;
-        countBadgeObj.transform.localPosition = new Vector3(badgeX, 0.07f, badgeZ);
+        // Badge patch mesh
+        GameObject badgeMeshObj = new GameObject("BadgeMesh");
+        badgeMeshObj.transform.SetParent(countBadgeObj.transform, false);
+        badgeMeshObj.transform.localPosition = Vector3.zero;
 
-        // Small Square Outer Border
-        GameObject badgeBg = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        badgeBg.name = "BadgeSquareBackground";
-        badgeBg.transform.SetParent(countBadgeObj.transform, false);
-        badgeBg.transform.localPosition = Vector3.zero;
-        badgeBg.transform.localScale = new Vector3(0.48f, 0.025f, 0.48f);
-        SafeDestroy(badgeBg.GetComponent<Collider>());
+        MeshFilter badgeFilter = badgeMeshObj.AddComponent<MeshFilter>();
+        badgeFilter.sharedMesh = CreateStadiumBadgeMesh(outerW, outerH, tubeRadius, 0.018f, rightSide, rows, 24);
+        badgeBackgroundRenderer = badgeMeshObj.AddComponent<MeshRenderer>();
+        badgeBackgroundRenderer.material = rimMat;
 
-        var badgeMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-        badgeMat.color = AntColorPalette.GetColor(holeColor);
-        if (badgeMat.HasProperty("_Smoothness")) badgeMat.SetFloat("_Smoothness", 0.90f);
-        badgeBg.GetComponent<MeshRenderer>().material = badgeMat;
-        badgeBackgroundRenderer = badgeBg.GetComponent<MeshRenderer>();
-
-        // Inner Dark Square Contrast
-        GameObject innerBadge = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        innerBadge.name = "InnerBadgeSquare";
-        innerBadge.transform.SetParent(countBadgeObj.transform, false);
-        innerBadge.transform.localPosition = new Vector3(0f, 0.012f, 0f);
-        innerBadge.transform.localScale = new Vector3(0.40f, 0.025f, 0.40f);
-        SafeDestroy(innerBadge.GetComponent<Collider>());
-        var innerMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-        innerMat.color = new UnityEngine.Color(0.12f, 0.14f, 0.18f);
-        innerBadge.GetComponent<MeshRenderer>().material = innerMat;
-
-        // Stylized Number Text (Always oriented upright facing top camera)
+        // Number Text (Facing top-down camera)
         GameObject textObj = new GameObject("BadgeCountText");
         textObj.transform.SetParent(countBadgeObj.transform, false);
-        textObj.transform.localPosition = new Vector3(0f, 0.025f, 0f);
+
+        float rCap = Mathf.Max(0.08f, (outerH * 0.5f) - tubeRadius);
+        float straightLen = Mathf.Max(0f, outerW - 2f * (rCap + tubeRadius));
+        float halfL = straightLen * 0.5f;
+        float rInner = Mathf.Max(0.04f, rCap - tubeRadius);
+
+        float badgeLeftX = (rows >= 2) ? (halfL - 0.20f) : (halfL - 0.10f);
+        float centerBadgeX = (badgeLeftX + (halfL + rInner)) * 0.5f;
+
+        float textX = rightSide ? centerBadgeX : -centerBadgeX;
+        float textZ = 0f;
+        textObj.transform.localPosition = new Vector3(textX, 0.035f, textZ);
         textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
 
         countTextMesh = textObj.AddComponent<TextMesh>();
         countTextMesh.alignment = TextAlignment.Center;
         countTextMesh.anchor = TextAnchor.MiddleCenter;
-        countTextMesh.fontSize = 54;
-        countTextMesh.characterSize = 0.090f;
+        countTextMesh.fontSize = 62;
+        countTextMesh.characterSize = (rows >= 2) ? 0.080f : 0.092f;
         countTextMesh.fontStyle = FontStyle.Bold;
         countTextMesh.color = UnityEngine.Color.white;
+    }
+
+    /// <summary>
+    /// Generates a perfectly smooth continuous tubular stadium/capsule rim mesh.
+    /// </summary>
+    public static Mesh CreateStadiumTubeMesh(float outerW, float outerH, float tubeRadius, float tubeHeight, int pathResolution = 64, int crossResolution = 16)
+    {
+        Mesh mesh = new Mesh();
+        mesh.name = "StadiumTubeMesh";
+
+        float rCap = Mathf.Max(0.08f, (outerH * 0.5f) - tubeRadius);
+        float straightLen = Mathf.Max(0f, outerW - 2f * (rCap + tubeRadius));
+        float halfL = straightLen * 0.5f;
+
+        int straightRes = Mathf.Max(4, pathResolution / 8);
+        int arcRes = Mathf.Max(12, (pathResolution - 2 * straightRes) / 2);
+        int totalPathPoints = 2 * straightRes + 2 * arcRes;
+
+        List<Vector3> pathPoints = new List<Vector3>(totalPathPoints);
+        List<Vector3> pathNormals = new List<Vector3>(totalPathPoints);
+
+        // 1. Top straight line (-halfL -> +halfL)
+        for (int i = 0; i < straightRes; i++)
+        {
+            float t = (float)i / straightRes;
+            float x = Mathf.Lerp(-halfL, halfL, t);
+            pathPoints.Add(new Vector3(x, 0f, rCap));
+            pathNormals.Add(Vector3.forward);
+        }
+
+        // 2. Right semicircle (+pi/2 -> -pi/2)
+        for (int i = 0; i < arcRes; i++)
+        {
+            float t = (float)i / arcRes;
+            float ang = Mathf.PI * 0.5f - t * Mathf.PI;
+            float x = halfL + rCap * Mathf.Cos(ang);
+            float z = rCap * Mathf.Sin(ang);
+            pathPoints.Add(new Vector3(x, 0f, z));
+            pathNormals.Add(new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)).normalized);
+        }
+
+        // 3. Bottom straight line (+halfL -> -halfL)
+        for (int i = 0; i < straightRes; i++)
+        {
+            float t = (float)i / straightRes;
+            float x = Mathf.Lerp(halfL, -halfL, t);
+            pathPoints.Add(new Vector3(x, 0f, -rCap));
+            pathNormals.Add(Vector3.back);
+        }
+
+        // 4. Left semicircle (-pi/2 -> -3pi/2)
+        for (int i = 0; i < arcRes; i++)
+        {
+            float t = (float)i / arcRes;
+            float ang = -Mathf.PI * 0.5f - t * Mathf.PI;
+            float x = -halfL + rCap * Mathf.Cos(ang);
+            float z = rCap * Mathf.Sin(ang);
+            pathPoints.Add(new Vector3(x, 0f, z));
+            pathNormals.Add(new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)).normalized);
+        }
+
+        int M = pathPoints.Count;
+        int K = crossResolution;
+        Vector3[] vertices = new Vector3[M * (K + 1)];
+        Vector3[] normals = new Vector3[M * (K + 1)];
+        Vector2[] uvs = new Vector2[M * (K + 1)];
+
+        for (int i = 0; i < M; i++)
+        {
+            Vector3 center = pathPoints[i];
+            Vector3 norm2D = pathNormals[i];
+
+            for (int j = 0; j <= K; j++)
+            {
+                float phi = ((float)j / K) * Mathf.PI; // 0 to PI
+                float cosPhi = Mathf.Cos(phi);
+                float sinPhi = Mathf.Sin(phi);
+
+                Vector3 pos = center + norm2D * (-cosPhi * tubeRadius) + Vector3.up * (sinPhi * tubeHeight);
+                Vector3 n = (norm2D * (-cosPhi) + Vector3.up * sinPhi).normalized;
+
+                int vIdx = i * (K + 1) + j;
+                vertices[vIdx] = pos;
+                normals[vIdx] = n;
+                uvs[vIdx] = new Vector2((float)i / M, (float)j / K);
+            }
+        }
+
+        int[] triangles = new int[M * K * 6];
+        int tIdx = 0;
+
+        for (int i = 0; i < M; i++)
+        {
+            int nextI = (i + 1) % M;
+            for (int j = 0; j < K; j++)
+            {
+                int v00 = i * (K + 1) + j;
+                int v01 = i * (K + 1) + j + 1;
+                int v10 = nextI * (K + 1) + j;
+                int v11 = nextI * (K + 1) + j + 1;
+
+                triangles[tIdx++] = v00;
+                triangles[tIdx++] = v01;
+                triangles[tIdx++] = v10;
+
+                triangles[tIdx++] = v01;
+                triangles[tIdx++] = v11;
+                triangles[tIdx++] = v10;
+            }
+        }
+
+        mesh.vertices = vertices;
+        mesh.normals = normals;
+        mesh.uv = uvs;
+        mesh.triangles = triangles;
+        mesh.RecalculateBounds();
+        return mesh;
+    }
+
+    /// <summary>
+    /// Generates the flat inner stadium pit floor mesh.
+    /// </summary>
+    public static Mesh CreateStadiumPitMesh(float outerW, float outerH, float tubeRadius, float yOffset = 0.012f, int arcSegments = 24)
+    {
+        Mesh mesh = new Mesh();
+        mesh.name = "StadiumPitMesh";
+
+        float rCap = Mathf.Max(0.08f, (outerH * 0.5f) - tubeRadius);
+        float rInner = Mathf.Max(0.04f, rCap - tubeRadius);
+        float straightLen = Mathf.Max(0f, outerW - 2f * (rCap + tubeRadius));
+        float halfL = straightLen * 0.5f;
+
+        List<Vector3> verts = new List<Vector3>();
+        List<Vector3> norms = new List<Vector3>();
+        List<Vector2> uvs = new List<Vector2>();
+        List<int> tris = new List<int>();
+
+        // Center origin vertex
+        verts.Add(new Vector3(0f, yOffset, 0f));
+        norms.Add(Vector3.up);
+        uvs.Add(new Vector2(0.5f, 0.5f));
+
+        List<Vector3> perimeter = new List<Vector3>();
+
+        // Top line (+halfL -> -halfL)
+        perimeter.Add(new Vector3(halfL, yOffset, rInner));
+        perimeter.Add(new Vector3(-halfL, yOffset, rInner));
+
+        // Left semicircle (pi/2 -> 3pi/2)
+        for (int i = 0; i <= arcSegments; i++)
+        {
+            float ang = Mathf.PI * 0.5f + ((float)i / arcSegments) * Mathf.PI;
+            perimeter.Add(new Vector3(-halfL + rInner * Mathf.Cos(ang), yOffset, rInner * Mathf.Sin(ang)));
+        }
+
+        // Bottom line (-halfL -> +halfL)
+        perimeter.Add(new Vector3(-halfL, yOffset, -rInner));
+        perimeter.Add(new Vector3(halfL, yOffset, -rInner));
+
+        // Right semicircle (-pi/2 -> +pi/2)
+        for (int i = 0; i <= arcSegments; i++)
+        {
+            float ang = -Mathf.PI * 0.5f + ((float)i / arcSegments) * Mathf.PI;
+            perimeter.Add(new Vector3(halfL + rInner * Mathf.Cos(ang), yOffset, rInner * Mathf.Sin(ang)));
+        }
+
+        int perimStartIdx = verts.Count;
+        for (int i = 0; i < perimeter.Count; i++)
+        {
+            verts.Add(perimeter[i]);
+            norms.Add(Vector3.up);
+            uvs.Add(new Vector2((perimeter[i].x + outerW * 0.5f) / outerW, (perimeter[i].z + outerH * 0.5f) / outerH));
+        }
+
+        for (int i = 0; i < perimeter.Count - 1; i++)
+        {
+            tris.Add(0);
+            tris.Add(perimStartIdx + i);
+            tris.Add(perimStartIdx + i + 1);
+        }
+        tris.Add(0);
+        tris.Add(perimStartIdx + perimeter.Count - 1);
+        tris.Add(perimStartIdx);
+
+        mesh.vertices = verts.ToArray();
+        mesh.normals = norms.ToArray();
+        mesh.uv = uvs.ToArray();
+        mesh.triangles = tris.ToArray();
+        mesh.RecalculateBounds();
+        return mesh;
+    }
+
+    /// <summary>
+    /// Generates the integrated badge mesh sitting inside the end cap of the stadium cavity
+    /// (placed strictly opposite to the ant facing entrance side).
+    /// </summary>
+    public static Mesh CreateStadiumBadgeMesh(float outerW, float outerH, float tubeRadius, float yOffset = 0.018f, bool rightSide = true, int rows = 1, int arcSegments = 24)
+    {
+        Mesh mesh = new Mesh();
+        mesh.name = rightSide ? "StadiumBadgeMesh_Right" : "StadiumBadgeMesh_Left";
+
+        float rCap = Mathf.Max(0.08f, (outerH * 0.5f) - tubeRadius);
+        float rInner = Mathf.Max(0.04f, rCap - tubeRadius);
+        float straightLen = Mathf.Max(0f, outerW - 2f * (rCap + tubeRadius));
+        float halfL = straightLen * 0.5f;
+
+        float badgeLeftX = (rows >= 2) ? (halfL - 0.20f) : (halfL - 0.10f);
+        float cornerR = 0.06f;
+        float centerBadgeX = (badgeLeftX + (halfL + rInner)) * 0.5f;
+
+        List<Vector3> verts = new List<Vector3>();
+        List<Vector3> norms = new List<Vector3>();
+        List<Vector2> uvs = new List<Vector2>();
+        List<int> tris = new List<int>();
+
+        List<Vector3> perimeter = new List<Vector3>();
+
+        if (rightSide)
+        {
+            // Badge on RIGHT side of hole
+            verts.Add(new Vector3(centerBadgeX, yOffset, 0f));
+            norms.Add(Vector3.up);
+            uvs.Add(new Vector2(0.5f, 0.5f));
+
+            // 1. Top line from right arc entry to top-left corner
+            perimeter.Add(new Vector3(halfL, yOffset, rInner));
+            perimeter.Add(new Vector3(badgeLeftX + cornerR, yOffset, rInner));
+
+            // 2. Top-left rounded corner (pi/2 to pi)
+            for (int i = 0; i <= 6; i++)
+            {
+                float ang = Mathf.PI * 0.5f + ((float)i / 6) * Mathf.PI * 0.5f;
+                perimeter.Add(new Vector3(badgeLeftX + cornerR + cornerR * Mathf.Cos(ang), yOffset, rInner - cornerR + cornerR * Mathf.Sin(ang)));
+            }
+
+            // 3. Left vertical line
+            perimeter.Add(new Vector3(badgeLeftX, yOffset, -rInner + cornerR));
+
+            // 4. Bottom-left rounded corner (pi to 3pi/2)
+            for (int i = 0; i <= 6; i++)
+            {
+                float ang = Mathf.PI + ((float)i / 6) * Mathf.PI * 0.5f;
+                perimeter.Add(new Vector3(badgeLeftX + cornerR + cornerR * Mathf.Cos(ang), yOffset, -rInner + cornerR + cornerR * Mathf.Sin(ang)));
+            }
+
+            // 5. Bottom line to right arc entry
+            perimeter.Add(new Vector3(halfL, yOffset, -rInner));
+
+            // 6. Right semicircle arc (-pi/2 to +pi/2)
+            for (int i = 0; i <= arcSegments; i++)
+            {
+                float ang = -Mathf.PI * 0.5f + ((float)i / arcSegments) * Mathf.PI;
+                perimeter.Add(new Vector3(halfL + rInner * Mathf.Cos(ang), yOffset, rInner * Mathf.Sin(ang)));
+            }
+
+            int pStart = verts.Count;
+            for (int i = 0; i < perimeter.Count; i++)
+            {
+                verts.Add(perimeter[i]);
+                norms.Add(Vector3.up);
+                uvs.Add(new Vector2(perimeter[i].x, perimeter[i].z));
+            }
+
+            for (int i = 0; i < perimeter.Count - 1; i++)
+            {
+                tris.Add(0);
+                tris.Add(pStart + i);
+                tris.Add(pStart + i + 1);
+            }
+            tris.Add(0);
+            tris.Add(pStart + perimeter.Count - 1);
+            tris.Add(pStart);
+        }
+        else
+        {
+            // Badge on LEFT side of hole
+            verts.Add(new Vector3(-centerBadgeX, yOffset, 0f));
+            norms.Add(Vector3.up);
+            uvs.Add(new Vector2(0.5f, 0.5f));
+
+            // 1. Top line from left arc entry to top-right corner
+            perimeter.Add(new Vector3(-halfL, yOffset, rInner));
+            perimeter.Add(new Vector3(-badgeLeftX - cornerR, yOffset, rInner));
+
+            // 2. Top-right rounded corner (pi/2 to 0)
+            for (int i = 0; i <= 6; i++)
+            {
+                float ang = Mathf.PI * 0.5f - ((float)i / 6) * Mathf.PI * 0.5f;
+                perimeter.Add(new Vector3(-badgeLeftX - cornerR + cornerR * Mathf.Cos(ang), yOffset, rInner - cornerR + cornerR * Mathf.Sin(ang)));
+            }
+
+            // 3. Right vertical line
+            perimeter.Add(new Vector3(-badgeLeftX, yOffset, -rInner + cornerR));
+
+            // 4. Bottom-right rounded corner (0 to -pi/2)
+            for (int i = 0; i <= 6; i++)
+            {
+                float ang = 0f - ((float)i / 6) * Mathf.PI * 0.5f;
+                perimeter.Add(new Vector3(-badgeLeftX - cornerR + cornerR * Mathf.Cos(ang), yOffset, -rInner + cornerR + cornerR * Mathf.Sin(ang)));
+            }
+
+            // 5. Bottom line to left arc entry
+            perimeter.Add(new Vector3(-halfL, yOffset, -rInner));
+
+            // 6. Left semicircle arc (-pi/2 to -3pi/2)
+            for (int i = 0; i <= arcSegments; i++)
+            {
+                float ang = -Mathf.PI * 0.5f - ((float)i / arcSegments) * Mathf.PI;
+                perimeter.Add(new Vector3(-halfL + rInner * Mathf.Cos(ang), yOffset, rInner * Mathf.Sin(ang)));
+            }
+
+            int pStart = verts.Count;
+            for (int i = 0; i < perimeter.Count; i++)
+            {
+                verts.Add(perimeter[i]);
+                norms.Add(Vector3.up);
+                uvs.Add(new Vector2(perimeter[i].x, perimeter[i].z));
+            }
+
+            for (int i = 0; i < perimeter.Count - 1; i++)
+            {
+                tris.Add(0);
+                tris.Add(pStart + i + 1);
+                tris.Add(pStart + i);
+            }
+            tris.Add(0);
+            tris.Add(pStart);
+            tris.Add(pStart + perimeter.Count - 1);
+        }
+
+        mesh.vertices = verts.ToArray();
+        mesh.normals = norms.ToArray();
+        mesh.uv = uvs.ToArray();
+        mesh.triangles = tris.ToArray();
+        mesh.RecalculateBounds();
+        return mesh;
     }
 
     private void UpdateBadgeDisplay()
@@ -200,7 +534,7 @@ public class HoleController : MonoBehaviour
         if (countTextMesh == null) return;
 
         countTextMesh.text = remainingCount.ToString();
-        countTextMesh.characterSize = remainingCount >= 10 ? 0.078f : 0.090f;
+        countTextMesh.characterSize = remainingCount >= 10 ? 0.080f : 0.092f;
         countTextMesh.color = remainingCount > 0 ? UnityEngine.Color.white : new UnityEngine.Color(1f, 1f, 1f, 0.85f);
     }
 
@@ -252,7 +586,7 @@ public class HoleController : MonoBehaviour
         if (countBadgeObj != null)
         {
             countBadgeObj.transform.DOKill();
-            countBadgeObj.transform.DOPunchScale(new Vector3(0.25f, 0.25f, 0.25f), 0.18f, 5, 0.5f);
+            countBadgeObj.transform.DOPunchScale(new Vector3(0.22f, 0.22f, 0.22f), 0.18f, 5, 0.5f);
         }
     }
 
@@ -268,6 +602,9 @@ public class HoleController : MonoBehaviour
     private void SafeDestroy(UnityEngine.Object obj)
     {
         if (obj == null) return;
+#if UNITY_EDITOR
+        if (UnityEditor.PrefabUtility.IsPartOfPrefabAsset(obj)) return;
+#endif
         if (Application.isPlaying) Destroy(obj);
         else DestroyImmediate(obj);
     }
@@ -275,11 +612,12 @@ public class HoleController : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
+        if (IsPrefabAsset()) return;
         UnityEditor.EditorApplication.delayCall += () =>
         {
-            if (this != null && !Application.isPlaying)
+            if (this != null && !Application.isPlaying && !IsPrefabAsset())
             {
-                BuildRoundedRimSquarePitSlotVisuals(isRightSide, parallelRows);
+                BuildStadiumSlotVisuals(isRightSide, parallelRows);
                 UpdateBadgeDisplay();
             }
         };

@@ -1,0 +1,34 @@
+# Material definitions for Hole_Stadium
+
+newmtl Mat_Rim_Red
+Ka 0.95 0.24 0.26
+Kd 0.95 0.24 0.26
+Ks 0.94 0.94 0.94
+Ns 220.0
+d 1.0
+illum 2
+
+newmtl Mat_Pit_Dark
+Ka 0.12 0.14 0.17
+Kd 0.12 0.14 0.17
+Ks 0.12 0.12 0.12
+Ns 15.0
+d 1.0
+illum 2
+
+newmtl Mat_Badge_Red
+Ka 0.95 0.24 0.26
+Kd 0.95 0.24 0.26
+Ks 0.90 0.90 0.90
+Ns 180.0
+d 1.0
+illum 2
+
+newmtl Mat_Number_White
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.6 0.6 0.6
+Ns 120.0
+d 1.0
+illum 2
+

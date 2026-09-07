@@ -48,8 +48,18 @@ public class AntQueueController : MonoBehaviour
         return new Vector3(x, yOffset, z);
     }
 
+    private bool IsPrefabAsset()
+    {
+#if UNITY_EDITOR
+        return UnityEditor.PrefabUtility.IsPartOfPrefabAsset(gameObject) || !gameObject.scene.IsValid();
+#else
+        return false;
+#endif
+    }
+
     private void Awake()
     {
+        if (IsPrefabAsset()) return;
         if (antUnits.Count == 0 || transform.childCount == 0)
         {
             if (currentBodyCoordinates != null && currentBodyCoordinates.Count > 0)
@@ -322,6 +332,9 @@ public class AntQueueController : MonoBehaviour
     private void SafeDestroy(UnityEngine.Object obj)
     {
         if (obj == null) return;
+#if UNITY_EDITOR
+        if (UnityEditor.PrefabUtility.IsPartOfPrefabAsset(obj)) return;
+#endif
         if (Application.isPlaying) Destroy(obj);
         else DestroyImmediate(obj);
     }
@@ -329,9 +342,10 @@ public class AntQueueController : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
+        if (IsPrefabAsset()) return;
         UnityEditor.EditorApplication.delayCall += () =>
         {
-            if (this != null && !Application.isPlaying && antUnits.Count > 0)
+            if (this != null && !Application.isPlaying && !IsPrefabAsset() && antUnits.Count > 0)
             {
                 UpdateAntOrientations();
             }
