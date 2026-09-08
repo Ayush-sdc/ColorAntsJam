@@ -25,6 +25,10 @@ public class BoardManager : MonoBehaviour
     [SerializeField] private GameObject holePrefab;
     [SerializeField] private GameObject antQueuePrefab;
 
+    [Header("Hierarchy Sync Options")]
+    [Tooltip("If true, BoardManager will preserve manually placed scene Hole and Queue GameObjects instead of wiping and respawning them on Play.")]
+    [SerializeField] private bool preserveSceneObjects = true;
+
     [SerializeField] private int width = 9;
     [SerializeField] private int height = 6;
     [SerializeField] private float cellSize = 1.0f;
@@ -87,7 +91,6 @@ public class BoardManager : MonoBehaviour
     public void SetupBoard(Level level)
     {
         instance = this;
-        ClearBoard();
 
         width = level.GridWidth;
         height = level.GridHeight;
@@ -100,6 +103,41 @@ public class BoardManager : MonoBehaviour
         {
             GardenBackgroundManager.Instance.BuildEnvironment(width, height, cellSize);
         }
+
+        // Check if scene already contains pre-placed holes & queues (Edit Mode customization)
+        HoleController[] existingHoles = parentTransform.GetComponentsInChildren<HoleController>(true);
+        AntQueueController[] existingQueues = parentTransform.GetComponentsInChildren<AntQueueController>(true);
+
+        if (preserveSceneObjects && existingHoles != null && existingHoles.Length > 0)
+        {
+            holesMap.Clear();
+            activeQueues.Clear();
+
+            foreach (var hole in existingHoles)
+            {
+                RegisterHoleInMap(hole);
+                hole.EnsureVisuals();
+            }
+
+            foreach (var q in existingQueues)
+            {
+                if (!activeQueues.Contains(q))
+                {
+                    activeQueues.Add(q);
+                }
+            }
+
+            // Ensure grid visuals if missing
+            if (parentTransform.Find("TilesHolder") == null)
+            {
+                SpawnGridVisuals(level);
+            }
+
+            OnBoardStateChanged?.Invoke();
+            return;
+        }
+
+        ClearBoard();
 
         // 2. Spawn Grid Visual Tiles & Static Ground Dots ONLY at ant coordinates
         SpawnGridVisuals(level);
@@ -244,19 +282,24 @@ public class BoardManager : MonoBehaviour
         }
 
         controller.Initialize(holeData.HoleColor, holeData.GridCoordinate, initialCount, isRightSide, rowCount);
-        
-        // Register primary coordinate
-        holesMap[holeData.GridCoordinate] = controller;
-        
-        // Register secondary cell of the 2-cell wide slot
-        int xDir = (holeData.GridCoordinate.x == 1 && holeData.GridCoordinate.y >= 8) ? -1 : (holeData.GridCoordinate.x >= 4 ? 1 : 1);
-        Vector2Int secondaryCoord = holeData.GridCoordinate + new Vector2Int(xDir, 0);
+        RegisterHoleInMap(controller);
+    }
+
+    private void RegisterHoleInMap(HoleController controller)
+    {
+        if (controller == null) return;
+
+        Vector2Int primaryCoord = controller.GridCoordinate;
+        holesMap[primaryCoord] = controller;
+
+        int rowCount = controller.ParallelRows;
+        int xDir = (primaryCoord.x == 1 && primaryCoord.y >= 8) ? -1 : (primaryCoord.x >= 4 ? 1 : 1);
+        Vector2Int secondaryCoord = primaryCoord + new Vector2Int(xDir, 0);
         holesMap[secondaryCoord] = controller;
 
-        // If 2 parallel rows, also register upper row coordinates
         if (rowCount >= 2)
         {
-            Vector2Int upperPrimary = holeData.GridCoordinate + new Vector2Int(0, 1);
+            Vector2Int upperPrimary = primaryCoord + new Vector2Int(0, 1);
             Vector2Int upperSecondary = secondaryCoord + new Vector2Int(0, 1);
             holesMap[upperPrimary] = controller;
             holesMap[upperSecondary] = controller;

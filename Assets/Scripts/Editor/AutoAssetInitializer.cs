@@ -23,12 +23,8 @@ public static class AutoAssetInitializer
             LevelGeneratorWindow.GenerateSampleLevelsAndDatabase();
         }
 
-        // 3. Automatically sync UI architecture and Play Mode Level 1 layout into Edit Mode hierarchy
-        if (!Application.isPlaying)
-        {
-            SceneSetupUtility.SetupScene();
-            LevelGeneratorWindow.BuildLevel1InSceneHierarchy();
-            ModelCreationUtility.RefreshAllHolesInScene();
-        }
+        // Automatic scene wipe on reload has been disabled to preserve user's manual Edit Mode changes.
+        // If you want to rebuild the scene layout from data at any time, use the top menu:
+        // SlitherAnts -> Sync Play Mode Layout to Edit Mode
     }
 }

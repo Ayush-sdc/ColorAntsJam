@@ -151,7 +151,7 @@ public static class SceneSetupUtility
         gearRect.anchorMin = new Vector2(0f, 1f);
         gearRect.anchorMax = new Vector2(0f, 1f);
         gearRect.pivot = new Vector2(0f, 1f);
-        gearRect.anchoredPosition = new Vector2(48f, -48f);
+        gearRect.anchoredPosition = new Vector2(48f, -135f);
         gearRect.sizeDelta = new Vector2(68f, 68f);
 
         var gearImg = gearBtnObj.AddComponent<Image>();
@@ -163,15 +163,16 @@ public static class SceneSetupUtility
         gearShadow.effectColor = new Color(0f, 0f, 0f, 0.20f);
         gearShadow.effectDistance = new Vector2(0f, -3f);
 
-        // --- TOP MAIN ROUNDED RECTANGLE HUD CARD (Moved slightly down to -140px) ---
+        // --- TOP MAIN ROUNDED RECTANGLE HUD CARD (Anchored at -235px) ---
         GameObject topCard = new GameObject("TopCardHUD");
         topCard.transform.SetParent(canvasObj.transform, false);
         var cardRect = topCard.AddComponent<RectTransform>();
         cardRect.anchorMin = new Vector2(0.5f, 1f);
         cardRect.anchorMax = new Vector2(0.5f, 1f);
         cardRect.pivot = new Vector2(0.5f, 1f);
-        cardRect.anchoredPosition = new Vector2(0f, -140f);
+        cardRect.anchoredPosition = new Vector2(0f, -235f);
         cardRect.sizeDelta = new Vector2(640f, 86f);
+        cardRect.localScale = new Vector3(1.25f, 1.25f, 1.25f);
 
         var cardImg = topCard.AddComponent<Image>();
         cardImg.sprite = roundedCardSprite;

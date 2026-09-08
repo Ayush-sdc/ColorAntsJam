@@ -264,9 +264,10 @@ public class HoleController : MonoBehaviour
         float badgeLeftX = (rows >= 2) ? (halfL - 0.20f) : (halfL - 0.10f);
         float centerBadgeX = (badgeLeftX + (halfL + rInner)) * 0.5f;
 
-        float textX = rightSide ? centerBadgeX : -centerBadgeX;
-        float textZ = 0f;
-        textObj.transform.localPosition = new Vector3(textX, 0.17f, textZ);
+        float textX = rightSide ? centerBadgeX : -0.438f;
+        float textY = rightSide ? 0.17f : 0.258f;
+        float textZ = rightSide ? 0f : 0.032f;
+        textObj.transform.localPosition = new Vector3(textX, textY, textZ);
         textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
 
         countTextMesh = textObj.AddComponent<TextMesh>();
