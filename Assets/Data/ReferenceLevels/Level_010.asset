@@ -1,0 +1,3272 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08c48c4a571c5df44b34a1f6328e9d42, type: 3}
+  m_Name: Level_010
+  m_EditorClassIdentifier: Assembly-CSharp::Level
+  levelNumber: 10
+  levelName: Reference Level 10
+  difficulty: 2
+  duration: 0.0
+  gridSize: {x: 20, y: 20}
+  gridWidth: 20
+  gridHeight: 20
+  cellSize: 1
+  capacity: 0
+  disabledGridCells: []
+  cellInfo:
+  - position: {x: 0, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 0, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 1, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 2, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 3, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 4, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 5, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 6, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 7, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 8, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 9, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 10, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 11, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 12, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 13, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 14, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 15, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 16, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 17, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 18, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 0}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 1}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 2}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 3}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 4}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 5}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 6}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 7}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 8}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 9}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 10}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 11}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 12}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 13}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 14}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 15}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 16}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 17}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 18}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  - position: {x: 19, y: 19}
+    isForcedDisabledCell: 0
+    cellType: 0
+    colorId: 0
+    capacity: 1
+  holes: []
+  antQueues:
+  - queueId: Record_0_2
+    colorId: 2
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 15, y: 19}
+    - {x: 16, y: 19}
+    - {x: 17, y: 19}
+    - {x: 18, y: 19}
+    - {x: 19, y: 19}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 1
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_1_2
+    colorId: 2
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 15, y: 18}
+    - {x: 16, y: 18}
+    - {x: 17, y: 18}
+    - {x: 18, y: 18}
+    - {x: 19, y: 18}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 1
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_2_2
+    colorId: 2
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 15, y: 17}
+    - {x: 16, y: 17}
+    - {x: 17, y: 17}
+    - {x: 18, y: 17}
+    - {x: 19, y: 17}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 1
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_3_2
+    colorId: 2
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 15, y: 16}
+    - {x: 16, y: 16}
+    - {x: 17, y: 16}
+    - {x: 18, y: 16}
+    - {x: 19, y: 16}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 1
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_4_1
+    colorId: 1
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 4, y: 14}
+    - {x: 3, y: 14}
+    - {x: 2, y: 14}
+    - {x: 1, y: 14}
+    - {x: 0, y: 14}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_5_1
+    colorId: 1
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 4, y: 13}
+    - {x: 3, y: 13}
+    - {x: 2, y: 13}
+    - {x: 1, y: 13}
+    - {x: 0, y: 13}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_6_1
+    colorId: 1
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 4, y: 12}
+    - {x: 3, y: 12}
+    - {x: 2, y: 12}
+    - {x: 1, y: 12}
+    - {x: 0, y: 12}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_7_1
+    colorId: 1
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 4, y: 11}
+    - {x: 3, y: 11}
+    - {x: 2, y: 11}
+    - {x: 1, y: 11}
+    - {x: 0, y: 11}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_8_6
+    colorId: 6
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 15, y: 9}
+    - {x: 16, y: 9}
+    - {x: 17, y: 9}
+    - {x: 18, y: 9}
+    - {x: 19, y: 9}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 2
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_9_6
+    colorId: 6
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 15, y: 8}
+    - {x: 16, y: 8}
+    - {x: 17, y: 8}
+    - {x: 18, y: 8}
+    - {x: 19, y: 8}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 2
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_10_6
+    colorId: 6
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 15, y: 7}
+    - {x: 16, y: 7}
+    - {x: 17, y: 7}
+    - {x: 18, y: 7}
+    - {x: 19, y: 7}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 2
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_11_6
+    colorId: 6
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 15, y: 6}
+    - {x: 16, y: 6}
+    - {x: 17, y: 6}
+    - {x: 18, y: 6}
+    - {x: 19, y: 6}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 2
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_12_10
+    colorId: 10
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 4, y: 4}
+    - {x: 3, y: 4}
+    - {x: 2, y: 4}
+    - {x: 1, y: 4}
+    - {x: 0, y: 4}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 3
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_13_10
+    colorId: 10
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 4, y: 3}
+    - {x: 3, y: 3}
+    - {x: 2, y: 3}
+    - {x: 1, y: 3}
+    - {x: 0, y: 3}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 3
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_14_10
+    colorId: 10
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 4, y: 2}
+    - {x: 3, y: 2}
+    - {x: 2, y: 2}
+    - {x: 1, y: 2}
+    - {x: 0, y: 2}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 3
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_15_10
+    colorId: 10
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 4, y: 1}
+    - {x: 3, y: 1}
+    - {x: 2, y: 1}
+    - {x: 1, y: 1}
+    - {x: 0, y: 1}
+    fullPathToHole: []
+    isConnected: 1
+    connectedIndex: 3
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_16_2
+    colorId: 2
+    holderType: 0
+    antCount: 8
+    cells:
+    - {x: 3, y: 19}
+    - {x: 3, y: 18}
+    - {x: 3, y: 17}
+    - {x: 3, y: 16}
+    - {x: 4, y: 16}
+    - {x: 4, y: 17}
+    - {x: 4, y: 18}
+    - {x: 4, y: 19}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_17_1
+    colorId: 1
+    holderType: 0
+    antCount: 8
+    cells:
+    - {x: 16, y: 14}
+    - {x: 16, y: 13}
+    - {x: 16, y: 12}
+    - {x: 16, y: 11}
+    - {x: 15, y: 11}
+    - {x: 15, y: 12}
+    - {x: 15, y: 13}
+    - {x: 15, y: 14}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_18_6
+    colorId: 6
+    holderType: 0
+    antCount: 8
+    cells:
+    - {x: 3, y: 9}
+    - {x: 3, y: 8}
+    - {x: 3, y: 7}
+    - {x: 3, y: 6}
+    - {x: 4, y: 6}
+    - {x: 4, y: 7}
+    - {x: 4, y: 8}
+    - {x: 4, y: 9}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_19_10
+    colorId: 10
+    holderType: 0
+    antCount: 8
+    cells:
+    - {x: 16, y: 4}
+    - {x: 16, y: 3}
+    - {x: 16, y: 2}
+    - {x: 16, y: 1}
+    - {x: 15, y: 1}
+    - {x: 15, y: 2}
+    - {x: 15, y: 3}
+    - {x: 15, y: 4}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_20_5
+    colorId: 5
+    holderType: 1
+    antCount: 10
+    cells:
+    - {x: 17, y: 13}
+    - {x: 17, y: 14}
+    - {x: 17, y: 15}
+    - {x: 16, y: 15}
+    - {x: 15, y: 15}
+    - {x: 14, y: 15}
+    - {x: 14, y: 16}
+    - {x: 14, y: 17}
+    - {x: 14, y: 18}
+    - {x: 14, y: 19}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_21_5
+    colorId: 5
+    holderType: 0
+    antCount: 4
+    cells:
+    - {x: 17, y: 4}
+    - {x: 17, y: 3}
+    - {x: 18, y: 3}
+    - {x: 18, y: 4}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_22_8
+    colorId: 8
+    holderType: 0
+    antCount: 4
+    cells:
+    - {x: 5, y: 4}
+    - {x: 5, y: 3}
+    - {x: 6, y: 3}
+    - {x: 6, y: 4}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_23_9
+    colorId: 9
+    holderType: 0
+    antCount: 4
+    cells:
+    - {x: 7, y: 2}
+    - {x: 7, y: 1}
+    - {x: 8, y: 1}
+    - {x: 8, y: 2}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_24_4
+    colorId: 4
+    holderType: 0
+    antCount: 4
+    cells:
+    - {x: 13, y: 18}
+    - {x: 12, y: 18}
+    - {x: 12, y: 19}
+    - {x: 13, y: 19}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_25_3
+    colorId: 3
+    holderType: 1
+    antCount: 10
+    cells:
+    - {x: 8, y: 10}
+    - {x: 8, y: 9}
+    - {x: 7, y: 9}
+    - {x: 6, y: 9}
+    - {x: 5, y: 9}
+    - {x: 5, y: 10}
+    - {x: 4, y: 10}
+    - {x: 3, y: 10}
+    - {x: 2, y: 10}
+    - {x: 2, y: 9}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_26_3
+    colorId: 3
+    holderType: 0
+    antCount: 4
+    cells:
+    - {x: 7, y: 14}
+    - {x: 8, y: 14}
+    - {x: 8, y: 13}
+    - {x: 7, y: 13}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_27_11
+    colorId: 11
+    holderType: 0
+    antCount: 4
+    cells:
+    - {x: 0, y: 19}
+    - {x: 0, y: 18}
+    - {x: 1, y: 18}
+    - {x: 1, y: 19}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_28_12
+    colorId: 12
+    holderType: 0
+    antCount: 4
+    cells:
+    - {x: 7, y: 12}
+    - {x: 7, y: 11}
+    - {x: 8, y: 11}
+    - {x: 8, y: 12}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_29_4
+    colorId: 4
+    holderType: 1
+    antCount: 14
+    cells:
+    - {x: 12, y: 16}
+    - {x: 12, y: 15}
+    - {x: 11, y: 15}
+    - {x: 10, y: 15}
+    - {x: 9, y: 15}
+    - {x: 8, y: 15}
+    - {x: 7, y: 15}
+    - {x: 6, y: 15}
+    - {x: 6, y: 14}
+    - {x: 6, y: 13}
+    - {x: 6, y: 12}
+    - {x: 6, y: 11}
+    - {x: 6, y: 10}
+    - {x: 7, y: 10}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_30_0
+    colorId: 0
+    holderType: 0
+    antCount: 4
+    cells:
+    - {x: 13, y: 13}
+    - {x: 13, y: 12}
+    - {x: 12, y: 12}
+    - {x: 12, y: 13}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_31_7
+    colorId: 7
+    holderType: 1
+    antCount: 8
+    cells:
+    - {x: 19, y: 11}
+    - {x: 19, y: 12}
+    - {x: 19, y: 13}
+    - {x: 19, y: 14}
+    - {x: 19, y: 15}
+    - {x: 18, y: 15}
+    - {x: 18, y: 14}
+    - {x: 18, y: 13}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_32_8
+    colorId: 8
+    holderType: 1
+    antCount: 11
+    cells:
+    - {x: 9, y: 4}
+    - {x: 10, y: 4}
+    - {x: 11, y: 4}
+    - {x: 11, y: 5}
+    - {x: 11, y: 6}
+    - {x: 12, y: 6}
+    - {x: 12, y: 7}
+    - {x: 12, y: 8}
+    - {x: 12, y: 9}
+    - {x: 12, y: 10}
+    - {x: 13, y: 10}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_33_9
+    colorId: 9
+    holderType: 1
+    antCount: 6
+    cells:
+    - {x: 8, y: 7}
+    - {x: 8, y: 8}
+    - {x: 9, y: 8}
+    - {x: 9, y: 9}
+    - {x: 9, y: 10}
+    - {x: 9, y: 11}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_34_4
+    colorId: 4
+    holderType: 1
+    antCount: 9
+    cells:
+    - {x: 12, y: 3}
+    - {x: 12, y: 2}
+    - {x: 12, y: 1}
+    - {x: 11, y: 1}
+    - {x: 11, y: 2}
+    - {x: 11, y: 3}
+    - {x: 10, y: 3}
+    - {x: 10, y: 2}
+    - {x: 10, y: 1}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_35_7
+    colorId: 7
+    holderType: 0
+    antCount: 4
+    cells:
+    - {x: 17, y: 1}
+    - {x: 17, y: 0}
+    - {x: 18, y: 0}
+    - {x: 18, y: 1}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_36_3
+    colorId: 3
+    holderType: 0
+    antCount: 2
+    cells:
+    - {x: 19, y: 1}
+    - {x: 19, y: 0}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_37_3
+    colorId: 3
+    holderType: 1
+    antCount: 9
+    cells:
+    - {x: 8, y: 0}
+    - {x: 7, y: 0}
+    - {x: 6, y: 0}
+    - {x: 5, y: 0}
+    - {x: 4, y: 0}
+    - {x: 3, y: 0}
+    - {x: 2, y: 0}
+    - {x: 1, y: 0}
+    - {x: 0, y: 0}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_38_0
+    colorId: 0
+    holderType: 1
+    antCount: 6
+    cells:
+    - {x: 12, y: 5}
+    - {x: 12, y: 4}
+    - {x: 13, y: 4}
+    - {x: 13, y: 3}
+    - {x: 13, y: 2}
+    - {x: 13, y: 1}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_39_7
+    colorId: 7
+    holderType: 0
+    antCount: 2
+    cells:
+    - {x: 19, y: 4}
+    - {x: 19, y: 3}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_40_0
+    colorId: 0
+    holderType: 1
+    antCount: 11
+    cells:
+    - {x: 13, y: 14}
+    - {x: 13, y: 15}
+    - {x: 13, y: 16}
+    - {x: 13, y: 17}
+    - {x: 12, y: 17}
+    - {x: 11, y: 17}
+    - {x: 10, y: 17}
+    - {x: 9, y: 17}
+    - {x: 9, y: 16}
+    - {x: 10, y: 16}
+    - {x: 11, y: 16}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_41_4
+    colorId: 4
+    holderType: 1
+    antCount: 3
+    cells:
+    - {x: 11, y: 19}
+    - {x: 10, y: 19}
+    - {x: 9, y: 19}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_42_4
+    colorId: 4
+    holderType: 1
+    antCount: 3
+    cells:
+    - {x: 11, y: 18}
+    - {x: 10, y: 18}
+    - {x: 9, y: 18}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_43_8
+    colorId: 8
+    holderType: 1
+    antCount: 12
+    cells:
+    - {x: 5, y: 11}
+    - {x: 5, y: 12}
+    - {x: 5, y: 13}
+    - {x: 5, y: 14}
+    - {x: 5, y: 15}
+    - {x: 4, y: 15}
+    - {x: 3, y: 15}
+    - {x: 2, y: 15}
+    - {x: 2, y: 16}
+    - {x: 2, y: 17}
+    - {x: 2, y: 18}
+    - {x: 2, y: 19}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_44_11
+    colorId: 11
+    holderType: 1
+    antCount: 3
+    cells:
+    - {x: 0, y: 17}
+    - {x: 0, y: 16}
+    - {x: 0, y: 15}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_45_11
+    colorId: 11
+    holderType: 1
+    antCount: 3
+    cells:
+    - {x: 1, y: 17}
+    - {x: 1, y: 16}
+    - {x: 1, y: 15}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_46_7
+    colorId: 7
+    holderType: 1
+    antCount: 22
+    cells:
+    - {x: 13, y: 0}
+    - {x: 12, y: 0}
+    - {x: 11, y: 0}
+    - {x: 10, y: 0}
+    - {x: 9, y: 0}
+    - {x: 9, y: 1}
+    - {x: 9, y: 2}
+    - {x: 9, y: 3}
+    - {x: 8, y: 3}
+    - {x: 7, y: 3}
+    - {x: 7, y: 4}
+    - {x: 7, y: 5}
+    - {x: 6, y: 5}
+    - {x: 5, y: 5}
+    - {x: 4, y: 5}
+    - {x: 3, y: 5}
+    - {x: 2, y: 5}
+    - {x: 2, y: 6}
+    - {x: 1, y: 6}
+    - {x: 1, y: 5}
+    - {x: 0, y: 5}
+    - {x: 0, y: 6}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_47_8
+    colorId: 8
+    holderType: 1
+    antCount: 2
+    cells:
+    - {x: 6, y: 2}
+    - {x: 6, y: 1}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_48_8
+    colorId: 8
+    holderType: 1
+    antCount: 2
+    cells:
+    - {x: 5, y: 2}
+    - {x: 5, y: 1}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_49_10
+    colorId: 10
+    holderType: 1
+    antCount: 3
+    cells:
+    - {x: 17, y: 2}
+    - {x: 18, y: 2}
+    - {x: 19, y: 2}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_50_4
+    colorId: 4
+    holderType: 1
+    antCount: 11
+    cells:
+    - {x: 13, y: 9}
+    - {x: 13, y: 8}
+    - {x: 13, y: 7}
+    - {x: 13, y: 6}
+    - {x: 13, y: 5}
+    - {x: 14, y: 5}
+    - {x: 15, y: 5}
+    - {x: 16, y: 5}
+    - {x: 17, y: 5}
+    - {x: 18, y: 5}
+    - {x: 19, y: 5}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_51_7
+    colorId: 7
+    holderType: 1
+    antCount: 7
+    cells:
+    - {x: 16, y: 0}
+    - {x: 15, y: 0}
+    - {x: 14, y: 0}
+    - {x: 14, y: 1}
+    - {x: 14, y: 2}
+    - {x: 14, y: 3}
+    - {x: 14, y: 4}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_52_11
+    colorId: 11
+    holderType: 1
+    antCount: 4
+    cells:
+    - {x: 14, y: 9}
+    - {x: 14, y: 8}
+    - {x: 14, y: 7}
+    - {x: 14, y: 6}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_53_12
+    colorId: 12
+    holderType: 1
+    antCount: 12
+    cells:
+    - {x: 13, y: 11}
+    - {x: 14, y: 11}
+    - {x: 14, y: 10}
+    - {x: 15, y: 10}
+    - {x: 16, y: 10}
+    - {x: 17, y: 10}
+    - {x: 17, y: 11}
+    - {x: 17, y: 12}
+    - {x: 18, y: 12}
+    - {x: 18, y: 11}
+    - {x: 18, y: 10}
+    - {x: 19, y: 10}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_54_1
+    colorId: 1
+    holderType: 1
+    antCount: 19
+    cells:
+    - {x: 11, y: 12}
+    - {x: 10, y: 12}
+    - {x: 10, y: 11}
+    - {x: 10, y: 10}
+    - {x: 10, y: 9}
+    - {x: 10, y: 8}
+    - {x: 10, y: 7}
+    - {x: 9, y: 7}
+    - {x: 9, y: 6}
+    - {x: 8, y: 6}
+    - {x: 7, y: 6}
+    - {x: 7, y: 7}
+    - {x: 7, y: 8}
+    - {x: 6, y: 8}
+    - {x: 5, y: 8}
+    - {x: 5, y: 7}
+    - {x: 5, y: 6}
+    - {x: 6, y: 6}
+    - {x: 6, y: 7}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_55_11
+    colorId: 11
+    holderType: 1
+    antCount: 10
+    cells:
+    - {x: 0, y: 10}
+    - {x: 0, y: 9}
+    - {x: 0, y: 8}
+    - {x: 0, y: 7}
+    - {x: 1, y: 7}
+    - {x: 2, y: 7}
+    - {x: 2, y: 8}
+    - {x: 1, y: 8}
+    - {x: 1, y: 9}
+    - {x: 1, y: 10}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_56_9
+    colorId: 9
+    holderType: 1
+    antCount: 5
+    cells:
+    - {x: 8, y: 4}
+    - {x: 8, y: 5}
+    - {x: 9, y: 5}
+    - {x: 10, y: 5}
+    - {x: 10, y: 6}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_57_10
+    colorId: 10
+    holderType: 1
+    antCount: 4
+    cells:
+    - {x: 11, y: 9}
+    - {x: 11, y: 10}
+    - {x: 11, y: 11}
+    - {x: 12, y: 11}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_58_10
+    colorId: 10
+    holderType: 0
+    antCount: 2
+    cells:
+    - {x: 11, y: 8}
+    - {x: 11, y: 7}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_59_10
+    colorId: 10
+    holderType: 1
+    antCount: 4
+    cells:
+    - {x: 10, y: 14}
+    - {x: 9, y: 14}
+    - {x: 9, y: 13}
+    - {x: 9, y: 12}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_60_10
+    colorId: 10
+    holderType: 0
+    antCount: 2
+    cells:
+    - {x: 11, y: 14}
+    - {x: 12, y: 14}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_61_0
+    colorId: 0
+    holderType: 1
+    antCount: 2
+    cells:
+    - {x: 11, y: 13}
+    - {x: 10, y: 13}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_62_9
+    colorId: 9
+    holderType: 1
+    antCount: 16
+    cells:
+    - {x: 8, y: 16}
+    - {x: 8, y: 17}
+    - {x: 8, y: 18}
+    - {x: 8, y: 19}
+    - {x: 7, y: 19}
+    - {x: 6, y: 19}
+    - {x: 5, y: 19}
+    - {x: 5, y: 18}
+    - {x: 5, y: 17}
+    - {x: 5, y: 16}
+    - {x: 6, y: 16}
+    - {x: 6, y: 17}
+    - {x: 6, y: 18}
+    - {x: 7, y: 18}
+    - {x: 7, y: 17}
+    - {x: 7, y: 16}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_63_11
+    colorId: 11
+    holderType: 0
+    antCount: 1
+    cells:
+    - {x: 14, y: 14}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0
+  - queueId: Record_64_11
+    colorId: 11
+    holderType: 1
+    antCount: 2
+    cells:
+    - {x: 14, y: 13}
+    - {x: 14, y: 12}
+    fullPathToHole: []
+    isConnected: 0
+    connectedIndex: 0
+    isSecondColor: 0
+    secondColor: 0
+    pipeCount: 0
+    isLocked: 0
+    lockAmount: 0

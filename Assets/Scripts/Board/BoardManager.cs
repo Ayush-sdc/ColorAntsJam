@@ -1,46 +1,49 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening;
 
-[ExecuteAlways]
 public class BoardManager : MonoBehaviour
 {
     private static BoardManager instance;
-    public static BoardManager Instance
-    {
-        get
-        {
-            if (instance == null)
-            {
-                instance = UnityEngine.Object.FindFirstObjectByType<BoardManager>();
-            }
-            return instance;
-        }
-        private set => instance = value;
-    }
+    public static BoardManager Instance => instance;
 
-    [Header("Board Configuration")]
+    [Header("Board References")]
     [SerializeField] private Transform boardParent;
-    [SerializeField] private GameObject tilePrefab;
     [SerializeField] private GameObject holePrefab;
     [SerializeField] private GameObject antQueuePrefab;
 
-    [Header("Hierarchy Sync Options")]
-    [Tooltip("If true, BoardManager will preserve manually placed scene Hole and Queue GameObjects instead of wiping and respawning them on Play.")]
-    [SerializeField] private bool preserveSceneObjects = true;
+    [Header("Debug Options")]
+    [Tooltip("Debug only: If true, BoardManager will preserve manually placed scene Hole and Queue GameObjects instead of spawning from Level assets. Keep false for normal gameplay.")]
+    [SerializeField] private bool preserveSceneObjects = false;
+    [Tooltip("When false, routine board diagnostics are suppressed to keep Console clean.")]
+    [SerializeField] private bool enableDiagnostics = false;
+    private bool isTestInstance = false;
 
+    [Header("Runtime Grid State")]
     [SerializeField] private int width = 9;
     [SerializeField] private int height = 6;
     [SerializeField] private float cellSize = 1.0f;
 
+    // Grid occupancy maps
     private readonly Dictionary<Vector2Int, HoleController> holesMap = new Dictionary<Vector2Int, HoleController>();
     private readonly List<AntQueueController> activeQueues = new List<AntQueueController>();
 
+    [SerializeField] private Level currentLevel;
+
     public int Width => width;
     public int Height => height;
+    public int GridWidth => width;
+    public int GridHeight => height;
     public float CellSize => cellSize;
+    public Level CurrentLevel => currentLevel;
     public IReadOnlyList<AntQueueController> ActiveQueues => activeQueues;
-    public Transform BoardParent => boardParent;
+    public IReadOnlyDictionary<Vector2Int, HoleController> HolesMap => holesMap;
+    public bool EnableDiagnostics { get => enableDiagnostics; set => enableDiagnostics = value; }
+    public bool IsTestInstance => isTestInstance;
+
+    private bool isSettingUpBoard = false;
+    public bool IsSettingUpBoard => isSettingUpBoard;
 
     public static event Action OnBoardStateChanged;
 
@@ -59,6 +62,14 @@ public class BoardManager : MonoBehaviour
         if (instance == null)
         {
             instance = this;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (instance == this)
+        {
+            instance = null;
         }
     }
 
@@ -88,151 +99,396 @@ public class BoardManager : MonoBehaviour
         return new Vector2Int(x, y);
     }
 
-    public void SetupBoard(Level level)
+    public void SetupBoard(Level level, bool isTestInstance = false)
     {
-        instance = this;
+        this.isTestInstance = isTestInstance;
+        this.isSettingUpBoard = true;
+        if (!isTestInstance)
+        {
+            instance = this;
+        }
 
+        if (level == null)
+        {
+            Debug.LogError("[BoardManager] SetupBoard called with null Level asset!");
+            this.isSettingUpBoard = false;
+            return;
+        }
+
+        currentLevel = level;
         width = level.GridWidth;
         height = level.GridHeight;
-        cellSize = level.CellSize;
+        cellSize = level.CellSize > 0f ? level.CellSize : 1.0f;
+
+        // 1. Clear all previously spawned gameplay objects
+        ClearBoard();
 
         Transform parentTransform = boardParent != null ? boardParent : transform;
 
-        // 1. Update/Frame Background Environment if present
-        if (GardenBackgroundManager.Instance != null)
+        // 2. Update/Frame Background Environment (live gameplay only)
+        if (!isTestInstance && GardenBackgroundManager.Instance != null)
         {
             GardenBackgroundManager.Instance.BuildEnvironment(width, height, cellSize);
         }
 
-        // Check if scene already contains pre-placed holes & queues (Edit Mode customization)
-        HoleController[] existingHoles = parentTransform.GetComponentsInChildren<HoleController>(true);
-        AntQueueController[] existingQueues = parentTransform.GetComponentsInChildren<AntQueueController>(true);
+        #if UNITY_EDITOR
+        string assetPath = UnityEditor.AssetDatabase.GetAssetPath(level);
+        #else
+        string assetPath = "Runtime Build";
+        #endif
+        bool isRefLevel = ReferenceLevelRuntimeAdapter.IsReferenceLevel(level);
 
-        if (preserveSceneObjects && existingHoles != null && existingHoles.Length > 0)
+        if (enableDiagnostics)
         {
-            holesMap.Clear();
-            activeQueues.Clear();
+            Debug.Log($"[BoardManager Diagnostics]\n" +
+                      $"  Asset Name: {level.name}\n" +
+                      $"  Asset Path: {assetPath}\n" +
+                      $"  GridSize: {level.GridSize} ({width}x{height})\n" +
+                      $"  AntQueues Count: {level.AntQueues?.Count ?? 0}\n" +
+                      $"  Holes Count: {level.Holes?.Count ?? 0}\n" +
+                      $"  IsReferenceLevel: {isRefLevel}");
+        }
 
-            foreach (var hole in existingHoles)
-            {
-                RegisterHoleInMap(hole);
-                hole.EnsureVisuals();
-            }
+        // 3. Spawn Holes and Queues
+        if (isRefLevel)
+        {
+            if (enableDiagnostics) Debug.Log("[BoardManager Diagnostics] Executing Branch: SetupReferenceBoard()");
+            SetupReferenceBoard(level);
+        }
+        else
+        {
+            if (enableDiagnostics) Debug.Log("[BoardManager Diagnostics] Executing Branch: SetupHandmadeBoard()");
+            SetupHandmadeBoard(level);
+        }
 
-            foreach (var q in existingQueues)
+        // 4. Spawn clean neutral grid visual dots (skipping all hole cells)
+        SpawnGridVisuals(level);
+
+        // 5. Dynamic camera auto-framing for entire finalized board layout (live gameplay only)
+        if (!isTestInstance)
+        {
+            AdjustCameraFraming(level);
+        }
+
+        // 6. Log active runtime hierarchy state only if diagnostics enabled
+        if (enableDiagnostics)
+        {
+            Debug.Log($"[BoardManager Diagnostics] activeQueues.Count = {activeQueues.Count}");
+            foreach (var q in activeQueues)
             {
-                if (!activeQueues.Contains(q))
+                if (q == null) continue;
+                var units = q.Units;
+                string unitsLog = "";
+                for (int i = 0; i < units.Count; i++)
                 {
-                    activeQueues.Add(q);
+                    var u = units[i];
+                    if (u == null) continue;
+                    var renderers = u.GetComponentsInChildren<MeshRenderer>(true);
+                    var mf = u.GetComponentInChildren<MeshFilter>(true);
+                    string meshName = (mf != null && mf.sharedMesh != null) ? mf.sharedMesh.name : "null";
+                    string matName = (renderers.Length > 0 && renderers[0].sharedMaterial != null) ? renderers[0].sharedMaterial.name : "null";
+                    bool rEnabled = renderers.Length > 0 && renderers[0].enabled;
+                    unitsLog += $"\n    Ant #{i} at {u.transform.position}: MeshRenderer count={renderers.Length}, enabled={rEnabled}, sharedMesh='{meshName}', sharedMaterial='{matName}'";
                 }
+                Debug.Log($"[BoardManager Diagnostics] Queue '{q.QueueId}': Cells={q.CurrentBodyCoordinates?.Count ?? 0}, GameObject.activeInHierarchy={q.gameObject.activeInHierarchy}, AntUnits={units?.Count ?? 0}{unitsLog}");
             }
 
-            // Ensure grid visuals if missing
-            if (parentTransform.Find("TilesHolder") == null)
+            Debug.Log($"[BoardManager Diagnostics] holesMap.Count = {holesMap.Count}");
+            foreach (var kvp in holesMap)
             {
-                SpawnGridVisuals(level);
+                var h = kvp.Value;
+                if (h == null) continue;
+                Debug.Log($"[BoardManager Diagnostics] Hole at cell {kvp.Key}: Color={h.Color}, GridCoord={h.GridCoordinate}, WorldPos={h.transform.position}, IsRightSide={h.IsRightSide}, Rows={h.ParallelRows}, RemainingCount={h.RemainingCount}");
             }
+        }
 
-            OnBoardStateChanged?.Invoke();
+        this.isSettingUpBoard = false;
+    }
+
+    private void SetupHandmadeBoard(Level level)
+    {
+        if (level.Holes != null)
+        {
+            foreach (var holeData in level.Holes)
+            {
+                int matchingAnts = 0;
+                if (level.AntQueues != null)
+                {
+                    foreach (var q in level.AntQueues)
+                    {
+                        if (q.AntColor == holeData.HoleColor)
+                        {
+                            matchingAnts += q.AntCount;
+                        }
+                    }
+                }
+                int initialCount = matchingAnts > 0 ? matchingAnts : holeData.DisplayCount;
+                SpawnHole(holeData, initialCount);
+            }
+        }
+
+        if (level.AntQueues != null)
+        {
+            foreach (var queueData in level.AntQueues)
+            {
+                SpawnAntQueue(queueData);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reconstructs the runtime board for a raw reference Level using ReferenceLevelRuntimeAdapter.
+    /// </summary>
+    private void SetupReferenceBoard(Level level)
+    {
+        var refHoles = ReferenceLevelRuntimeAdapter.ExtractHoles(level);
+        var refQueues = ReferenceLevelRuntimeAdapter.ExtractPlayableQueues(level, refHoles);
+
+        foreach (var rHole in refHoles)
+        {
+            SpawnReferenceHole(rHole);
+        }
+
+        foreach (var rQueue in refQueues)
+        {
+            SpawnReferenceAntQueue(rQueue);
+        }
+    }
+
+    private void SpawnReferenceHole(RuntimeReferenceHole rHole)
+    {
+        Transform parentTransform = boardParent != null ? boardParent : transform;
+
+        Vector2Int entrance = rHole.EntranceCell;
+        bool isRightSide = rHole.IsRightSide;
+        int rowCount = rHole.ParallelRows;
+
+        Vector3 worldPos;
+        if (rowCount >= 2)
+        {
+            float xOffset = 0.5f * cellSize;
+            float zOffset = 0.5f * cellSize;
+            worldPos = GridToWorldPosition(entrance, 0.01f) + new Vector3(xOffset, 0f, zOffset);
+        }
+        else
+        {
+            float xOffset = isRightSide ? 0.5f : -0.5f;
+            worldPos = GridToWorldPosition(entrance, 0.01f) + new Vector3(xOffset * cellSize, 0f, 0f);
+        }
+
+        GameObject holeObj;
+        if (holePrefab != null)
+        {
+            holeObj = Instantiate(holePrefab, worldPos, Quaternion.identity, parentTransform);
+        }
+        else
+        {
+            holeObj = new GameObject($"Hole_{rHole.AntColor}_{entrance.x}_{entrance.y}");
+            holeObj.transform.SetParent(parentTransform, false);
+            holeObj.transform.position = worldPos;
+        }
+
+        var controller = holeObj.GetComponent<HoleController>();
+        if (controller == null)
+        {
+            controller = holeObj.AddComponent<HoleController>();
+        }
+
+        controller.Initialize(rHole.ColorID, entrance, rHole.OccupiedCells, rHole.Capacity, isRightSide, rowCount);
+
+        // Register all occupied footprint cells in holesMap
+        if (rHole.OccupiedCells != null && rHole.OccupiedCells.Count > 0)
+        {
+            foreach (var cell in rHole.OccupiedCells)
+            {
+                holesMap[cell] = controller;
+            }
+        }
+        else
+        {
+            RegisterHoleInMap(controller);
+        }
+    }
+
+    private void SpawnReferenceAntQueue(RuntimeReferenceQueue rQueue)
+    {
+        Transform parentTransform = boardParent != null ? boardParent : transform;
+
+        GameObject queueObj;
+        if (antQueuePrefab != null)
+        {
+            queueObj = Instantiate(antQueuePrefab, Vector3.zero, Quaternion.identity, parentTransform);
+        }
+        else
+        {
+            queueObj = new GameObject($"Queue_{rQueue.QueueId}");
+            queueObj.transform.SetParent(parentTransform, false);
+            queueObj.transform.localPosition = Vector3.zero;
+        }
+
+        var controller = queueObj.GetComponent<AntQueueController>();
+        if (controller == null)
+        {
+            controller = queueObj.AddComponent<AntQueueController>();
+        }
+
+        AntQueueData queueData = new AntQueueData(
+            rQueue.QueueId,
+            rQueue.ColorID,
+            1,
+            rQueue.BodyCoordinates,
+            rQueue.IsConnected,
+            rQueue.ConnectedIndex,
+            rQueue.IsSecondColor,
+            rQueue.SecondColor,
+            rQueue.PipeCount,
+            rQueue.IsLocked,
+            rQueue.LockAmount,
+            rQueue.PathToHole
+        );
+
+        controller.Initialize(queueData);
+        activeQueues.Add(controller);
+    }
+
+    /// <summary>
+    /// Dynamically frames the camera to fit any board dimensions (GridWidth, GridHeight, CellSize),
+    /// accounting for flank holders, top gameplay UI safe area headroom, and screen aspect ratio.
+    /// </summary>
+    private void AdjustCameraFraming(Level level)
+    {
+        if (BoardCameraController.Instance != null)
+        {
+            BoardCameraController.Instance.FrameLevel(level);
             return;
         }
 
-        ClearBoard();
+        Camera cam = Camera.main;
+        if (cam == null) return;
 
-        // 2. Spawn Grid Visual Tiles & Static Ground Dots ONLY at ant coordinates
-        SpawnGridVisuals(level);
+        int w = level.GridWidth > 0 ? level.GridWidth : 9;
+        int h = level.GridHeight > 0 ? level.GridHeight : 6;
+        float cs = level.CellSize > 0f ? level.CellSize : 1.0f;
 
-        // 3. Spawn Holes with initial capacity equal to matching queue ants
-        foreach (var holeData in level.Holes)
+        // Visual bounds in world coordinates centered around (0,0)
+        float minX = -(w - 1) * 0.5f * cs;
+        float maxX = (w - 1) * 0.5f * cs;
+        float minZ = -(h - 1) * 0.5f * cs;
+        float maxZ = (h - 1) * 0.5f * cs;
+
+        // Expand bounds to tightly fit all holes and their actual physical geometry
+        if (level.Holes != null)
         {
-            int totalAntsForColor = 0;
-            if (level.AntQueues != null)
+            foreach (var hole in level.Holes)
             {
-                foreach (var q in level.AntQueues)
+                int rowCount = hole.ParallelRows;
+                bool isRight = (rowCount >= 2) ? (hole.GridCoordinate.x >= w / 2) : (hole.GridCoordinate.x >= 4);
+                Vector3 hPos;
+                float halfW = (rowCount >= 2) ? 1.05f : 1.05f;
+                float halfH = (rowCount >= 2) ? 1.05f : 0.48f;
+
+                if (rowCount >= 2)
                 {
-                    if (q.AntColor == holeData.HoleColor)
-                    {
-                        totalAntsForColor += q.InitialBodyCoordinates.Count;
-                    }
+                    hPos = GridToWorldPosition(hole.GridCoordinate, 0f) + new Vector3(0.5f * cs, 0f, 0.5f * cs);
                 }
+                else
+                {
+                    float xOff = isRight ? 0.5f : -0.5f;
+                    hPos = GridToWorldPosition(hole.GridCoordinate, 0f) + new Vector3(xOff * cs, 0f, 0f);
+                }
+
+                minX = Mathf.Min(minX, hPos.x - halfW);
+                maxX = Mathf.Max(maxX, hPos.x + halfW);
+                minZ = Mathf.Min(minZ, hPos.z - halfH);
+                maxZ = Mathf.Max(maxZ, hPos.z + halfH);
             }
-
-            int initialCount = totalAntsForColor > 0 ? totalAntsForColor : holeData.DisplayCount;
-            SpawnHole(holeData, initialCount);
         }
 
-        // 4. Spawn Ant Queues
-        foreach (var queueData in level.AntQueues)
+        // Tightly framed dimensions with small margins
+        float padX = 0.55f * cs;
+        float padBottom = 0.65f * cs;
+        float padTop = 1.75f * cs; // UI safe area for header/timer
+
+        float totalWidth = (maxX - minX) + (padX * 2f);
+        float totalHeight = (maxZ - minZ) + padTop + padBottom;
+
+        float aspect = cam.aspect > 0.01f ? cam.aspect : (Screen.width / (float)Mathf.Max(1, Screen.height));
+        float vFovRad = cam.fieldOfView * Mathf.Deg2Rad;
+        float tanHalfVFov = Mathf.Tan(vFovRad * 0.5f);
+        float tanHalfHFov = tanHalfVFov * aspect;
+
+        float requiredHeightForWidth = (totalWidth * 0.5f) / tanHalfHFov;
+        float requiredHeightForHeight = (totalHeight * 0.5f) / tanHalfVFov;
+
+        float targetY = Mathf.Max(requiredHeightForWidth, requiredHeightForHeight);
+        if (cam.orthographic)
         {
-            SpawnAntQueue(queueData);
+            float orthoForWidth = totalWidth / (2.0f * aspect);
+            float orthoForHeight = totalHeight * 0.5f;
+            cam.orthographicSize = Mathf.Max(orthoForWidth, orthoForHeight);
+            targetY = 15f;
         }
 
-        OnBoardStateChanged?.Invoke();
+        // Center on the board with slight headroom offset for top UI
+        float centerX = (minX + maxX) * 0.5f;
+        float centerZ = ((minZ + maxZ) * 0.5f) - (padTop - padBottom) * 0.35f;
+
+        cam.transform.position = new Vector3(centerX, targetY, centerZ);
+        cam.transform.rotation = Quaternion.Euler(88f, 0f, 0f);
     }
 
     private void SpawnGridVisuals(Level level)
     {
         Transform parentTransform = boardParent != null ? boardParent : transform;
-        Transform gridHolder = new GameObject("TilesHolder").transform;
-        gridHolder.SetParent(parentTransform);
-        gridHolder.localPosition = Vector3.zero;
 
-        // 1. Clean, elegant studio floor backdrop
-        GameObject floorObj = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        floorObj.name = "StudioFloor";
-        floorObj.transform.SetParent(gridHolder);
-        floorObj.transform.localPosition = new Vector3(0f, -0.05f, 0f);
-        floorObj.transform.localScale = new Vector3((width * cellSize + 20f) * 0.1f, 1f, (height * cellSize + 20f) * 0.1f);
-        SafeDestroy(floorObj.GetComponent<Collider>());
+        GameObject tilesHolder = new GameObject("TilesHolder");
+        tilesHolder.transform.SetParent(parentTransform, false);
 
-        var floorRenderer = floorObj.GetComponent<MeshRenderer>();
-        if (floorRenderer != null)
-        {
-            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-            mat.color = AntColorPalette.StudioBackground;
-            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.08f);
-            floorRenderer.material = mat;
-        }
-
-        // 2. Static Circular Ground Dots ONLY at exact coordinates where ants exist (dots = ants)
         Material dotMat = AntColorPalette.GetGroundDotMaterial();
-        GameObject dotsHolder = new GameObject("GroundDotsHolder");
-        dotsHolder.transform.SetParent(gridHolder);
-        dotsHolder.transform.localPosition = Vector3.zero;
+        HashSet<Vector2Int> disabledSet = level != null ? level.GetCombinedDisabledCells() : new HashSet<Vector2Int>();
 
-        HashSet<Vector2Int> antCoordinates = new HashSet<Vector2Int>();
+        // Collect initial ant body coordinates across all queues (skipping holes and disabled cells)
+        HashSet<Vector2Int> antCells = new HashSet<Vector2Int>();
         if (level != null && level.AntQueues != null)
         {
             foreach (var q in level.AntQueues)
             {
                 if (q.InitialBodyCoordinates != null)
                 {
-                    foreach (var coord in q.InitialBodyCoordinates)
+                    foreach (var cell in q.InitialBodyCoordinates)
                     {
-                        antCoordinates.Add(coord);
+                        if (!holesMap.ContainsKey(cell) && !disabledSet.Contains(cell))
+                        {
+                            antCells.Add(cell);
+                        }
                     }
                 }
             }
         }
 
-        foreach (var coord in antCoordinates)
+        foreach (var pos in antCells)
         {
-            Vector3 dotWorldPos = GridToWorldPosition(coord, 0.005f);
+            Vector3 worldPos = GridToWorldPosition(pos, 0.004f);
+            CreateProceduralGridDot(tilesHolder.transform, worldPos, dotMat);
+        }
+    }
 
-            GameObject dot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            dot.name = $"TileDot_{coord.x}_{coord.y}";
-            dot.transform.SetParent(dotsHolder.transform);
-            dot.transform.position = dotWorldPos;
-            dot.transform.localScale = new Vector3(0.36f * cellSize, 0.005f, 0.36f * cellSize);
-            SafeDestroy(dot.GetComponent<Collider>());
+    private void CreateProceduralGridDot(Transform parent, Vector3 worldPos, Material dotMat)
+    {
+        GameObject dot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        dot.name = "GridDot";
+        dot.transform.SetParent(parent, false);
+        dot.transform.position = worldPos;
+        dot.transform.localScale = new Vector3(0.28f, 0.001f, 0.28f);
 
-            var dotRenderer = dot.GetComponent<MeshRenderer>();
-            if (dotRenderer != null)
-            {
-                dotRenderer.material = dotMat;
-                dotRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                dotRenderer.receiveShadows = true;
-            }
+        SafeDestroy(dot.GetComponent<Collider>());
+
+        var dotRenderer = dot.GetComponent<MeshRenderer>();
+        if (dotRenderer != null && dotMat != null)
+        {
+            dotRenderer.material = dotMat;
+            dotRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            dotRenderer.receiveShadows = false;
         }
     }
 
@@ -240,44 +496,37 @@ public class BoardManager : MonoBehaviour
     {
         Transform parentTransform = boardParent != null ? boardParent : transform;
 
-        // Multiple parallel rows check (e.g. 2 parallel rows double the width)
-        int rowCount = holeData.DisplayCount >= 2 ? 2 : 1;
+        int rowCount = holeData.ParallelRows;
+        bool isRightSide = (rowCount >= 2) ? (holeData.GridCoordinate.x >= width / 2) : (holeData.GridCoordinate.x >= 4);
 
         Vector3 worldPos;
-        bool isRightSide = holeData.GridCoordinate.x >= 4;
-
         if (rowCount >= 2)
         {
-            // For 2 parallel rows, center over the 2x2 grid cell area
-            float xOffset = (holeData.GridCoordinate.x >= 4 ? 0.5f : 0.5f) * cellSize;
-            // For top-left blue box (x=1, y=9), red box (x=1, y=0), green box (x=10, y=9), orange (x=5, y=0), cyan (x=10, y=2)
-            if (holeData.GridCoordinate.x == 1 && holeData.GridCoordinate.y >= 8)
-            {
-                // Top-left blue box spans x=0..1, y=9..10 -> center at x=0.5, y=9.5
-                xOffset = -0.5f * cellSize;
-            }
+            float xOffset = 0.5f * cellSize;
             float zOffset = 0.5f * cellSize;
             worldPos = GridToWorldPosition(holeData.GridCoordinate, 0.01f) + new Vector3(xOffset, 0f, zOffset);
         }
         else
         {
-            float xOffset = holeData.GridCoordinate.x >= 4 ? 0.5f : -0.5f;
+            float xOffset = isRightSide ? 0.5f : -0.5f;
             worldPos = GridToWorldPosition(holeData.GridCoordinate, 0.01f) + new Vector3(xOffset * cellSize, 0f, 0f);
         }
 
         GameObject holeObj;
-        HoleController controller;
-
         if (holePrefab != null)
         {
             holeObj = Instantiate(holePrefab, worldPos, Quaternion.identity, parentTransform);
-            controller = holeObj.GetComponent<HoleController>();
         }
         else
         {
             holeObj = new GameObject($"Hole_{holeData.HoleColor}_{holeData.GridCoordinate.x}_{holeData.GridCoordinate.y}");
-            holeObj.transform.SetParent(parentTransform);
+            holeObj.transform.SetParent(parentTransform, false);
             holeObj.transform.position = worldPos;
+        }
+
+        var controller = holeObj.GetComponent<HoleController>();
+        if (controller == null)
+        {
             controller = holeObj.AddComponent<HoleController>();
         }
 
@@ -289,90 +538,203 @@ public class BoardManager : MonoBehaviour
     {
         if (controller == null) return;
 
+        if (controller.OccupiedCells != null && controller.OccupiedCells.Count > 0)
+        {
+            foreach (var cell in controller.OccupiedCells)
+            {
+                holesMap[cell] = controller;
+            }
+            return;
+        }
+
         Vector2Int primaryCoord = controller.GridCoordinate;
         holesMap[primaryCoord] = controller;
 
         int rowCount = controller.ParallelRows;
-        int xDir = (primaryCoord.x == 1 && primaryCoord.y >= 8) ? -1 : (primaryCoord.x >= 4 ? 1 : 1);
-        Vector2Int secondaryCoord = primaryCoord + new Vector2Int(xDir, 0);
-        holesMap[secondaryCoord] = controller;
-
         if (rowCount >= 2)
         {
-            Vector2Int upperPrimary = primaryCoord + new Vector2Int(0, 1);
-            Vector2Int upperSecondary = secondaryCoord + new Vector2Int(0, 1);
-            holesMap[upperPrimary] = controller;
-            holesMap[upperSecondary] = controller;
-        }
-    }
-
-    private void SpawnAntQueue(AntQueueData data)
-    {
-        Transform parentTransform = boardParent != null ? boardParent : transform;
-        GameObject queueObj;
-        AntQueueController queueController;
-
-        if (antQueuePrefab != null)
-        {
-            queueObj = Instantiate(antQueuePrefab, Vector3.zero, Quaternion.identity, parentTransform);
-            queueController = queueObj.GetComponent<AntQueueController>();
+            holesMap[primaryCoord + new Vector2Int(1, 0)] = controller;
+            holesMap[primaryCoord + new Vector2Int(0, 1)] = controller;
+            holesMap[primaryCoord + new Vector2Int(1, 1)] = controller;
         }
         else
         {
-            queueObj = new GameObject($"AntQueue_{data.QueueId}_{data.AntColor}");
-            queueObj.transform.SetParent(parentTransform);
-            queueController = queueObj.AddComponent<AntQueueController>();
+            int xDir = controller.IsRightSide ? 1 : -1;
+            Vector2Int secondaryCoord = primaryCoord + new Vector2Int(xDir, 0);
+            holesMap[secondaryCoord] = controller;
+        }
+    }
+
+    private void SpawnAntQueue(AntQueueData queueData)
+    {
+        Transform parentTransform = boardParent != null ? boardParent : transform;
+
+        GameObject queueObj;
+        if (antQueuePrefab != null)
+        {
+            queueObj = Instantiate(antQueuePrefab, Vector3.zero, Quaternion.identity, parentTransform);
+        }
+        else
+        {
+            queueObj = new GameObject($"Queue_{queueData.QueueId}");
+            queueObj.transform.SetParent(parentTransform, false);
+            queueObj.transform.localPosition = Vector3.zero;
         }
 
-        queueController.Initialize(data);
-        activeQueues.Add(queueController);
+        var controller = queueObj.GetComponent<AntQueueController>();
+        if (controller == null)
+        {
+            controller = queueObj.AddComponent<AntQueueController>();
+        }
+
+        controller.Initialize(queueData);
+        activeQueues.Add(controller);
     }
 
     public HoleController GetHoleAt(Vector2Int coord)
     {
-        holesMap.TryGetValue(coord, out var hole);
-        return hole;
+        if (holesMap.TryGetValue(coord, out var hole))
+        {
+            return hole;
+        }
+        return null;
     }
 
-    public AntQueueController GetQueueOccupying(Vector2Int coordinate, AntQueueController excludeQueue = null)
+    public AntQueueController GetQueueOccupying(Vector2Int coord, AntQueueController ignoreQueue = null)
     {
-        for (int i = 0; i < activeQueues.Count; i++)
+        foreach (var q in activeQueues)
         {
-            var queue = activeQueues[i];
-            if (queue == excludeQueue) continue;
-
-            if (queue.Occupies(coordinate))
+            if (q == null || q == ignoreQueue) continue;
+            if (q.Occupies(coord))
             {
-                return queue;
+                return q;
             }
         }
         return null;
     }
 
-    /// <summary>
-    /// Checks whether the entire remaining path for the queue is completely clear of ANY other queue's current body.
-    /// </summary>
-    public bool IsPathClearForQueue(AntQueueController queue)
+    public bool IsCellFree(Vector2Int coord)
     {
-        var remainingPath = queue.GetRemainingPath();
-        if (remainingPath == null || remainingPath.Count == 0) return false;
-
-        // Check if destination matches correct color hole and is not full
-        Vector2Int destination = remainingPath[remainingPath.Count - 1];
-        var hole = GetHoleAt(destination);
-        if (hole == null || hole.Color != queue.Color || hole.IsFull)
+        if (coord.x < 0 || coord.x >= width || coord.y < 0 || coord.y >= height)
         {
             return false;
         }
 
-        // Check each step on the path ahead (from head forward)
-        for (int i = 1; i < remainingPath.Count; i++)
+        if (currentLevel != null && currentLevel.GetCombinedDisabledCells().Contains(coord))
         {
-            Vector2Int step = remainingPath[i];
-            AntQueueController blocker = GetQueueOccupying(step, queue);
-            if (blocker != null)
+            return false;
+        }
+
+        if (GetHoleAt(coord) != null) return false;
+        if (GetQueueOccupying(coord) != null) return false;
+
+        return true;
+    }
+
+    /// <summary>
+    /// Returns all active ant queues that belong to the same connected group as the given queue.
+    /// If the queue is not connected, returns a list containing only the queue itself.
+    /// </summary>
+    public List<AntQueueController> GetConnectedGroup(AntQueueController queue)
+    {
+        var group = new List<AntQueueController>();
+        if (queue == null) return group;
+
+        if (!queue.IsConnected || queue.ConnectedIndex < 0)
+        {
+            group.Add(queue);
+            return group;
+        }
+
+        int targetIndex = queue.ConnectedIndex;
+        foreach (var q in activeQueues)
+        {
+            if (q != null && q.IsConnected && q.ConnectedIndex == targetIndex)
             {
-                return false; // Path blocked by another queue!
+                group.Add(q);
+            }
+        }
+
+        if (group.Count == 0)
+        {
+            group.Add(queue);
+        }
+
+        return group;
+    }
+
+    /// <summary>
+    /// Validates movement for a queue or its entire connected group atomically.
+    /// If all members have valid paths, starts synchronized movement for all members together.
+    /// If any member is blocked, all members remain stationary and play blocked feedback.
+    /// </summary>
+    public bool TryStartMove(AntQueueController queue)
+    {
+        if (queue == null || queue.IsMoving) return false;
+
+        var group = GetConnectedGroup(queue);
+
+        // Check if any member in the group is already moving
+        foreach (var member in group)
+        {
+            if (member == null || member.IsMoving) return false;
+        }
+
+        // Validate path for every member in the connected group
+        var groupPaths = new Dictionary<AntQueueController, List<Vector2Int>>();
+        bool allValid = true;
+
+        foreach (var member in group)
+        {
+            var path = AntPathfinder.FindPath(this, member);
+            if (path == null || path.Count < 2)
+            {
+                allValid = false;
+                break;
+            }
+            groupPaths[member] = path;
+        }
+
+        if (!allValid)
+        {
+            // Atomic rejection: all group members stay stationary and play blocked feedback
+            foreach (var member in group)
+            {
+                if (member != null)
+                {
+                    member.TriggerBlockedFeedback();
+                }
+            }
+            return false;
+        }
+
+        // All valid: atomically launch synchronized movement for all group members simultaneously
+        foreach (var kvp in groupPaths)
+        {
+            if (kvp.Key != null)
+            {
+                kvp.Key.StartMoveAlongPath(kvp.Value);
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Checks whether an ant queue (or all members of its connected group) has a valid unblocked path.
+    /// </summary>
+    public bool IsPathClearForQueue(AntQueueController queue)
+    {
+        if (queue == null) return false;
+
+        var group = GetConnectedGroup(queue);
+        foreach (var member in group)
+        {
+            if (member == null) return false;
+            var path = AntPathfinder.FindPath(this, member);
+            if (path == null || path.Count < 2)
+            {
+                return false;
             }
         }
 
@@ -381,36 +743,74 @@ public class BoardManager : MonoBehaviour
 
     public void OnQueueCompleted(AntQueueController queue)
     {
-        if (activeQueues.Contains(queue))
+        if (queue != null && activeQueues.Contains(queue))
         {
             activeQueues.Remove(queue);
+            queue.transform.DOKill();
             SafeDestroy(queue.gameObject);
         }
 
-        OnBoardStateChanged?.Invoke();
+        if (!isTestInstance)
+        {
+            OnBoardStateChanged?.Invoke();
+        }
+    }
+
+    public void UnregisterQueue(AntQueueController queue)
+    {
+        OnQueueCompleted(queue);
     }
 
     public void ClearBoard()
     {
+        Transform parentTransform = boardParent != null ? boardParent : transform;
+
+        Transform tiles = parentTransform.Find("TilesHolder");
+        if (tiles != null)
+        {
+            tiles.DOKill();
+            SafeDestroy(tiles.gameObject);
+        }
+
+        foreach (var hole in holesMap.Values)
+        {
+            if (hole != null)
+            {
+                hole.transform.DOKill();
+                SafeDestroy(hole.gameObject);
+            }
+        }
         holesMap.Clear();
+
         foreach (var q in activeQueues)
         {
-            if (q != null) SafeDestroy(q.gameObject);
+            if (q != null)
+            {
+                q.transform.DOKill();
+                SafeDestroy(q.gameObject);
+            }
         }
         activeQueues.Clear();
 
-        // Destroy any leftover children in transform
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
-            SafeDestroy(transform.GetChild(i).gameObject);
+            var child = transform.GetChild(i);
+            if (child != null)
+            {
+                child.DOKill();
+                SafeDestroy(child.gameObject);
+            }
         }
-
-        // Destroy children in boardParent if separate
         if (boardParent != null && boardParent != transform)
         {
             for (int i = boardParent.childCount - 1; i >= 0; i--)
             {
-                SafeDestroy(boardParent.GetChild(i).gameObject);
+                var child = boardParent.GetChild(i);
+                if (child != null)
+                {
+                    child.DOKill();
+                    SafeDestroy(child.gameObject);
+                }
             }
         }
     }
@@ -418,13 +818,7 @@ public class BoardManager : MonoBehaviour
     private void SafeDestroy(UnityEngine.Object obj)
     {
         if (obj == null) return;
-        if (Application.isPlaying)
-        {
-            Destroy(obj);
-        }
-        else
-        {
-            DestroyImmediate(obj);
-        }
+        if (Application.isPlaying) Destroy(obj);
+        else DestroyImmediate(obj);
     }
 }

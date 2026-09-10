@@ -97,16 +97,15 @@ public static class AntColorPalette
         Material newMat = new Material(uLitShader);
         newMat.name = $"AntMat_{color}";
 
+        Color col = GetColor(color);
+        newMat.color = col;
+        if (newMat.HasProperty("_BaseColor")) newMat.SetColor("_BaseColor", col);
+
         Texture2D tex = GetTexture(color);
         if (tex != null)
         {
             newMat.mainTexture = tex;
             if (newMat.HasProperty("_BaseMap")) newMat.SetTexture("_BaseMap", tex);
-            newMat.color = Color.white;
-        }
-        else
-        {
-            newMat.color = GetColor(color);
         }
 
         if (newMat.HasProperty("_Smoothness")) newMat.SetFloat("_Smoothness", 0.65f);
@@ -116,11 +115,43 @@ public static class AntColorPalette
         return newMat;
     }
 
+    private static GameObject workerAntPrefab;
+
+    public static GameObject GetWorkerAntPrefab()
+    {
+        if (workerAntPrefab == null)
+        {
+            workerAntPrefab = Resources.Load<GameObject>("Ants/Prefabs/WorkerAnt");
+        }
+        return workerAntPrefab;
+    }
+
     public static Mesh GetWorkerAntMesh()
     {
         if (workerMesh == null)
         {
-            workerMesh = Resources.Load<Mesh>("Ants/Meshes/WorkerAntMesh");
+            GameObject prefab = GetWorkerAntPrefab();
+            if (prefab != null)
+            {
+                MeshFilter mf = prefab.GetComponentInChildren<MeshFilter>(true);
+                if (mf != null && mf.sharedMesh != null)
+                {
+                    workerMesh = mf.sharedMesh;
+                }
+            }
+
+            if (workerMesh == null)
+            {
+                workerMesh = Resources.Load<Mesh>("Ants/Meshes/WorkerAntMesh");
+                if (workerMesh == null)
+                {
+                    Mesh[] all = Resources.LoadAll<Mesh>("Ants/Meshes/WorkerAntMesh");
+                    if (all != null && all.Length > 0)
+                    {
+                        workerMesh = all[0];
+                    }
+                }
+            }
         }
         return workerMesh;
     }
@@ -139,7 +170,7 @@ public static class AntColorPalette
     }
 
     /// <summary>
-    /// Soft, low-opacity subtle neutral grey ground dot material.
+    /// Subtle low-opacity dark/black ground dot material for initial ant body path markers (exactly 25% alpha).
     /// </summary>
     public static Material GetGroundDotMaterial()
     {
@@ -148,10 +179,45 @@ public static class AntColorPalette
             Shader uLitShader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
             groundDotMaterial = new Material(uLitShader);
             groundDotMaterial.name = "GroundDotMat";
-            groundDotMaterial.color = new Color(0.72f, 0.71f, 0.70f); // Soft, subtle low-contrast grey on studio floor
+            Color darkCol = new Color(0.12f, 0.12f, 0.15f, 0.25f); // Exactly 25% alpha
+            groundDotMaterial.color = darkCol;
+            if (groundDotMaterial.HasProperty("_BaseColor")) groundDotMaterial.SetColor("_BaseColor", darkCol);
+
+            // URP Transparency Configuration
+            groundDotMaterial.SetFloat("_Surface", 1f); // 1 = Transparent
+            groundDotMaterial.SetFloat("_Blend", 0f);   // 0 = Alpha blend
+            groundDotMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            groundDotMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            groundDotMaterial.SetInt("_ZWrite", 0);
+            groundDotMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            groundDotMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+
             if (groundDotMaterial.HasProperty("_Smoothness")) groundDotMaterial.SetFloat("_Smoothness", 0.0f);
             if (groundDotMaterial.HasProperty("_Metallic")) groundDotMaterial.SetFloat("_Metallic", 0f);
         }
         return groundDotMaterial;
+    }
+
+    private static readonly Dictionary<AntColor, Material> holeMaterialCache = new Dictionary<AntColor, Material>();
+
+    public static Material GetHoleMaterial(AntColor color)
+    {
+        if (holeMaterialCache.TryGetValue(color, out var mat) && mat != null)
+        {
+            return mat;
+        }
+
+        Shader uLitShader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+        Material newMat = new Material(uLitShader);
+        newMat.name = $"HoleRimMat_{color}";
+
+        Color col = GetColor(color);
+        newMat.color = col;
+        if (newMat.HasProperty("_BaseColor")) newMat.SetColor("_BaseColor", col);
+        if (newMat.HasProperty("_Smoothness")) newMat.SetFloat("_Smoothness", 0.90f);
+        if (newMat.HasProperty("_Metallic")) newMat.SetFloat("_Metallic", 0.05f);
+
+        holeMaterialCache[color] = newMat;
+        return newMat;
     }
 }

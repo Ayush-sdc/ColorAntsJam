@@ -1,7 +1,6 @@
 using UnityEngine;
 using DG.Tweening;
 
-[ExecuteAlways]
 public class AntUnit : MonoBehaviour
 {
     [Header("Ant Properties")]
@@ -23,9 +22,11 @@ public class AntUnit : MonoBehaviour
     public bool IsTail => isTail;
     public bool IsMoving { get; set; } = false;
 
+    private bool isInitialized = false;
+
     private void Awake()
     {
-        if (transform.childCount == 0)
+        if (!isInitialized && transform.childCount == 0 && modelRoot == null)
         {
             BuildVisuals();
         }
@@ -33,7 +34,10 @@ public class AntUnit : MonoBehaviour
 
     private void Start()
     {
-        BuildVisuals();
+        if (!isInitialized && transform.childCount == 0 && modelRoot == null)
+        {
+            BuildVisuals();
+        }
     }
 
     public void Setup(AntColor color, bool head = false, bool tail = false)
@@ -41,6 +45,7 @@ public class AntUnit : MonoBehaviour
         this.antColor = color;
         this.isHead = head;
         this.isTail = tail;
+        this.isInitialized = true;
 
         BuildVisuals();
     }
@@ -55,12 +60,12 @@ public class AntUnit : MonoBehaviour
 
         if (workerMesh != null)
         {
-            // 1. Compact 3D Worker Ant Mesh (Length scaled to leave clear gap between queue ants)
+            // 1. Compact 3D Worker Ant Mesh (Length scaled to maintain readability and separation)
             GameObject modelObj = new GameObject("AntModel_3D");
             modelObj.transform.SetParent(transform, false);
             modelObj.transform.localPosition = new Vector3(0f, 0.05f, 0f);
-            modelObj.transform.localRotation = Quaternion.Euler(0f, 180f, 0f); // Aligns mesh facing forward (+Z)
-            modelObj.transform.localScale = new Vector3(0.95f, 0.95f, 0.82f); // Compact length leaves clear ~0.3 unit gap between adjacent ants
+            modelObj.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            modelObj.transform.localScale = new Vector3(0.95f, 0.95f, 0.82f);
             modelRoot = modelObj.transform;
 
             var meshFilter = modelObj.AddComponent<MeshFilter>();
@@ -71,13 +76,13 @@ public class AntUnit : MonoBehaviour
             bodyRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
             bodyRenderer.receiveShadows = true;
 
-            // 2. Head Pivot (Positioned on the compact head)
+            // 2. Head Pivot
             GameObject headPivotObj = new GameObject("HeadPivot");
             headPivotObj.transform.SetParent(transform, false);
             headPivotObj.transform.localPosition = new Vector3(0f, 0.25f, 0.20f);
             headPivot = headPivotObj.transform;
 
-            // Expressive Googly Eyes (Sockets positioned in front of antennae roots)
+            // Expressive Googly Eyes
             float eyeScale = isHead ? 0.22f : 0.18f;
             Vector3 leftEyePos = new Vector3(-0.12f, -0.02f, 0.12f);
             Vector3 rightEyePos = new Vector3(0.12f, -0.02f, 0.12f);
@@ -87,7 +92,7 @@ public class AntUnit : MonoBehaviour
         }
         else
         {
-            // Fallback Procedural Composite Ant
+            // Procedural Fallback Composite Ant
             GameObject abdomen = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             abdomen.name = "Abdomen";
             abdomen.transform.SetParent(transform, false);
@@ -143,15 +148,9 @@ public class AntUnit : MonoBehaviour
     private void LateUpdate()
     {
         if (!Application.isPlaying) return;
-
         UpdateTrackingBehavior();
     }
 
-    /// <summary>
-    /// Subtle sensitivity head pivot tracking:
-    /// - Turns gently when the cursor is in front (clamped to +/- 25 degrees).
-    /// - Smooth interpolation rate (4.5f) to avoid sudden snapping.
-    /// </summary>
     private void UpdateTrackingBehavior()
     {
         if (headPivot == null) return;
@@ -165,16 +164,13 @@ public class AntUnit : MonoBehaviour
             Vector3 dirToMouse = toMouse.normalized;
             float forwardDot = Vector3.Dot(transform.forward, dirToMouse);
 
-            // In front of the ant (within frontal cone)
             if (forwardDot > 0.15f)
             {
-                // Gentle head turning (clamped to +/- 25 degrees)
                 float rawAngle = Vector3.SignedAngle(transform.forward, dirToMouse, Vector3.up);
                 float subtleAngle = Mathf.Clamp(rawAngle * 0.40f, -25f, 25f);
                 Quaternion targetHeadRotation = Quaternion.Euler(0f, subtleAngle, 0f);
                 headPivot.localRotation = Quaternion.Slerp(headPivot.localRotation, targetHeadRotation, Time.deltaTime * 4.5f);
 
-                // Expressive eye gaze tracking
                 Vector3 leftEyeWorld = (leftPupil != null && leftPupil.parent != null) ? leftPupil.parent.position : headPivot.position;
                 Vector3 rightEyeWorld = (rightPupil != null && rightPupil.parent != null) ? rightPupil.parent.position : headPivot.position;
 
@@ -184,7 +180,6 @@ public class AntUnit : MonoBehaviour
             }
         }
 
-        // Reset gently to center forward
         headPivot.localRotation = Quaternion.Slerp(headPivot.localRotation, Quaternion.identity, Time.deltaTime * 3.5f);
         UpdatePupilPosition(leftPupil, Vector3.zero, Vector3.zero, false);
         UpdatePupilPosition(rightPupil, Vector3.zero, Vector3.zero, false);
@@ -216,7 +211,6 @@ public class AntUnit : MonoBehaviour
             }
         }
 
-        // Return to neutral center
         pupil.localPosition = Vector3.Lerp(pupil.localPosition, DefaultPupilLocalPos, Time.deltaTime * 8f);
     }
 
@@ -226,10 +220,22 @@ public class AntUnit : MonoBehaviour
         rightPupil = null;
         headPivot = null;
         modelRoot = null;
+        bodyRenderer = null;
 
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
-            SafeDestroy(transform.GetChild(i).gameObject);
+            Transform child = transform.GetChild(i);
+            if (child != null)
+            {
+                if (Application.isPlaying)
+                {
+                    Destroy(child.gameObject);
+                }
+                else
+                {
+                    DestroyImmediate(child.gameObject);
+                }
+            }
         }
     }
 
@@ -248,47 +254,32 @@ public class AntUnit : MonoBehaviour
         {
             var legMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
             legMat.color = AntColorPalette.LegColor;
-            if (legMat.HasProperty("_Smoothness")) legMat.SetFloat("_Smoothness", 0.5f);
             legRenderer.material = legMat;
         }
     }
 
-    private void CreateAntenna(Transform parent, Vector3 localPos, Vector3 localEuler)
+    private void CreateAntenna(Transform parent, Vector3 localPos, Vector3 localRot)
     {
         GameObject antenna = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         antenna.name = "Antenna";
         antenna.transform.SetParent(parent, false);
         antenna.transform.localPosition = localPos;
-        antenna.transform.localRotation = Quaternion.Euler(localEuler);
-        antenna.transform.localScale = new Vector3(0.02f, 0.06f, 0.02f);
+        antenna.transform.localRotation = Quaternion.Euler(localRot);
+        antenna.transform.localScale = new Vector3(0.024f, 0.09f, 0.024f);
+
         SafeDestroy(antenna.GetComponent<Collider>());
 
-        var ren = antenna.GetComponent<MeshRenderer>();
-        if (ren != null)
+        var antRenderer = antenna.GetComponent<MeshRenderer>();
+        if (antRenderer != null)
         {
-            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-            mat.color = AntColorPalette.LegColor;
-            ren.material = mat;
-        }
-
-        GameObject tip = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        tip.name = "Tip";
-        tip.transform.SetParent(antenna.transform, false);
-        tip.transform.localPosition = new Vector3(0f, 1.0f, 0f);
-        tip.transform.localScale = new Vector3(2.0f, 0.8f, 2.0f);
-        SafeDestroy(tip.GetComponent<Collider>());
-        var tipRen = tip.GetComponent<MeshRenderer>();
-        if (tipRen != null)
-        {
-            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-            mat.color = AntColorPalette.GetColor(antColor);
-            tipRen.material = mat;
+            var antMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
+            antMat.color = AntColorPalette.LegColor;
+            antRenderer.material = antMat;
         }
     }
 
-    private Transform CreateEye(Transform parent, Vector3 localPos, string eyeName, float scale = 0.18f)
+    private Transform CreateEye(Transform parent, Vector3 localPos, string eyeName, float scale = 0.20f)
     {
-        // 1. Full Expressive Glossy White Eyeball Sphere
         GameObject eye = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         eye.name = eyeName;
         eye.transform.SetParent(parent, false);
@@ -306,7 +297,6 @@ public class AntUnit : MonoBehaviour
             eyeRenderer.material = eyeMat;
         }
 
-        // 2. Jet-Black Pupil Sphere (Expressive Gaze Tracking)
         GameObject pupil = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         pupil.name = "Pupil";
         pupil.transform.SetParent(eye.transform, false);

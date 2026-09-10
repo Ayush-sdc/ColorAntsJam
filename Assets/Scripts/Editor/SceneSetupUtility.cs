@@ -1,91 +1,127 @@
-using UnityEditor;
 using UnityEngine;
+using UnityEditor;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using Unity.Cinemachine;
 
 public static class SceneSetupUtility
 {
-    [MenuItem("SlitherAnts/Setup Main Scene Game Architecture")]
+    // [MenuItem("Tools/Slither Ants/Setup Complete Game Scene")]
+    // Legacy scene setup utility - disabled from menu to prevent scene contamination
     public static void SetupScene()
     {
-        // 1. Camera: Top-down studio perspective framing the board with top UI headroom
-        Camera cam = Camera.main;
-        if (cam == null)
+        // 1. Setup Camera Hierarchy
+        Camera mainCam = Camera.main;
+        GameObject mainCamObj;
+        if (mainCam == null)
         {
-            var camObj = new GameObject("Main Camera");
-            cam = camObj.AddComponent<Camera>();
-            camObj.tag = "MainCamera";
-        }
-        cam.transform.position = new Vector3(0f, 13.2f, -0.9f);
-        cam.transform.rotation = Quaternion.Euler(88f, 0f, 0f);
-        cam.backgroundColor = AntColorPalette.StudioBackground;
-        cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.fieldOfView = 78f;
-
-        // 2. Soft, diffused studio lighting with gentle soft shadows
-        var lightObj = GameObject.Find("Directional Light");
-        if (lightObj != null)
-        {
-            var light = lightObj.GetComponent<Light>();
-            if (light != null)
+            mainCamObj = GameObject.FindWithTag("MainCamera");
+            if (mainCamObj == null)
             {
-                light.color = new Color(1f, 0.98f, 0.95f);
-                light.intensity = 1.35f;
-                light.shadows = LightShadows.Soft;
-                light.shadowStrength = 0.35f;
-                lightObj.transform.rotation = Quaternion.Euler(60f, -30f, 0f);
+                mainCamObj = new GameObject("Main Camera");
+                mainCamObj.tag = "MainCamera";
+                mainCam = mainCamObj.AddComponent<Camera>();
+            }
+            else
+            {
+                mainCam = mainCamObj.GetComponent<Camera>();
             }
         }
-
-        // 3. GameController with core managers
-        GameObject gameController = GameObject.Find("GameController");
-        if (gameController == null)
+        else
         {
-            gameController = new GameObject("GameController");
+            mainCamObj = mainCam.gameObject;
         }
 
-        var levelMgr = gameController.GetComponent<LevelManager>() ?? gameController.AddComponent<LevelManager>();
-        var boardMgr = gameController.GetComponent<BoardManager>() ?? gameController.AddComponent<BoardManager>();
-        var gameMgr = gameController.GetComponent<GameManager>() ?? gameController.AddComponent<GameManager>();
-        var inputHandler = gameController.GetComponent<PlayerInputHandler>() ?? gameController.AddComponent<PlayerInputHandler>();
-        var soundMgr = gameController.GetComponent<SoundManager>() ?? gameController.AddComponent<SoundManager>();
+        mainCam.clearFlags = CameraClearFlags.SolidColor;
+        mainCam.backgroundColor = new Color(0.92f, 0.94f, 0.96f);
+        mainCam.fieldOfView = 78f;
+        mainCam.transform.position = new Vector3(0f, 15f, -0.5f);
+        mainCam.transform.rotation = Quaternion.Euler(88f, 0f, 0f);
 
-        // Link Database
-        LevelDatabase db = AssetDatabase.LoadAssetAtPath<LevelDatabase>("Assets/Data/Levels/LevelDatabase.asset");
+        if (mainCamObj.GetComponent<AudioListener>() == null)
+        {
+            mainCamObj.AddComponent<AudioListener>();
+        }
+
+        // Add CinemachineBrain to Main Camera
+        CinemachineBrain brain = mainCamObj.GetComponent<CinemachineBrain>();
+        if (brain == null)
+        {
+            brain = mainCamObj.AddComponent<CinemachineBrain>();
+        }
+        brain.enabled = false;
+
+        // 2. Setup GameplayCamera (Cinemachine Camera)
+        GameObject gpCamObj = GameObject.Find("GameplayCamera");
+        if (gpCamObj == null)
+        {
+            gpCamObj = new GameObject("GameplayCamera");
+        }
+        gpCamObj.transform.position = new Vector3(0f, 15f, -0.5f);
+        gpCamObj.transform.rotation = Quaternion.Euler(88f, 0f, 0f);
+
+        CinemachineCamera cmCam = gpCamObj.GetComponent<CinemachineCamera>();
+        if (cmCam == null)
+        {
+            cmCam = gpCamObj.AddComponent<CinemachineCamera>();
+        }
+        cmCam.Lens.FieldOfView = 78f;
+        gpCamObj.SetActive(false);
+
+        // 3. Setup BoardCameraController
+        GameObject camCtrlObj = GameObject.Find("BoardCameraController");
+        if (camCtrlObj == null)
+        {
+            camCtrlObj = new GameObject("BoardCameraController");
+        }
+        BoardCameraController camCtrl = camCtrlObj.GetComponent<BoardCameraController>();
+        if (camCtrl == null)
+        {
+            camCtrl = camCtrlObj.AddComponent<BoardCameraController>();
+        }
+        SetField(camCtrl, "useCinemachine", true);
+        SetField(camCtrl, "projectionMode", CameraProjectionMode.Orthographic);
+        SetField(camCtrl, "mainCamera", mainCam);
+        SetField(camCtrl, "cinemachineBrain", brain);
+        SetField(camCtrl, "gameplayCamera", cmCam);
+
+        // 4. Directional Light
+        Light dirLight = Object.FindAnyObjectByType<Light>();
+        if (dirLight == null)
+        {
+            GameObject lightObj = new GameObject("Directional Light");
+            dirLight = lightObj.AddComponent<Light>();
+            dirLight.type = LightType.Directional;
+            dirLight.intensity = 1.0f;
+            dirLight.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+        }
+
+        // 5. Game Managers
+        GameObject mgrObj = GameObject.Find("GameManagers");
+        if (mgrObj == null)
+        {
+            mgrObj = new GameObject("GameManagers");
+        }
+
+        BoardManager boardMgr = mgrObj.GetComponent<BoardManager>();
+        if (boardMgr == null) boardMgr = mgrObj.AddComponent<BoardManager>();
+
+        LevelManager levelMgr = mgrObj.GetComponent<LevelManager>();
+        if (levelMgr == null) levelMgr = mgrObj.AddComponent<LevelManager>();
+
+        GameManager gameMgr = mgrObj.GetComponent<GameManager>();
+        if (gameMgr == null) gameMgr = mgrObj.AddComponent<GameManager>();
+
+        PlayerInputHandler inputHdr = mgrObj.GetComponent<PlayerInputHandler>();
+        if (inputHdr == null) inputHdr = mgrObj.AddComponent<PlayerInputHandler>();
+
+        LevelDatabase db = AssetDatabase.LoadAssetAtPath<LevelDatabase>("Assets/Data/LevelDatabase.asset");
         if (db != null)
         {
-            var field = typeof(LevelManager).GetField("levelDatabase", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (field != null)
-            {
-                field.SetValue(levelMgr, db);
-            }
+            SetField(levelMgr, "levelDatabase", db);
         }
 
-        // 4. Board Root
-        GameObject boardObj = GameObject.Find("Board");
-        if (boardObj == null)
-        {
-            boardObj = new GameObject("Board");
-        }
-        var boardParentField = typeof(BoardManager).GetField("boardParent", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        if (boardParentField != null)
-        {
-            boardParentField.SetValue(boardMgr, boardObj.transform);
-        }
-
-        // 5. Ant Units Container
-        GameObject antsObj = GameObject.Find("Ants");
-        if (antsObj == null)
-        {
-            antsObj = new GameObject("Ants");
-        }
-        var antsParentField = typeof(BoardManager).GetField("antsParent", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        if (antsParentField != null)
-        {
-            antsParentField.SetValue(boardMgr, antsObj.transform);
-        }
-
-        // 6. Food Box Container
+        // 6. Food Boxes Parent
         GameObject foodBoxesObj = GameObject.Find("FoodBoxes");
         if (foodBoxesObj == null)
         {

@@ -1,0 +1,21 @@
+{
+    "name": "SlitherAnts.Editor",
+    "rootNamespace": "",
+    "references": [
+        "SlitherAnts.Runtime",
+        "Unity.Cinemachine",
+        "UnityEngine.UI",
+        "UnityEditor.UI"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

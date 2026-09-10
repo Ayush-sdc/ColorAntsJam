@@ -4,13 +4,19 @@ using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 
-[ExecuteAlways]
 public class AntQueueController : MonoBehaviour
 {
+    private static bool s_DebugLoggedOneRefAnt = false;
+
     [Header("Queue Data")]
     [SerializeField] private string queueId;
+    [SerializeField] private int colorId = 0;
     [SerializeField] private AntColor antColor;
     [SerializeField] private int antCount;
+
+    [Header("Connected Queues")]
+    [SerializeField] private bool isConnected = false;
+    [SerializeField] private int connectedIndex = -1;
 
     [Header("Runtime State")]
     [SerializeField] private bool isMoving = false;
@@ -25,8 +31,11 @@ public class AntQueueController : MonoBehaviour
     [SerializeField] private List<AntUnit> antUnits = new List<AntUnit>();
 
     public string QueueId => queueId;
+    public int ColorID => colorId;
     public AntColor Color => antColor;
     public int AntCount => antCount;
+    public bool IsConnected => isConnected;
+    public int ConnectedIndex => connectedIndex;
     public bool IsMoving => isMoving;
     public IReadOnlyList<Vector2Int> CurrentBodyCoordinates => currentBodyCoordinates;
     public IReadOnlyList<Vector2Int> RemainingPath => remainingPath;
@@ -72,13 +81,35 @@ public class AntQueueController : MonoBehaviour
     public void Initialize(AntQueueData data)
     {
         queueId = data.QueueId;
+        colorId = data.ColorID;
         antColor = data.AntColor;
         antCount = data.AntCount;
+        isConnected = data.IsConnected;
+        connectedIndex = data.ConnectedIndex;
 
         currentBodyCoordinates = new List<Vector2Int>(data.InitialBodyCoordinates);
         remainingPath = new List<Vector2Int>(data.FullPathToHole);
 
         SpawnAnts();
+    }
+
+    public void InitializeReference(string id, int rawColorId, AntColor color, List<Vector2Int> bodyCoords, List<Vector2Int> path, bool connected = false, int connIdx = -1)
+    {
+        queueId = id;
+        colorId = rawColorId;
+        antColor = color;
+        isConnected = connected;
+        connectedIndex = connIdx;
+        currentBodyCoordinates = bodyCoords != null ? new List<Vector2Int>(bodyCoords) : new List<Vector2Int>();
+        antCount = currentBodyCoordinates.Count;
+        remainingPath = path != null ? new List<Vector2Int>(path) : new List<Vector2Int>();
+
+        SpawnAnts();
+    }
+
+    public void InitializeReference(string id, AntColor color, List<Vector2Int> bodyCoords, List<Vector2Int> path)
+    {
+        InitializeReference(id, (int)color, color, bodyCoords, path, false, -1);
     }
 
     [ContextMenu("Rebuild Queue Visuals")]
@@ -171,27 +202,72 @@ public class AntQueueController : MonoBehaviour
     }
 
     /// <summary>
-    /// Attempts to trigger this queue to move along its predefined path to its hole tray.
-    /// Returns true if the move started, false if blocked or unable to move.
+    /// Attempts to trigger this queue (or its connected group) to move along its path to its matching hole.
+    /// Returns true if movement started, false if blocked or unable to move.
     /// </summary>
     public bool TryStartMove()
     {
         if (isMoving) return false;
 
-        // Check path validity against BoardManager
-        if (BoardManager.Instance != null && !BoardManager.Instance.IsPathClearForQueue(this))
+        if (BoardManager.Instance != null)
         {
-            PlayBlockedShake();
-            OnQueueBlockedFeedback?.Invoke(this);
+            return BoardManager.Instance.TryStartMove(this);
+        }
+
+        // Fallback for isolated unit tests without BoardManager
+        List<Vector2Int> path = AntPathfinder.FindPath(null, this);
+        if (path == null || path.Count < 2)
+        {
+            TriggerBlockedFeedback();
             return false;
         }
 
-        StartCoroutine(MoveRoutine());
+        StartMoveAlongPath(path);
         return true;
+    }
+
+    public void StartMoveAlongPath(List<Vector2Int> path)
+    {
+        if (isMoving || path == null || path.Count < 2) return;
+        remainingPath = new List<Vector2Int>(path);
+        StartCoroutine(MoveRoutine());
+    }
+
+    private void OnDisable()
+    {
+        KillAllTweens();
+    }
+
+    private void OnDestroy()
+    {
+        KillAllTweens();
+    }
+
+    private void KillAllTweens()
+    {
+        StopAllCoroutines();
+        if (antUnits != null)
+        {
+            for (int i = 0; i < antUnits.Count; i++)
+            {
+                if (antUnits[i] != null)
+                {
+                    antUnits[i].transform.DOKill();
+                }
+            }
+        }
+        transform.DOKill();
+    }
+
+    public void TriggerBlockedFeedback()
+    {
+        PlayBlockedShake();
+        OnQueueBlockedFeedback?.Invoke(this);
     }
 
     public void PlayBlockedShake()
     {
+        if (!Application.isPlaying) return;
         foreach (var unit in antUnits)
         {
             if (unit == null) continue;

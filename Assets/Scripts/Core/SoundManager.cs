@@ -34,17 +34,32 @@ public class SoundManager : MonoBehaviour
 
         GenerateProceduralAudioClips();
 
-        // Subscribe to game events for automatic SFX triggering
-        AntQueueController.OnQueueMoveStarted += _ => PlayTap();
-        AntQueueController.OnQueueBlockedFeedback += _ => PlayBlocked();
+        // Subscribe to game events using named methods to allow reliable unsubscription
+        AntQueueController.OnQueueMoveStarted += HandleQueueMoveStarted;
+        AntQueueController.OnQueueBlockedFeedback += HandleQueueBlocked;
         GameManager.OnGameStateChanged += HandleGameStateChanged;
     }
 
     private void OnDestroy()
     {
-        AntQueueController.OnQueueMoveStarted -= _ => PlayTap();
-        AntQueueController.OnQueueBlockedFeedback -= _ => PlayBlocked();
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+
+        AntQueueController.OnQueueMoveStarted -= HandleQueueMoveStarted;
+        AntQueueController.OnQueueBlockedFeedback -= HandleQueueBlocked;
         GameManager.OnGameStateChanged -= HandleGameStateChanged;
+    }
+
+    private void HandleQueueMoveStarted(AntQueueController queue)
+    {
+        PlayTap();
+    }
+
+    private void HandleQueueBlocked(AntQueueController queue)
+    {
+        PlayBlocked();
     }
 
     private void HandleGameStateChanged(GameState state)

@@ -42,6 +42,11 @@ public class GameManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+
         LevelManager.OnLevelLoaded -= HandleLevelLoaded;
         BoardManager.OnBoardStateChanged -= CheckGameWinLossConditions;
         AntQueueController.OnQueueBlockedFeedback -= HandleBlockedFeedback;
@@ -67,13 +72,15 @@ public class GameManager : MonoBehaviour
 
     private void HandleLevelLoaded(Level level)
     {
+        currentState = GameState.NotStarted;
         remainingTimer = level.TimeLimitInSeconds;
-        currentState = GameState.Playing;
 
         if (BoardManager.Instance != null)
         {
             BoardManager.Instance.SetupBoard(level);
         }
+
+        currentState = GameState.Playing;
 
         OnGameStateChanged?.Invoke(currentState);
         OnTimerUpdated?.Invoke(remainingTimer);
@@ -82,8 +89,6 @@ public class GameManager : MonoBehaviour
 
     private void HandleBlockedFeedback(AntQueueController queue)
     {
-        // When player clicks a blocked queue, decrement a life / heart if desired, or provide feedback
-        // Here we notify UI of current lives
         OnLivesUpdated?.Invoke(playerLives);
     }
 
@@ -93,8 +98,10 @@ public class GameManager : MonoBehaviour
     public void CheckGameWinLossConditions()
     {
         if (currentState != GameState.Playing) return;
+        if (BoardManager.Instance == null || BoardManager.Instance.IsSettingUpBoard) return;
 
         var activeQueues = BoardManager.Instance.ActiveQueues;
+        if (activeQueues == null) return;
 
         // 1. Win condition: No ant queues remain on board
         if (activeQueues.Count == 0)

@@ -1,0 +1,3386 @@
+{
+  "snakes": [
+    {
+      "Cells": [
+        {
+          "x": 1,
+          "y": 12
+        },
+        {
+          "x": 1,
+          "y": 13
+        },
+        {
+          "x": 1,
+          "y": 14
+        }
+      ],
+      "ColorID": 0,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 0,
+          "y": 12
+        },
+        {
+          "x": 0,
+          "y": 13
+        },
+        {
+          "x": 0,
+          "y": 14
+        }
+      ],
+      "ColorID": 0,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 1,
+          "y": 9
+        },
+        {
+          "x": 1,
+          "y": 10
+        },
+        {
+          "x": 1,
+          "y": 11
+        }
+      ],
+      "ColorID": 4,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 1,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 0,
+          "y": 9
+        },
+        {
+          "x": 0,
+          "y": 10
+        },
+        {
+          "x": 0,
+          "y": 11
+        }
+      ],
+      "ColorID": 4,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 1,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 1,
+          "y": 6
+        },
+        {
+          "x": 1,
+          "y": 7
+        },
+        {
+          "x": 1,
+          "y": 8
+        }
+      ],
+      "ColorID": 7,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 2,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 0,
+          "y": 6
+        },
+        {
+          "x": 0,
+          "y": 7
+        },
+        {
+          "x": 0,
+          "y": 8
+        }
+      ],
+      "ColorID": 7,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 2,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 1,
+          "y": 0
+        }
+      ],
+      "ColorID": 0,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": 1,
+          "y": 1
+        }
+      ],
+      "ColorID": 4,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 0,
+          "y": 2
+        },
+        {
+          "x": 1,
+          "y": 2
+        }
+      ],
+      "ColorID": 7,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 0,
+          "y": 4
+        },
+        {
+          "x": 0,
+          "y": 3
+        }
+      ],
+      "ColorID": 1,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 3,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 1,
+          "y": 4
+        },
+        {
+          "x": 1,
+          "y": 3
+        }
+      ],
+      "ColorID": 1,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 3,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 0,
+          "y": 5
+        },
+        {
+          "x": 1,
+          "y": 5
+        }
+      ],
+      "ColorID": 1,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 5,
+          "y": 6
+        },
+        {
+          "x": 4,
+          "y": 6
+        },
+        {
+          "x": 3,
+          "y": 6
+        },
+        {
+          "x": 2,
+          "y": 6
+        },
+        {
+          "x": 2,
+          "y": 7
+        },
+        {
+          "x": 2,
+          "y": 8
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 99,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 11,
+          "y": 1
+        },
+        {
+          "x": 12,
+          "y": 1
+        },
+        {
+          "x": 13,
+          "y": 1
+        },
+        {
+          "x": 14,
+          "y": 1
+        }
+      ],
+      "ColorID": 10,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 5,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 11,
+          "y": 0
+        },
+        {
+          "x": 12,
+          "y": 0
+        },
+        {
+          "x": 13,
+          "y": 0
+        },
+        {
+          "x": 14,
+          "y": 0
+        }
+      ],
+      "ColorID": 10,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 5,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 7,
+          "y": 1
+        },
+        {
+          "x": 6,
+          "y": 1
+        },
+        {
+          "x": 5,
+          "y": 1
+        }
+      ],
+      "ColorID": 6,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 7,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 7,
+          "y": 0
+        },
+        {
+          "x": 6,
+          "y": 0
+        },
+        {
+          "x": 5,
+          "y": 0
+        }
+      ],
+      "ColorID": 6,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 7,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 9,
+          "y": 1
+        },
+        {
+          "x": 9,
+          "y": 0
+        }
+      ],
+      "ColorID": 6,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 4,
+          "y": 2
+        }
+      ],
+      "ColorID": 0,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 2,
+          "y": 0
+        }
+      ],
+      "ColorID": 10,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 4,
+          "y": 1
+        },
+        {
+          "x": 3,
+          "y": 1
+        }
+      ],
+      "ColorID": 5,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 8,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 4,
+          "y": 0
+        },
+        {
+          "x": 3,
+          "y": 0
+        }
+      ],
+      "ColorID": 5,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 8,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 10,
+          "y": 1
+        },
+        {
+          "x": 10,
+          "y": 0
+        }
+      ],
+      "ColorID": 5,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 12,
+          "y": 14
+        },
+        {
+          "x": 13,
+          "y": 14
+        },
+        {
+          "x": 14,
+          "y": 14
+        }
+      ],
+      "ColorID": 5,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 93,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 13,
+          "y": 10
+        },
+        {
+          "x": 13,
+          "y": 11
+        },
+        {
+          "x": 13,
+          "y": 12
+        }
+      ],
+      "ColorID": 4,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 98,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 14,
+          "y": 10
+        },
+        {
+          "x": 14,
+          "y": 11
+        },
+        {
+          "x": 14,
+          "y": 12
+        }
+      ],
+      "ColorID": 4,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 98,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 13,
+          "y": 7
+        },
+        {
+          "x": 13,
+          "y": 8
+        },
+        {
+          "x": 13,
+          "y": 9
+        }
+      ],
+      "ColorID": 7,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 96,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 14,
+          "y": 7
+        },
+        {
+          "x": 14,
+          "y": 8
+        },
+        {
+          "x": 14,
+          "y": 9
+        }
+      ],
+      "ColorID": 7,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 96,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 13,
+          "y": 5
+        },
+        {
+          "x": 13,
+          "y": 4
+        }
+      ],
+      "ColorID": 6,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 95,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 14,
+          "y": 5
+        },
+        {
+          "x": 14,
+          "y": 4
+        }
+      ],
+      "ColorID": 6,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 95,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 13,
+          "y": 2
+        },
+        {
+          "x": 14,
+          "y": 2
+        }
+      ],
+      "ColorID": 4,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 13,
+          "y": 3
+        },
+        {
+          "x": 14,
+          "y": 3
+        }
+      ],
+      "ColorID": 7,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 13,
+          "y": 6
+        },
+        {
+          "x": 14,
+          "y": 6
+        }
+      ],
+      "ColorID": 6,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 12,
+          "y": 13
+        },
+        {
+          "x": 13,
+          "y": 13
+        },
+        {
+          "x": 14,
+          "y": 13
+        }
+      ],
+      "ColorID": 5,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 93,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 5,
+          "y": 14
+        },
+        {
+          "x": 5,
+          "y": 13
+        }
+      ],
+      "ColorID": 5,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 6,
+          "y": 7
+        },
+        {
+          "x": 6,
+          "y": 6
+        },
+        {
+          "x": 6,
+          "y": 5
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 92,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 7,
+          "y": 7
+        },
+        {
+          "x": 7,
+          "y": 6
+        },
+        {
+          "x": 7,
+          "y": 5
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 92,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 6,
+          "y": 14
+        },
+        {
+          "x": 6,
+          "y": 13
+        },
+        {
+          "x": 7,
+          "y": 13
+        },
+        {
+          "x": 7,
+          "y": 14
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 10,
+          "y": 14
+        },
+        {
+          "x": 11,
+          "y": 14
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 91,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 10,
+          "y": 13
+        },
+        {
+          "x": 11,
+          "y": 13
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 91,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 6,
+          "y": 3
+        },
+        {
+          "x": 6,
+          "y": 2
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 90,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 12,
+          "y": 3
+        },
+        {
+          "x": 12,
+          "y": 2
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 88,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 11,
+          "y": 3
+        },
+        {
+          "x": 11,
+          "y": 2
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 88,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 11,
+          "y": 7
+        },
+        {
+          "x": 12,
+          "y": 7
+        },
+        {
+          "x": 12,
+          "y": 6
+        },
+        {
+          "x": 11,
+          "y": 6
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 3,
+          "y": 4
+        },
+        {
+          "x": 2,
+          "y": 4
+        },
+        {
+          "x": 2,
+          "y": 5
+        },
+        {
+          "x": 3,
+          "y": 5
+        }
+      ],
+      "ColorID": 6,
+      "HolderType": 1,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 9,
+          "y": 4
+        },
+        {
+          "x": 8,
+          "y": 4
+        },
+        {
+          "x": 8,
+          "y": 3
+        },
+        {
+          "x": 8,
+          "y": 2
+        },
+        {
+          "x": 8,
+          "y": 1
+        },
+        {
+          "x": 8,
+          "y": 0
+        }
+      ],
+      "ColorID": 6,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 84,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 12,
+          "y": 4
+        },
+        {
+          "x": 12,
+          "y": 5
+        }
+      ],
+      "ColorID": 6,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 9,
+          "y": 5
+        },
+        {
+          "x": 8,
+          "y": 5
+        },
+        {
+          "x": 8,
+          "y": 6
+        },
+        {
+          "x": 8,
+          "y": 7
+        },
+        {
+          "x": 8,
+          "y": 8
+        },
+        {
+          "x": 8,
+          "y": 9
+        }
+      ],
+      "ColorID": 6,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 84,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 12,
+          "y": 10
+        },
+        {
+          "x": 12,
+          "y": 11
+        },
+        {
+          "x": 12,
+          "y": 12
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 83,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 11,
+          "y": 10
+        },
+        {
+          "x": 11,
+          "y": 11
+        },
+        {
+          "x": 11,
+          "y": 12
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 83,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 12,
+          "y": 9
+        },
+        {
+          "x": 12,
+          "y": 8
+        }
+      ],
+      "ColorID": 10,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 6,
+          "y": 9
+        },
+        {
+          "x": 5,
+          "y": 9
+        },
+        {
+          "x": 4,
+          "y": 9
+        }
+      ],
+      "ColorID": 10,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 82,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 6,
+          "y": 8
+        },
+        {
+          "x": 5,
+          "y": 8
+        },
+        {
+          "x": 4,
+          "y": 8
+        }
+      ],
+      "ColorID": 10,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 82,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 4,
+          "y": 13
+        },
+        {
+          "x": 3,
+          "y": 13
+        },
+        {
+          "x": 2,
+          "y": 13
+        },
+        {
+          "x": 2,
+          "y": 14
+        }
+      ],
+      "ColorID": 5,
+      "HolderType": 1,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 5,
+          "y": 12
+        },
+        {
+          "x": 5,
+          "y": 11
+        },
+        {
+          "x": 4,
+          "y": 11
+        },
+        {
+          "x": 3,
+          "y": 11
+        },
+        {
+          "x": 2,
+          "y": 11
+        },
+        {
+          "x": 2,
+          "y": 12
+        },
+        {
+          "x": 3,
+          "y": 12
+        },
+        {
+          "x": 4,
+          "y": 12
+        }
+      ],
+      "ColorID": 5,
+      "HolderType": 1,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 7,
+          "y": 12
+        },
+        {
+          "x": 7,
+          "y": 11
+        },
+        {
+          "x": 7,
+          "y": 10
+        },
+        {
+          "x": 8,
+          "y": 10
+        },
+        {
+          "x": 9,
+          "y": 10
+        },
+        {
+          "x": 10,
+          "y": 10
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 80,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 6,
+          "y": 12
+        },
+        {
+          "x": 6,
+          "y": 11
+        },
+        {
+          "x": 6,
+          "y": 10
+        },
+        {
+          "x": 5,
+          "y": 10
+        },
+        {
+          "x": 4,
+          "y": 10
+        },
+        {
+          "x": 3,
+          "y": 10
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 80,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 5,
+          "y": 7
+        },
+        {
+          "x": 4,
+          "y": 7
+        },
+        {
+          "x": 3,
+          "y": 7
+        },
+        {
+          "x": 3,
+          "y": 8
+        },
+        {
+          "x": 3,
+          "y": 9
+        },
+        {
+          "x": 2,
+          "y": 9
+        },
+        {
+          "x": 2,
+          "y": 10
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 99,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 3,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 3,
+          "y": 3
+        },
+        {
+          "x": 4,
+          "y": 3
+        },
+        {
+          "x": 5,
+          "y": 3
+        },
+        {
+          "x": 5,
+          "y": 2
+        }
+      ],
+      "ColorID": 0,
+      "HolderType": 1,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 10,
+          "y": 11
+        },
+        {
+          "x": 10,
+          "y": 12
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 79,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 9,
+          "y": 2
+        },
+        {
+          "x": 10,
+          "y": 2
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 0,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 9,
+          "y": 11
+        },
+        {
+          "x": 9,
+          "y": 12
+        },
+        {
+          "x": 9,
+          "y": 13
+        },
+        {
+          "x": 9,
+          "y": 14
+        },
+        {
+          "x": 8,
+          "y": 14
+        },
+        {
+          "x": 8,
+          "y": 13
+        },
+        {
+          "x": 8,
+          "y": 12
+        },
+        {
+          "x": 8,
+          "y": 11
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 79,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 11,
+          "y": 9
+        },
+        {
+          "x": 10,
+          "y": 9
+        },
+        {
+          "x": 9,
+          "y": 9
+        },
+        {
+          "x": 9,
+          "y": 8
+        },
+        {
+          "x": 9,
+          "y": 7
+        },
+        {
+          "x": 9,
+          "y": 6
+        }
+      ],
+      "ColorID": 10,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 70,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 11,
+          "y": 8
+        },
+        {
+          "x": 10,
+          "y": 8
+        },
+        {
+          "x": 10,
+          "y": 7
+        },
+        {
+          "x": 10,
+          "y": 6
+        },
+        {
+          "x": 10,
+          "y": 5
+        },
+        {
+          "x": 10,
+          "y": 4
+        },
+        {
+          "x": 10,
+          "y": 3
+        },
+        {
+          "x": 9,
+          "y": 3
+        }
+      ],
+      "ColorID": 10,
+      "HolderType": 1,
+      "IsConnected": true,
+      "IsSecondColor": false,
+      "ConnectedIndex": 70,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 11,
+          "y": 5
+        },
+        {
+          "x": 11,
+          "y": 4
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 7,
+          "y": 9
+        },
+        {
+          "x": 7,
+          "y": 8
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 4,
+          "y": 14
+        },
+        {
+          "x": 3,
+          "y": 14
+        }
+      ],
+      "ColorID": 5,
+      "HolderType": 1,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 7,
+          "y": 4
+        },
+        {
+          "x": 7,
+          "y": 3
+        },
+        {
+          "x": 7,
+          "y": 2
+        }
+      ],
+      "ColorID": 8,
+      "HolderType": 1,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    },
+    {
+      "Cells": [
+        {
+          "x": 6,
+          "y": 4
+        },
+        {
+          "x": 5,
+          "y": 4
+        },
+        {
+          "x": 4,
+          "y": 4
+        },
+        {
+          "x": 4,
+          "y": 5
+        },
+        {
+          "x": 5,
+          "y": 5
+        }
+      ],
+      "ColorID": 6,
+      "HolderType": 1,
+      "IsConnected": false,
+      "IsSecondColor": false,
+      "ConnectedIndex": 0,
+      "SecondColor": 0,
+      "PipeCount": 0,
+      "IsLocked": false,
+      "LockAmount": 0
+    }
+  ],
+  "CellInfo": [
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 0,
+        "y": 1
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 0,
+        "y": 2
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 0,
+        "y": 3
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 0,
+        "y": 4
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 0,
+        "y": 5
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 0,
+        "y": 6
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 0,
+        "y": 7
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 0,
+        "y": 8
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 0,
+        "y": 9
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 0,
+        "y": 10
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 0,
+        "y": 11
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 0,
+        "y": 12
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 0,
+        "y": 13
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 0,
+        "y": 14
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 1,
+        "y": 0
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 1,
+        "y": 2
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 1,
+        "y": 3
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 1,
+        "y": 4
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 1,
+        "y": 5
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 1,
+        "y": 6
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 1,
+        "y": 7
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 1,
+        "y": 8
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 1,
+        "y": 9
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 1,
+        "y": 10
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 1,
+        "y": 11
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 1,
+        "y": 12
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 1,
+        "y": 13
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 1,
+        "y": 14
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 2,
+        "y": 0
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 2,
+        "y": 1
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 2,
+        "y": 2
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 2,
+        "y": 3
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 2,
+        "y": 4
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 2,
+        "y": 5
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 2,
+        "y": 6
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 2,
+        "y": 7
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 2,
+        "y": 8
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 2,
+        "y": 9
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 2,
+        "y": 10
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 2,
+        "y": 11
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 2,
+        "y": 12
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 2,
+        "y": 13
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 2,
+        "y": 14
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 3,
+        "y": 0
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 3,
+        "y": 1
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 3,
+        "y": 2
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 3,
+        "y": 3
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 3,
+        "y": 4
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 3,
+        "y": 5
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 3,
+        "y": 6
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 3,
+        "y": 7
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 3,
+        "y": 8
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 3,
+        "y": 9
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 3,
+        "y": 10
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 3,
+        "y": 11
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 3,
+        "y": 12
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 3,
+        "y": 13
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 3,
+        "y": 14
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 4,
+        "y": 0
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 4,
+        "y": 1
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 4,
+        "y": 2
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 4,
+        "y": 3
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 4,
+        "y": 4
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 4,
+        "y": 5
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 4,
+        "y": 6
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 4,
+        "y": 7
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 4,
+        "y": 8
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 4,
+        "y": 9
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 4,
+        "y": 10
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 4,
+        "y": 11
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 4,
+        "y": 12
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 4,
+        "y": 13
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 4,
+        "y": 14
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 5,
+        "y": 0
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 5,
+        "y": 1
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 5,
+        "y": 2
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 5,
+        "y": 3
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 5,
+        "y": 4
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 5,
+        "y": 5
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 5,
+        "y": 6
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 5,
+        "y": 7
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 5,
+        "y": 8
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 5,
+        "y": 9
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 5,
+        "y": 10
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 5,
+        "y": 11
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 5,
+        "y": 12
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 5,
+        "y": 13
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 5,
+        "y": 14
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 6,
+        "y": 0
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 6,
+        "y": 1
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 6,
+        "y": 2
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 6,
+        "y": 3
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 6,
+        "y": 4
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 6,
+        "y": 5
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 6,
+        "y": 6
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 6,
+        "y": 7
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 6,
+        "y": 8
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 6,
+        "y": 9
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 6,
+        "y": 10
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 6,
+        "y": 11
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 6,
+        "y": 12
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 6,
+        "y": 13
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 6,
+        "y": 14
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 7,
+        "y": 0
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 7,
+        "y": 1
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 7,
+        "y": 2
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 7,
+        "y": 3
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 7,
+        "y": 4
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 7,
+        "y": 5
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 7,
+        "y": 6
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 7,
+        "y": 7
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 7,
+        "y": 8
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 7,
+        "y": 9
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 7,
+        "y": 10
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 7,
+        "y": 11
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 7,
+        "y": 12
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 7,
+        "y": 13
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 7,
+        "y": 14
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 8,
+        "y": 0
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 8,
+        "y": 1
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 8,
+        "y": 2
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 8,
+        "y": 3
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 8,
+        "y": 4
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 8,
+        "y": 5
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 8,
+        "y": 6
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 8,
+        "y": 7
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 8,
+        "y": 8
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 8,
+        "y": 9
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 8,
+        "y": 10
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 8,
+        "y": 11
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 8,
+        "y": 12
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 8,
+        "y": 13
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 8,
+        "y": 14
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 9,
+        "y": 0
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 9,
+        "y": 1
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 9,
+        "y": 2
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 9,
+        "y": 3
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 9,
+        "y": 4
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 9,
+        "y": 5
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 9,
+        "y": 6
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 9,
+        "y": 7
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 9,
+        "y": 8
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 9,
+        "y": 9
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 9,
+        "y": 10
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 9,
+        "y": 11
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 9,
+        "y": 12
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 9,
+        "y": 13
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 9,
+        "y": 14
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 10,
+        "y": 0
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 10,
+        "y": 1
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 10,
+        "y": 2
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 10,
+        "y": 3
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 10,
+        "y": 4
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 10,
+        "y": 5
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 10,
+        "y": 6
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 10,
+        "y": 7
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 10,
+        "y": 8
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 10,
+        "y": 9
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 10,
+        "y": 10
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 10,
+        "y": 11
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 10,
+        "y": 12
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 10,
+        "y": 13
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 10,
+        "y": 14
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 11,
+        "y": 0
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 11,
+        "y": 1
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 11,
+        "y": 2
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 11,
+        "y": 3
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 11,
+        "y": 4
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 11,
+        "y": 5
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 11,
+        "y": 6
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 11,
+        "y": 7
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 11,
+        "y": 8
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 11,
+        "y": 9
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 11,
+        "y": 10
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 11,
+        "y": 11
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 11,
+        "y": 12
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 11,
+        "y": 13
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 11,
+        "y": 14
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 12,
+        "y": 0
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 12,
+        "y": 1
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 12,
+        "y": 2
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 12,
+        "y": 3
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 12,
+        "y": 4
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 12,
+        "y": 5
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 12,
+        "y": 6
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 12,
+        "y": 7
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 12,
+        "y": 8
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 12,
+        "y": 9
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 12,
+        "y": 10
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 12,
+        "y": 11
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 12,
+        "y": 12
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 12,
+        "y": 13
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 12,
+        "y": 14
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 13,
+        "y": 0
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 13,
+        "y": 1
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 13,
+        "y": 2
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 13,
+        "y": 3
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 13,
+        "y": 4
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 13,
+        "y": 5
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 13,
+        "y": 6
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 13,
+        "y": 7
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 13,
+        "y": 8
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 13,
+        "y": 9
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 13,
+        "y": 10
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 13,
+        "y": 11
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 13,
+        "y": 12
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 13,
+        "y": 13
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 13,
+        "y": 14
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 14,
+        "y": 0
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 14,
+        "y": 1
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 14,
+        "y": 2
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 14,
+        "y": 3
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 14,
+        "y": 4
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 14,
+        "y": 5
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 14,
+        "y": 6
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 14,
+        "y": 7
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 14,
+        "y": 8
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 14,
+        "y": 9
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 14,
+        "y": 10
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 14,
+        "y": 11
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 14,
+        "y": 12
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 14,
+        "y": 13
+      }
+    },
+    {
+      "IsForcedDisabledCell": false,
+      "Position": {
+        "x": 14,
+        "y": 14
+      }
+    }
+  ],
+  "GridSize": {
+    "x": 15,
+    "y": 15
+  },
+  "Duration": 0.0,
+  "LevelDifficulty": 0,
+  "MaxCapacity": 0,
+  "DisabledGridCells": []
+}

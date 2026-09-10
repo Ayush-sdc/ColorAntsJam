@@ -8,8 +8,14 @@ public class LevelManager : MonoBehaviour
     private const string CurrentLevelPrefKey = "CurrentLevel";
 
     [Header("Configuration")]
-    [Tooltip("Reference to the LevelDatabase ScriptableObject containing all levels.")]
+    [Tooltip("Reference to the production LevelDatabase ScriptableObject containing handmade levels.")]
     [SerializeField] private LevelDatabase levelDatabase;
+
+    [Tooltip("Optional reference database containing reference progression (Levels 1-45).")]
+    [SerializeField] private LevelDatabase referenceLevelDatabase;
+
+    [Tooltip("When true, gameplay progression loads from ReferenceLevelDatabase instead of the production LevelDatabase.")]
+    [SerializeField] private bool useReferenceLevelDatabase = false;
 
     [Tooltip("Should levels loop once the player completes the last configured level?")]
     [SerializeField] private bool loopWhenExceeded = true;
@@ -25,7 +31,15 @@ public class LevelManager : MonoBehaviour
 
     public Level ActiveLevel => activeLevel;
     public int CurrentLevelNumber => currentLevelNumber;
-    public LevelDatabase Database => levelDatabase;
+    public bool UseReferenceLevelDatabase
+    {
+        get => useReferenceLevelDatabase;
+        set => useReferenceLevelDatabase = value;
+    }
+
+    public LevelDatabase ReferenceDatabase => referenceLevelDatabase;
+    public LevelDatabase ActiveDatabase => (useReferenceLevelDatabase && referenceLevelDatabase != null) ? referenceLevelDatabase : levelDatabase;
+    public LevelDatabase Database => ActiveDatabase;
 
     /// <summary>
     /// Event triggered whenever a level is loaded and initialized.
@@ -42,6 +56,21 @@ public class LevelManager : MonoBehaviour
         }
 
         Instance = this;
+
+#if UNITY_EDITOR
+        if (referenceLevelDatabase == null)
+        {
+            referenceLevelDatabase = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelDatabase>("Assets/Data/ReferenceLevelDatabase.asset");
+        }
+#endif
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
     private void Start()
@@ -68,18 +97,19 @@ public class LevelManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Loads a specific level by its 1-based index from the LevelDatabase.
+    /// Loads a specific level by its 1-based index from the active LevelDatabase.
     /// </summary>
     public void LoadLevel(int levelNumber)
     {
-        if (levelDatabase == null)
+        var db = ActiveDatabase;
+        if (db == null)
         {
             Debug.LogError("[LevelManager] LevelDatabase reference is missing! Please assign it in the Inspector.", this);
             return;
         }
 
         currentLevelNumber = levelNumber;
-        activeLevel = levelDatabase.GetLevel(currentLevelNumber, loopWhenExceeded);
+        activeLevel = db.GetLevel(currentLevelNumber, loopWhenExceeded);
 
         if (activeLevel == null)
         {
@@ -136,4 +166,14 @@ public class LevelManager : MonoBehaviour
         currentLevelNumber = 1;
         Debug.Log("[LevelManager] PlayerPrefs level progress reset to Level 1.");
     }
+
+#if UNITY_EDITOR
+    [UnityEditor.MenuItem("Tools/Slither Ants Jam/Progression/Reset Progression to Level 1")]
+    public static void ResetProgressionEditorMenu()
+    {
+        PlayerPrefs.SetInt(CurrentLevelPrefKey, 1);
+        PlayerPrefs.Save();
+        Debug.Log("[LevelManager] PlayerPrefs level progression reset to Level 1.");
+    }
+#endif
 }

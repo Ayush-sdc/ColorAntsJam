@@ -23,18 +23,23 @@ MonoBehaviour:
   - holeColor: 0
     gridCoordinate: {x: 1, y: 9}
     displayCount: 2
+    parallelRows: 2
   - holeColor: 1
     gridCoordinate: {x: 10, y: 9}
     displayCount: 2
+    parallelRows: 2
   - holeColor: 4
     gridCoordinate: {x: 1, y: 0}
     displayCount: 2
+    parallelRows: 2
   - holeColor: 5
     gridCoordinate: {x: 5, y: 0}
     displayCount: 2
+    parallelRows: 2
   - holeColor: 6
     gridCoordinate: {x: 10, y: 2}
     displayCount: 2
+    parallelRows: 2
   antQueues:
   - queueId: Blue_Top
     antColor: 0

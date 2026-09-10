@@ -9,8 +9,9 @@ public static class LevelGeneratorWindow
     private const string Level01AssetPath = "Assets/Data/Levels/Level_01.asset";
     private const string DatabaseAssetPath = "Assets/Data/Levels/LevelDatabase.asset";
 
-    [MenuItem("SlitherAnts/Sync Play Mode Layout to Edit Mode")]
-    [MenuItem("SlitherAnts/Build Level 1 in Scene (Edit Mode)")]
+    // [MenuItem("SlitherAnts/Sync Play Mode Layout to Edit Mode")]
+    // [MenuItem("SlitherAnts/Build Level 1 in Scene (Edit Mode)")]
+    // Disabled to prevent baking runtime objects into main.unity
     public static void BuildLevel1InSceneHierarchy()
     {
         EnsureDataFolders();
@@ -228,11 +229,11 @@ public static class LevelGeneratorWindow
         // 5 Food Boxes matching reference photo (2 parallel ants capacity each)
         List<HoleData> holes = new List<HoleData>()
         {
-            new HoleData(AntColor.Blue, new Vector2Int(1, 9), 2),    // Top-Left Blue Box
-            new HoleData(AntColor.Green, new Vector2Int(10, 9), 2),  // Top-Right Green Box
-            new HoleData(AntColor.Red, new Vector2Int(1, 0), 2),     // Bottom-Left Red Box
-            new HoleData(AntColor.Orange, new Vector2Int(5, 0), 2),  // Bottom-Center Orange Box
-            new HoleData(AntColor.Cyan, new Vector2Int(10, 2), 2)    // Bottom-Right Cyan Box
+            new HoleData(AntColor.Blue, new Vector2Int(1, 9), 2, 2),    // Top-Left Blue Box (2 parallel rows)
+            new HoleData(AntColor.Green, new Vector2Int(10, 9), 2, 2),  // Top-Right Green Box (2 parallel rows)
+            new HoleData(AntColor.Red, new Vector2Int(1, 0), 2, 2),     // Bottom-Left Red Box (2 parallel rows)
+            new HoleData(AntColor.Orange, new Vector2Int(5, 0), 2, 2),  // Bottom-Center Orange Box (2 parallel rows)
+            new HoleData(AntColor.Cyan, new Vector2Int(10, 2), 2, 2)    // Bottom-Right Cyan Box (2 parallel rows)
         };
 
         // 10 Ant Queues (5 Pairs of Parallel Ants)

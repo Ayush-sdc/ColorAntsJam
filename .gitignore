@@ -56,3 +56,12 @@ crashlytics-build.properties
 # OS generated
 .DS_Store
 Thumbs.db
+
+# Scratch, logs, and backups
+*.bak
+*.bak.meta
+*_BACKUP*
+*.log
+*.zip
+scratch_*.py
+test_parity_output.txt

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "LevelDatabase", menuName = "SlitherAnts/Level Database", order = 0)]
@@ -8,6 +8,11 @@ public class LevelDatabase : ScriptableObject
 
     public IReadOnlyList<Level> Levels => levels;
     public int LevelCount => levels != null ? levels.Count : 0;
+
+    public void SetLevels(List<Level> newLevels)
+    {
+        levels = newLevels != null ? new List<Level>(newLevels) : new List<Level>();
+    }
 
     /// <summary>
     /// Gets a level by 1-based level index (e.g. Level 1, 2, ...).
