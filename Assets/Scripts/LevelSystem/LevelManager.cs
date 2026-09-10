@@ -15,7 +15,7 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private LevelDatabase referenceLevelDatabase;
 
     [Tooltip("When true, gameplay progression loads from ReferenceLevelDatabase instead of the production LevelDatabase.")]
-    [SerializeField] private bool useReferenceLevelDatabase = true;
+    [SerializeField] private bool useReferenceLevelDatabase = false;
 
     [Tooltip("Should levels loop once the player completes the last configured level?")]
     [SerializeField] private bool loopWhenExceeded = false;
@@ -38,21 +38,7 @@ public class LevelManager : MonoBehaviour
     }
 
     public LevelDatabase ReferenceDatabase => referenceLevelDatabase;
-    public LevelDatabase ActiveDatabase
-    {
-        get
-        {
-            if (useReferenceLevelDatabase && referenceLevelDatabase != null)
-            {
-                return referenceLevelDatabase;
-            }
-            if (referenceLevelDatabase != null)
-            {
-                return referenceLevelDatabase;
-            }
-            return levelDatabase;
-        }
-    }
+    public LevelDatabase ActiveDatabase => (useReferenceLevelDatabase && referenceLevelDatabase != null) ? referenceLevelDatabase : levelDatabase;
     public LevelDatabase Database => ActiveDatabase;
 
     /// <summary>
@@ -77,10 +63,6 @@ public class LevelManager : MonoBehaviour
             referenceLevelDatabase = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelDatabase>("Assets/Data/ReferenceLevelDatabase.asset");
         }
 #endif
-        if (referenceLevelDatabase != null)
-        {
-            useReferenceLevelDatabase = true;
-        }
     }
 
     private void OnDestroy()
