@@ -15,10 +15,10 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private LevelDatabase referenceLevelDatabase;
 
     [Tooltip("When true, gameplay progression loads from ReferenceLevelDatabase instead of the production LevelDatabase.")]
-    [SerializeField] private bool useReferenceLevelDatabase = false;
+    [SerializeField] private bool useReferenceLevelDatabase = true;
 
     [Tooltip("Should levels loop once the player completes the last configured level?")]
-    [SerializeField] private bool loopWhenExceeded = true;
+    [SerializeField] private bool loopWhenExceeded = false;
 
     [Header("Debug Settings")]
     [Tooltip("Override the level loaded on Start for testing purposes without changing PlayerPrefs.")]
@@ -38,7 +38,21 @@ public class LevelManager : MonoBehaviour
     }
 
     public LevelDatabase ReferenceDatabase => referenceLevelDatabase;
-    public LevelDatabase ActiveDatabase => (useReferenceLevelDatabase && referenceLevelDatabase != null) ? referenceLevelDatabase : levelDatabase;
+    public LevelDatabase ActiveDatabase
+    {
+        get
+        {
+            if (useReferenceLevelDatabase && referenceLevelDatabase != null)
+            {
+                return referenceLevelDatabase;
+            }
+            if (referenceLevelDatabase != null)
+            {
+                return referenceLevelDatabase;
+            }
+            return levelDatabase;
+        }
+    }
     public LevelDatabase Database => ActiveDatabase;
 
     /// <summary>
@@ -63,6 +77,10 @@ public class LevelManager : MonoBehaviour
             referenceLevelDatabase = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelDatabase>("Assets/Data/ReferenceLevelDatabase.asset");
         }
 #endif
+        if (referenceLevelDatabase != null)
+        {
+            useReferenceLevelDatabase = true;
+        }
     }
 
     private void OnDestroy()
@@ -108,7 +126,8 @@ public class LevelManager : MonoBehaviour
             return;
         }
 
-        currentLevelNumber = levelNumber;
+        int maxLevels = db.LevelCount > 0 ? db.LevelCount : 45;
+        currentLevelNumber = Mathf.Clamp(levelNumber, 1, maxLevels);
         activeLevel = db.GetLevel(currentLevelNumber, loopWhenExceeded);
 
         if (activeLevel == null)
@@ -125,10 +144,21 @@ public class LevelManager : MonoBehaviour
 
     /// <summary>
     /// Increments the current level in PlayerPrefs and loads it.
+    /// From Level 45, remains on Level 45.
     /// </summary>
     public void AdvanceToNextLevel()
     {
-        currentLevelNumber++;
+        var db = ActiveDatabase;
+        int maxLevels = (db != null && db.LevelCount > 0) ? db.LevelCount : 45;
+
+        if (currentLevelNumber >= maxLevels)
+        {
+            currentLevelNumber = maxLevels;
+            Debug.Log($"[LevelManager] Already at final Level {currentLevelNumber}. Remaining on current level.");
+            return;
+        }
+
+        currentLevelNumber = Mathf.Min(maxLevels, currentLevelNumber + 1);
         PlayerPrefs.SetInt(CurrentLevelPrefKey, currentLevelNumber);
         PlayerPrefs.Save();
 
@@ -137,14 +167,22 @@ public class LevelManager : MonoBehaviour
 
     /// <summary>
     /// Loads the previous level (clamped to Level 1 minimum).
+    /// From Level 1, remains on Level 1.
     /// </summary>
     public void LoadPreviousLevel()
     {
-        int prevLevel = Mathf.Max(1, currentLevelNumber - 1);
-        PlayerPrefs.SetInt(CurrentLevelPrefKey, prevLevel);
+        if (currentLevelNumber <= 1)
+        {
+            currentLevelNumber = 1;
+            Debug.Log("[LevelManager] Already at first Level 1. Remaining on current level.");
+            return;
+        }
+
+        currentLevelNumber = Mathf.Max(1, currentLevelNumber - 1);
+        PlayerPrefs.SetInt(CurrentLevelPrefKey, currentLevelNumber);
         PlayerPrefs.Save();
 
-        LoadLevel(prevLevel);
+        LoadLevel(currentLevelNumber);
     }
 
     /// <summary>
