@@ -28,6 +28,9 @@ public class BoardManager : MonoBehaviour
     // Grid occupancy maps
     private readonly Dictionary<Vector2Int, HoleController> holesMap = new Dictionary<Vector2Int, HoleController>();
     private readonly List<AntQueueController> activeQueues = new List<AntQueueController>();
+    private readonly List<HoleController> activeHoles = new List<HoleController>();
+    private readonly HashSet<string> completedHoleIds = new HashSet<string>();
+    private int completedHoleCount = 0;
 
     [SerializeField] private Level currentLevel;
 
@@ -38,6 +41,9 @@ public class BoardManager : MonoBehaviour
     public float CellSize => cellSize;
     public Level CurrentLevel => currentLevel;
     public IReadOnlyList<AntQueueController> ActiveQueues => activeQueues;
+    public IReadOnlyList<HoleController> ActiveHoles => activeHoles;
+    public int CompletedHoleCount => completedHoleCount;
+    public IReadOnlyCollection<string> CompletedHoleIds => completedHoleIds;
     public IReadOnlyDictionary<Vector2Int, HoleController> HolesMap => holesMap;
     public bool EnableDiagnostics { get => enableDiagnostics; set => enableDiagnostics = value; }
     public bool IsTestInstance => isTestInstance;
@@ -280,6 +286,7 @@ public class BoardManager : MonoBehaviour
         if (holePrefab != null)
         {
             holeObj = Instantiate(holePrefab, worldPos, Quaternion.identity, parentTransform);
+            holeObj.name = $"Hole_{rHole.AntColor}_{rHole.MinX}_{rHole.MinY}";
         }
         else
         {
@@ -318,6 +325,8 @@ public class BoardManager : MonoBehaviour
         {
             RegisterHoleInMap(controller);
         }
+
+        activeHoles.Add(controller);
     }
 
     private void SpawnReferenceAntQueue(RuntimeReferenceQueue rQueue)
@@ -557,7 +566,8 @@ public class BoardManager : MonoBehaviour
             controller = holeObj.AddComponent<HoleController>();
         }
 
-        controller.Initialize(holeData.HoleColor, holeData.GridCoordinate, initialCount, isRightSide, rowCount);
+        controller.Initialize(holeData.ColorID, holeData.GridCoordinate, initialCount, isRightSide, rowCount);
+        activeHoles.Add(controller);
         RegisterHoleInMap(controller);
     }
 
@@ -620,11 +630,18 @@ public class BoardManager : MonoBehaviour
 
     public HoleController GetHoleAt(Vector2Int coord)
     {
-        if (holesMap.TryGetValue(coord, out var hole))
+        if (!holesMap.TryGetValue(coord, out var hole))
         {
-            return hole;
+            return null;
         }
-        return null;
+
+        if (hole == null || hole.IsCompleted)
+        {
+            holesMap.Remove(coord);
+            return null;
+        }
+
+        return hole;
     }
 
     public AntQueueController GetQueueOccupying(Vector2Int coord, AntQueueController ignoreQueue = null)
@@ -768,6 +785,63 @@ public class BoardManager : MonoBehaviour
         return true;
     }
 
+    public void RemoveCompletedHole(HoleController hole)
+    {
+        if (hole == null) return;
+
+        string hId = hole.HoleId;
+        if (!string.IsNullOrEmpty(hId) && completedHoleIds.Contains(hId))
+        {
+            return; // Idempotent: already completed
+        }
+
+        if (!string.IsNullOrEmpty(hId))
+        {
+            completedHoleIds.Add(hId);
+        }
+        completedHoleCount++;
+        activeHoles.Remove(hole);
+
+        int releasedCount = 0;
+        var occupied = hole.OccupiedCells;
+        if (occupied != null)
+        {
+            foreach (var cell in occupied)
+            {
+                if (holesMap.TryGetValue(cell, out var mapped) && mapped == hole)
+                {
+                    holesMap.Remove(cell);
+                    releasedCount++;
+                }
+            }
+        }
+
+        // Defensive sweep for any stale mappings pointing to this exact hole
+        var lingeringKeys = new List<Vector2Int>();
+        foreach (var kvp in holesMap)
+        {
+            if (kvp.Value == hole)
+            {
+                lingeringKeys.Add(kvp.Key);
+            }
+        }
+        foreach (var key in lingeringKeys)
+        {
+            holesMap.Remove(key);
+            releasedCount++;
+        }
+
+        bool removedFromHoleMap = !holesMap.ContainsValue(hole);
+
+        // Notify board state changed so pathfinding / win-loss conditions update immediately
+        if (!isTestInstance && !isSettingUpBoard)
+        {
+            OnBoardStateChanged?.Invoke();
+        }
+
+        hole.PlayCompletedEffectAndDisappear(releasedCount, removedFromHoleMap);
+    }
+
     public void OnQueueCompleted(AntQueueController queue)
     {
         if (queue != null)
@@ -778,16 +852,16 @@ public class BoardManager : MonoBehaviour
                 activeQueues.Remove(queue);
 
                 // Find matching hole to notify queue swallow (badge decrement)
-                HoleController targetHole = null;
-                if (queue.CurrentBodyCoordinates != null && queue.CurrentBodyCoordinates.Count > 0)
+                HoleController targetHole = queue.DestinationHole;
+                if (targetHole == null && queue.CurrentBodyCoordinates != null && queue.CurrentBodyCoordinates.Count > 0)
                 {
                     targetHole = GetHoleAt(queue.CurrentBodyCoordinates[0]);
                 }
                 if (targetHole == null)
                 {
-                    foreach (var h in holesMap.Values)
+                    foreach (var h in activeHoles)
                     {
-                        if (h != null && h.ColorID == queue.ColorID)
+                        if (h != null && !h.IsCompleted && h.ColorID == queue.ColorID)
                         {
                             targetHole = h;
                             break;
@@ -826,6 +900,18 @@ public class BoardManager : MonoBehaviour
             tiles.DOKill();
             SafeDestroy(tiles.gameObject);
         }
+
+        foreach (var hole in activeHoles)
+        {
+            if (hole != null)
+            {
+                hole.transform.DOKill();
+                SafeDestroy(hole.gameObject);
+            }
+        }
+        activeHoles.Clear();
+        completedHoleIds.Clear();
+        completedHoleCount = 0;
 
         foreach (var hole in holesMap.Values)
         {

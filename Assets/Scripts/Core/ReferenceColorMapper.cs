@@ -81,6 +81,32 @@ public static class ReferenceColorMapper
     }
 
     /// <summary>
+    /// Converts a runtime AntColor enum back to its canonical raw reference ColorID.
+    /// Never casts enum index directly to integer.
+    /// </summary>
+    public static int ToRawColorId(AntColor color)
+    {
+        return color switch
+        {
+            AntColor.SkyBlue => 0,
+            AntColor.Lime => 1,
+            AntColor.Yellow => 2,
+            AntColor.Purple => 3,
+            AntColor.Orange => 4,
+            AntColor.Pink => 5,
+            AntColor.Indigo => 6,
+            AntColor.Green => 7,
+            AntColor.Brown => 8,
+            AntColor.White => 9,
+            AntColor.Red => 10,
+            AntColor.Turquoise => 11,
+            AntColor.Blue => 0,
+            AntColor.Cyan => 11,
+            _ => 9
+        };
+    }
+
+    /// <summary>
     /// Converts a raw reference ColorID directly to its runtime RGB visual Color.
     /// </summary>
     public static Color GetVisualColor(int rawColorId)

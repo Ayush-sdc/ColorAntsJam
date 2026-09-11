@@ -29,6 +29,7 @@ public class AntQueueController : MonoBehaviour
     [SerializeField] private float enterHoleJumpPower = 1.1f;
 
     [SerializeField] private List<AntUnit> antUnits = new List<AntUnit>();
+    [SerializeField] private HoleController destinationHole;
 
     public string QueueId => queueId;
     public int ColorID => colorId;
@@ -37,6 +38,7 @@ public class AntQueueController : MonoBehaviour
     public bool IsConnected => isConnected;
     public int ConnectedIndex => connectedIndex;
     public bool IsMoving => isMoving;
+    public HoleController DestinationHole => destinationHole;
     public IReadOnlyList<Vector2Int> CurrentBodyCoordinates => currentBodyCoordinates;
     public IReadOnlyList<Vector2Int> RemainingPath => remainingPath;
     public IReadOnlyList<AntUnit> Units => antUnits;
@@ -82,7 +84,7 @@ public class AntQueueController : MonoBehaviour
     {
         queueId = data.QueueId;
         colorId = data.ColorID;
-        antColor = data.AntColor;
+        antColor = ReferenceColorMapper.ToAntColor(data.ColorID);
         antCount = data.AntCount;
         isConnected = data.IsConnected;
         connectedIndex = data.ConnectedIndex;
@@ -97,7 +99,7 @@ public class AntQueueController : MonoBehaviour
     {
         queueId = id;
         colorId = rawColorId;
-        antColor = color;
+        antColor = ReferenceColorMapper.ToAntColor(rawColorId);
         isConnected = connected;
         connectedIndex = connIdx;
         currentBodyCoordinates = bodyCoords != null ? new List<Vector2Int>(bodyCoords) : new List<Vector2Int>();
@@ -109,7 +111,8 @@ public class AntQueueController : MonoBehaviour
 
     public void InitializeReference(string id, AntColor color, List<Vector2Int> bodyCoords, List<Vector2Int> path)
     {
-        InitializeReference(id, (int)color, color, bodyCoords, path, false, -1);
+        int rawId = ReferenceColorMapper.ToRawColorId(color);
+        InitializeReference(id, rawId, color, bodyCoords, path, false, -1);
     }
 
     [ContextMenu("Rebuild Queue Visuals")]
@@ -230,6 +233,11 @@ public class AntQueueController : MonoBehaviour
     {
         if (isMoving || path == null || path.Count < 2) return;
         remainingPath = new List<Vector2Int>(path);
+        Vector2Int targetCoord = remainingPath[remainingPath.Count - 1];
+        if (BoardManager.Instance != null)
+        {
+            destinationHole = BoardManager.Instance.GetHoleAt(targetCoord);
+        }
         StartCoroutine(MoveRoutine());
     }
 
@@ -289,7 +297,11 @@ public class AntQueueController : MonoBehaviour
         OnQueueMoveStarted?.Invoke(this);
 
         Vector2Int holeCoord = remainingPath[remainingPath.Count - 1];
-        HoleController hole = BoardManager.Instance != null ? BoardManager.Instance.GetHoleAt(holeCoord) : null;
+        if (destinationHole == null && BoardManager.Instance != null)
+        {
+            destinationHole = BoardManager.Instance.GetHoleAt(holeCoord);
+        }
+        HoleController hole = destinationHole;
         Vector3 holeWorldPos = GetWorldPositionForGrid(holeCoord);
 
         // Precompute the complete unbroken path of coordinates that each ant must traverse
@@ -403,6 +415,7 @@ public class AntQueueController : MonoBehaviour
         {
             BoardManager.Instance.OnQueueCompleted(this);
         }
+        destinationHole = null;
     }
 
     private void SafeDestroy(UnityEngine.Object obj)

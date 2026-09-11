@@ -1,6 +1,6 @@
 # Slither Ants Jam - Project Context & Session Handover
 
-**Last Updated:** September 11, 2026 (Comprehensive Project State)  
+**Last Updated:** September 12, 2026 (Authoritative Reference Pipeline, Color Consistency & Holder Removal)  
 **Active Branch:** `main`  
 **Unity Version:** 6000.3.23f1 (Universal Render Pipeline - URP)  
 **Primary Scene:** `Assets/Scenes/main.unity`  
@@ -9,107 +9,144 @@
 
 ## 1. Project Overview & Core Gameplay Loop
 
-**Slither Ants Jam** is a top-down 3D grid puzzle game built in Unity. Players tap / click colored ant queues ("caterpillar" slither chains) to route them into color-matched stadium holes around obstacles and other ant bodies.
+**Slither Ants Jam** is a top-down 3D grid puzzle game built in Unity. Players tap / click colored ant queues ("caterpillar" slither chains) to route them into color-matched stadium holders around obstacles and other ant bodies.
 
 ### Core Loop
-1. **Board Rebuild**: `LevelManager` loads the selected `Level` asset on start or on level change. `BoardManager.SetupBoard()` clears previous runtime objects and instantiates holes, queues, and grid dots.
-2. **Pathfinding & Input**: `PlayerInputHandler` detects raycasts on ant queues / grid cells. `BoardManager.TryStartMove()` uses `AntPathfinder.cs` (A* grid search) to validate that an unblocked path exists to a matching hole.
-3. **Slithering & Hole Entry**: Ants move segment-by-segment along the path (`AntQueueController`), slithering toward the hole entrance.
-4. **Hole Swallowing & Capacity**: As each ant unit reaches the hole, `HoleController` swallows the unit with DOTween scaling and burst VFX (`ant_dis`), decrementing its badge counter.
-5. **Win / Loss Evaluation**:
-   - **Win**: All ant queues on the board have been cleared into their respective holes.
-   - **Loss (Deadlock / Timeout)**: Timer reaches 0 or all remaining ant queues are deadlocked with no valid path to their holes.
+1. **Board Rebuild**: `LevelManager` loads the selected `Level` asset on start or on level change. `BoardManager.SetupBoard()` clears previous runtime objects and instantiates holders, queues, and grid dots.
+2. **Pathfinding & Input**: `PlayerInputHandler` detects raycasts on ant queues / grid cells. `BoardManager.TryStartMove()` uses `AntPathfinder.cs` (BFS grid search) to validate that an unblocked path exists to a matching holder entrance.
+3. **Slithering & Hole Entry**: Ants move segment-by-segment along the path (`AntQueueController`), slithering toward the holder entrance. The target `DestinationHole` is cached on the queue upon movement start.
+4. **Queue Swallowing & Capacity**: As ant units reach the holder, `HoleController` swallows units with DOTween scaling and burst VFX (`ant_dis`). When the entire queue finishes entering, `BoardManager.OnQueueCompleted(queue)` notifies `targetHole.OnQueueSwallowed()`, decrementing its queue counter.
+5. **Holder Completion & Permanent Grid Release**: When a holder's counter reaches 0:
+   - The holder enters `IsCompleted = true`.
+   - `BoardManager.RemoveCompletedHole(hole)` unregisters ALL cells across the holder's entire multi-cell footprint (`OccupiedCells`) from `holesMap`.
+   - Grid blocking is released immediately so remaining queues can path through that space.
+   - The holder shrinks cleanly (`0.20s`, `Ease.InBack`) and its GameObject (including `SlotRim`, `SlotInnerBevel`, `SlotPit`, and badge) is destroyed.
+6. **Win / Loss Evaluation**:
+   - **Win**: All ant queues on the board have been cleared (`BoardManager.ActiveQueues.Count == 0`). Win condition does not depend on destroyed `HoleController` GameObjects.
+   - **Loss (Deadlock / Timeout)**: Timer reaches 0 or all remaining ant queues are deadlocked with no valid path to their holders.
 
 ---
 
-## 2. Level Architecture & Dual-Database System
+## 2. Level Architecture & Database System
 
-The game supports two parallel level database systems without any conflicts:
+The project uses `Assets/Data/Levels/LevelDatabase.asset` as the authoritative level database containing all 45 reference levels (`Level_001` through `Level_045`).
 
 ```text
-                                  LevelManager (GameController)
-                                                │
-                 ┌──────────────────────────────┴──────────────────────────────┐
-                 ▼                                                             ▼
-    [Handmade Production Mode]                                    [Reference Progression Mode]
-  useReferenceLevelDatabase = FALSE                             useReferenceLevelDatabase = TRUE
-                 │                                                             │
-   Assets/Data/Levels/LevelDatabase.asset                      Assets/Data/ReferenceLevelDatabase.asset
-  (3 Handmade Levels: Level 1, 2, 3)                         (45 Reference Levels: Level 001 - 045)
-                 │                                                             │
-                 ▼                                                             ▼
-     SetupHandmadeBoard(level)                                    SetupReferenceBoard(level)
- (Direct HoleData + AntQueueData)                            (Via ReferenceLevelRuntimeAdapter)
+                              LevelManager (GameController)
+                                            │
+                                            ▼
+                           Assets/Data/Levels/LevelDatabase.asset
+                           (45 Reference Levels: Level_001 - Level_045)
+                                            │
+                                            ▼
+                           ReferenceLevelRuntimeAdapter.cs
+                                            │
+                    ┌───────────────────────┴───────────────────────┐
+                    ▼                                               ▼
+      HoleController (Holders)                        AntQueueController (Queues)
+   - Multi-cell footprints                         - Ordered body coordinates
+   - Raw ColorID mapping                           - Matching raw ColorID
+   - Initial count = matching queues               - Head-to-tail slither movement
+   - Single-queue visual override                  - DestinationHole caching
 ```
-
-### Current Active Configuration (Default)
-- **Active Database**: `Assets/Data/Levels/LevelDatabase.asset`
-- **`useReferenceLevelDatabase`**: `FALSE`
-- **Active Level 1 Asset**: `Assets/Data/Levels/Level_01.asset` (9x6 grid, 5 holes, 5 queues, 35 total ants)
-- **BoardManager Branch**: `SetupHandmadeBoard()`
 
 ---
 
-## 3. Key Scripts & Systems
+## 3. Authoritative Raw Color Pipeline
+
+Raw ColorIDs from `.asset` files are the single source of truth mapped via `ReferenceColorMapper.cs`:
+
+| Raw ColorID | Distinct Color Name | `AntColor` Enum | Notes |
+| :---: | :---: | :---: | :--- |
+| **0** | Sky Blue | `AntColor.SkyBlue` | Light sky blue `#33B3FF` |
+| **1** | Lime Green | `AntColor.Lime` | Bright vibrant lime `#7BD926` |
+| **2** | Yellow | `AntColor.Yellow` | Warm candy yellow `#FFBF0D` |
+| **3** | Purple | `AntColor.Purple` | Rich vivid purple `#9438E0` |
+| **4** | Orange | `AntColor.Orange` | Crisp citrus orange `#FF800D` |
+| **5** | Pink | `AntColor.Pink` | Punchy candy magenta/pink `#FA59BF` |
+| **6** | Indigo | `AntColor.Indigo` | Deep royal blue `#2E47D9` |
+| **7** | Green | `AntColor.Green` | Forest/leaf green `#1FA638` |
+| **8** | Brown | `AntColor.Brown` | Milk chocolate brown `#8C522B` |
+| **9** | White | `AntColor.White` | Clean warm white `#EBEBEB` |
+| **10** | Red | `AntColor.Red` | Coral ruby red `#F23D42` |
+| **11** | Turquoise | `AntColor.Turquoise` | Aqua/cyan `#1AE0C7` |
+| **12+** | UNVERIFIED | White fallback | Default fallback without guessing |
+
+Both Ants (`AntUnit` / `AntColorPalette.GetMaterial`) and Holder rims (`SlotRim` / `AntColorPalette.GetHoleMaterial`) derive their exact base RGB values from this pipeline (verified 100% RGB parity).
+
+---
+
+## 4. Holder Visuals & Single-Queue Overrides
+
+For runtime holders whose initial queue count is exactly 1 (e.g. all 5 Level 1 holders), `ApplySingleQueueHolderVisualOverride()` is applied:
+- `SlotRim`: LocalScale X = `1.9205`
+- `SlotInnerBevel`: LocalScale X = `2.3861`, dark shaded bevel (`Color.Lerp(baseColor, black, 0.38f)`)
+- `SlotPit`: LocalScale X = `2.6535`, recessed dark pit floor
+- `SlotCounterBadge`: LocalPosition `(0.35, 0.0, 0.0)`
+  - `BadgeMesh`: LocalPosition `(0.25, 0.0, -0.25)`
+  - `BadgeCountText`: LocalPosition `(0.25, 0.22, -0.25)`
+
+---
+
+## 5. Holder Removal & Footprint Grid Release System
+
+When a holder counter reaches 0 after queue completion:
+1. **Execution Sequence**:
+   - Final queue completely finishes entering -> `BoardManager.OnQueueCompleted(queue)`.
+   - Cached `queue.DestinationHole` is notified via `hole.OnQueueSwallowed()`.
+   - `remainingCount` reaches 0 -> marked `isCompleted = true`.
+   - `BoardManager.RemoveCompletedHole(hole)` is invoked.
+   - For every cell in `hole.OccupiedCells`, if mapped to this hole, it is removed from `holesMap`.
+   - Defensive sweep clears any lingering mappings.
+   - `activeHoles.Remove(hole)` updates active tracking; completion tracked via `completedHoleCount` and `completedHoleIds` (stable IDs, not destroyed references).
+   - Board state refreshed (`OnBoardStateChanged?.Invoke()`).
+   - `PlayCompletedEffectAndDisappear()` disables colliders, logs diagnostic entry, animates scale to 0 (`0.20s`, `Ease.InBack`), and destroys the GameObject.
+2. **Pathfinding & Occupancy Safety**:
+   - `AntPathfinder` evaluates dynamic occupancy from `BoardManager.HolesMap`. Because completed holders are unregistered immediately, released cells naturally become empty and walkable.
+   - `BoardManager.GetHoleAt(coord)` safely purges stale or completed mappings:
+     ```csharp
+     if (!holesMap.TryGetValue(coord, out var hole)) return null;
+     if (hole == null || hole.IsCompleted) { holesMap.Remove(coord); return null; }
+     return hole;
+     ```
+3. **Diagnostic Log Format**:
+   ```text
+   [HoleCompleted]
+   Color=Red
+   RemainingCount=0
+   OccupiedCells=[(1,0),(0,0)]
+   ReleasedCells=2
+   RemovedFromHoleMap=True
+   GameObjectRemoval=True
+   ```
+
+---
+
+## 6. Key Scripts & Systems
 
 | Script | Location | Responsibility |
 | :--- | :--- | :--- |
-| **`LevelManager.cs`** | `Assets/Scripts/LevelSystem/` | Singleton controlling active level index, progression persistence (`PlayerPrefs`), database switching, and clamped `E`/`Q` keyboard navigation. |
-| **`LevelDatabase.cs`** | `Assets/Scripts/LevelSystem/` | ScriptableObject holding an ordered list of `Level` assets with index bounds clamping/looping. |
-| **`Level.cs`** | `Assets/Scripts/LevelSystem/` | Data container for level metadata (dimensions `GridWidth`/`GridHeight`, duration, disabled cells, holes, and ant queues). |
-| **`ReferenceLevelRuntimeAdapter.cs`** | `Assets/Scripts/LevelSystem/` | In-memory dynamic adapter converting raw reference levels (`HolderType 0` holes, `HolderType 1` queues) into runtime board data without mutating immutable source files. |
-| **`BoardManager.cs`** | `Assets/Scripts/Board/` | Grid coordinate translation, clean runtime board lifecycle (`SetupBoard`, `ClearBoard`), hole map registration (`holesMap`), connected group validation, and visual dot spawning. |
-| **`AntPathfinder.cs`** | `Assets/Scripts/Board/` | A* pathfinding algorithm navigating around obstacles, other queues, disabled cells, and hole boundaries directly into color-matched hole entrances. |
-| **`BoardCameraController.cs`** | `Assets/Scripts/Camera/` | Dynamic camera auto-framing adjusting orthographic/perspective bounds to fit arbitrary board sizes with UI headroom. |
-| **`AntQueueController.cs`** | `Assets/Scripts/Ants/` | Slither chain movement, path execution, eye gaze tracking, blocked wobble feedback, connected group synchronization. |
-| **`AntUnit.cs`** | `Assets/Scripts/Ants/` | Individual ant body mesh, material color rendering, animated eye and pupil rotation. |
-| **`HoleController.cs`** | `Assets/Scripts/Board/` | Procedural 3D tubular glossy stadium rim, black cavity pit, colored badge mesh, 3D text counter, ant absorption animation, burst particles. |
-| **`GameManager.cs`** | `Assets/Scripts/Core/` | Game state machine (`NotStarted`, `Playing`, `LevelWon`, `LevelLost`), countdown timer, player lives, deadlock detection. |
-| **`PlayerInputHandler.cs`** | `Assets/Scripts/Core/` | Unified mouse and touch raycasting against ant colliders and board plane, keyboard shortcuts (`E` = Next, `Q` = Prev). |
-| **`GameUIManager.cs`** | `Assets/Scripts/UI/` | Top HUD (timer, level number text, life hearts, settings button), win/loss modal dialogs, audio settings modal. |
-| **`SoundManager.cs`** | `Assets/Scripts/Core/` | Procedural audio synthesis for taps, ant slithering, hole absorption, win/loss jingles, mute toggling. |
-| **`GardenBackgroundManager.cs`** | `Assets/Scripts/Environment/` | Dynamic stone patio floor, curb borders, foliage bushes, and pebble scatters adapted to board dimensions. |
+| **`ReferenceColorMapper.cs`** | `Assets/Scripts/Core/` | Authoritative 0..11 raw ColorID mapping to distinct `AntColor` values. |
+| **`AntColor.cs` / `Palette`** | `Assets/Scripts/Core/` | Color enums, calibrated sRGB color palette, shared materials for ants and holder rims. |
+| **`HoleController.cs`** | `Assets/Scripts/Board/` | Procedural stadium mesh geometry, single-queue overrides, badge text, queue-level swallow counter, disappearance animation. |
+| **`BoardManager.cs`** | `Assets/Scripts/Board/` | Runtime grid lifecycle, `holesMap` occupancy, `activeHoles` & `completedHoleIds` tracking, `RemoveCompletedHole()`, queue completion handling. |
+| **`AntQueueController.cs`** | `Assets/Scripts/Ants/` | Slither chain movement, path traversal, `DestinationHole` caching and dispatch. |
+| **`AntPathfinder.cs`** | `Assets/Scripts/Board/` | Deterministic BFS pathfinding respecting active queues, matching non-full holders, and released footprint cells. |
+| **`GameManager.cs`** | `Assets/Scripts/Core/` | Game state machine (`NotStarted`, `Playing`, `LevelWon`, `LevelLost`), deadlock detection, win condition evaluation (`activeQueues.Count == 0`). |
+| **`TestLevels1To5Validation.cs`** | `Assets/Scripts/Editor/` | Menu tools: `Validate Levels 1 to 5`, `Validate Color Consistency Levels 1 to 5`, `Validate Holder Removal Level 1`. |
 
 ---
 
-## 4. Progressive Mechanics Status Across All 45 Reference Levels
+## 7. Automated Test Suites (`Assets/Tests/EditMode/`)
 
-| Mechanic | Reference Field | Levels Present | Runtime Support Status |
-| :--- | :--- | :--- | :--- |
-| **Normal Queues** | `snakes[].HolderType == 1` | All 45 Levels | **Fully Supported** |
-| **Normal Holes** | `snakes[].HolderType == 0` | All 45 Levels | **Fully Supported** |
-| **Disabled Grid Cells** | `DisabledGridCells`, `CellInfo.IsForcedDisabledCell` | 2, 5, 6, 7, 12, 13, 14, 15, 19, 20, 21, 22, 23, 26, 27, 28, 29, 30, 31, 32, 33, 36, 38, 41, 44 | **Fully Supported** (Checked in `BoardManager.IsCellFree` & `AntPathfinder`) |
-| **Connected Queues** | `snakes[].IsConnected`, `ConnectedIndex` | 7, 8, 9, 10, 17, 18, 20, 24, 25, 28, 29, 32, 33, 35, 37, 40, 41, 43, 44, 45 | **Fully Supported** (Atomic path validation & synchronized group movement) |
-| **Second Color Queues** | `snakes[].IsSecondColor`, `SecondColor` | 15, 16, 20, 25, 29, 32, 37, 40, 41, 44 | **Partially Implemented** (Fields parsed; dual-color visuals & mid-absorption split pending) |
-| **Holder Type 2 (Obstacles)** | `snakes[].HolderType == 2` | 21, 22, 23, 24, 25, 32, 33, 37, 38, 40, 45 | **Not Yet Wired** (Adapter ignores type 2; needs obstacle/barrier spawning) |
-| **Locks** | `snakes[].IsLocked`, `LockAmount` | 30, 31, 32, 33, 37 | **Not Yet Wired** (Fields parsed; key/counter unlocking behavior pending) |
-| **Pipes (Tunnels)** | `snakes[].PipeCount > 0` | 45 | **Not Yet Wired** (Underground traversal logic pending) |
-
----
-
-## 5. Automated Test Suites
-
-All tests are located in `Assets/Tests/` and organized by assembly definitions:
-
-- **EditMode Tests** (`Assets/Tests/EditMode/EditModeTests.asmdef`):
-  - `BoardCameraControllerTests.cs`: Verifies camera height calculation, FOV constraints, and top UI margin padding.
-  - `LevelDatabaseTests.cs`: Verifies 45 reference levels integrity and Level 1-2 handmade ant counts (35 and 60).
-- **PlayMode Tests** (`Assets/Tests/PlayMode/PlayModeTests.asmdef`):
-  - `GameplayInitializationTests.cs`: Verifies manager singletons, input handling, and Level 1 handmade setup.
-  - `ReferenceProgressionTests.cs`: Verifies sequential loading, `E`/`Q` clamping (Level 1 min, Level 45 max), and exact dimensions/hole/queue counts for sample reference levels (1, 2, 3, 7, 15, 21, 30, 45).
-
----
-
-## 6. How to Continue Next Session
-
-1. **To play Handmade Levels (Production)**:
-   - Ensure `useReferenceLevelDatabase = false` in `LevelManager` (or toggle in Inspector on `GameController`).
-   - Levels 1, 2, 3 in `Assets/Data/Levels/` will load sequentially.
-2. **To switch to 45 Reference Levels**:
-   - Set `useReferenceLevelDatabase = true` in `LevelManager`.
-   - All 45 levels in `Assets/Data/ReferenceLevels/` will load sequentially with `E`/`Q` navigation.
-3. **Next Feature Priorities**:
-   - Add visual & runtime support for **Second Color Queues** (Level 15+).
-   - Add **Holder Type 2 static obstacles/barriers** to `ReferenceLevelRuntimeAdapter` (Level 21+).
-   - Implement **Lock & Key queue mechanics** (Level 30+).
-   - Implement **Pipes/Tunnels** (Level 45).
+- **`ReferenceLevels1To5Tests.cs`**:
+  - `Test01`: Verifies LevelDatabase contains all reference levels with exact grid dimensions.
+  - `Test02`: Verifies all 12 distinct colors are preserved without collapse.
+  - `Test03`: Verifies holder capacity matches playable queues count.
+  - `Test04`: Verifies holder footprints and dimensions are calculated accurately.
+  - `Test05`: Verifies centered holder placement and badge initialization.
+  - `Test06`: Verifies single-queue holder visual overrides applied on exact transforms.
+  - `Test07`: Verifies 100% RGB base color consistency between ant queues and holder rims.
+  - `Test08`: Verifies Level 1 holder removal, full 2x1 footprint release, counter zeroing, unmapping from `holesMap`, `GetHoleAt` null safety, and win condition.
+- **`LevelDatabaseTests.cs`**:
+  - Verifies level database counts and asset validity.

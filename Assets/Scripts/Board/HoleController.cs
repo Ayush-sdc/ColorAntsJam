@@ -25,6 +25,8 @@ public class HoleController : MonoBehaviour
     [SerializeField] private int widthCells = 1;
     [SerializeField] private int heightCells = 1;
     [SerializeField] private bool isQueueBasedCount = true;
+    [SerializeField] private int initialQueueCount = 1;
+    [SerializeField] private bool singleQueueVisualOverrideApplied = false;
 
     [Header("Visual Components")]
     [SerializeField] private Transform slotRoot;
@@ -38,12 +40,20 @@ public class HoleController : MonoBehaviour
     private static GameObject swallowVfxPrefab;
     private static Sprite capsuleSprite;
 
+    [SerializeField] private string holeId = "";
+    [SerializeField] private bool isCompleted = false;
+    private bool hasDisappeared = false;
+
+    public string HoleId => !string.IsNullOrEmpty(holeId) ? holeId : $"{holeColor}_{gridCoordinate.x}_{gridCoordinate.y}";
+    public bool IsCompleted => isCompleted;
     public int ColorID => colorId;
     public AntColor Color => holeColor;
     public Vector2Int GridCoordinate => gridCoordinate;
     public IReadOnlyList<Vector2Int> OccupiedCells => (occupiedCells != null && occupiedCells.Count > 0) ? occupiedCells : new List<Vector2Int> { gridCoordinate };
     public int RemainingCount => remainingCount;
     public int InitialCapacity => initialCapacity;
+    public int InitialQueueCount => initialQueueCount;
+    public bool SingleQueueVisualOverrideApplied => singleQueueVisualOverrideApplied;
     public bool IsFull => remainingCount <= 0;
     public int ParallelRows => parallelRows;
     public int WidthCells => widthCells;
@@ -57,8 +67,14 @@ public class HoleController : MonoBehaviour
             isRightSide = value;
             if (!IsPrefabAsset())
             {
-                BuildStadiumSlotVisuals(isRightSide, parallelRows, widthCells, heightCells);
+                int visualW = (this.initialQueueCount == 1) ? 1 : this.widthCells;
+                int visualH = (this.initialQueueCount == 1) ? 1 : this.heightCells;
+                BuildStadiumSlotVisuals(isRightSide, parallelRows, visualW, visualH);
                 UpdateBadgeDisplay();
+                if (this.initialQueueCount == 1)
+                {
+                    ApplySingleQueueHolderVisualOverride();
+                }
             }
         }
     }
@@ -102,7 +118,13 @@ public class HoleController : MonoBehaviour
 
         if (!hasVisuals)
         {
-            BuildStadiumSlotVisuals(isRightSide, parallelRows, widthCells, heightCells);
+            int visualW = (this.initialQueueCount == 1) ? 1 : this.widthCells;
+            int visualH = (this.initialQueueCount == 1) ? 1 : this.heightCells;
+            BuildStadiumSlotVisuals(isRightSide, parallelRows, visualW, visualH);
+            if (this.initialQueueCount == 1)
+            {
+                ApplySingleQueueHolderVisualOverride();
+            }
         }
         else
         {
@@ -115,7 +137,11 @@ public class HoleController : MonoBehaviour
         this.colorId = rawColorId;
         this.holeColor = ReferenceColorMapper.ToAntColor(rawColorId);
         this.gridCoordinate = coordinate;
+        this.holeId = $"Hole_{rawColorId}_{coordinate.x}_{coordinate.y}";
+        this.isCompleted = false;
+        this.hasDisappeared = false;
         this.initialCapacity = Mathf.Max(0, capacity);
+        this.initialQueueCount = this.initialCapacity;
         this.remainingCount = initialCapacity;
         this.isRightSide = isRightSideSlot;
         this.parallelRows = Mathf.Max(1, rowCount);
@@ -155,14 +181,28 @@ public class HoleController : MonoBehaviour
 
         if (!IsPrefabAsset())
         {
-            BuildStadiumSlotVisuals(isRightSideSlot, this.parallelRows, this.widthCells, this.heightCells);
+            int visualW = (this.initialQueueCount == 1) ? 1 : this.widthCells;
+            int visualH = (this.initialQueueCount == 1) ? 1 : this.heightCells;
+            BuildStadiumSlotVisuals(isRightSideSlot, this.parallelRows, visualW, visualH);
             UpdateBadgeDisplay();
+
+            if (this.initialQueueCount == 1)
+            {
+                ApplySingleQueueHolderVisualOverride();
+            }
         }
+    }
+
+    public void Initialize(int rawColorId, Vector2Int coordinate, int capacity = 1, bool isRightSideSlot = true, int rowCount = 1)
+    {
+        Initialize(rawColorId, coordinate, new List<Vector2Int> { coordinate }, capacity, isRightSideSlot, rowCount, 2, rowCount >= 2 ? 2 : 1, false);
     }
 
     public void Initialize(AntColor color, Vector2Int coordinate, int capacity = 1, bool isRightSideSlot = true, int rowCount = 1)
     {
-        Initialize((int)color, coordinate, new List<Vector2Int> { coordinate }, capacity, isRightSideSlot, rowCount, 2, rowCount >= 2 ? 2 : 1, false);
+        int rawId = ReferenceColorMapper.ToRawColorId(color);
+        Initialize(rawId, coordinate, new List<Vector2Int> { coordinate }, capacity, isRightSideSlot, rowCount, 2, rowCount >= 2 ? 2 : 1, false);
+        this.holeColor = color;
     }
 
     public static Sprite GetCapsuleSprite()
@@ -203,13 +243,21 @@ public class HoleController : MonoBehaviour
     [ContextMenu("Rebuild Stadium Visuals")]
     public void BuildStadiumSlotVisuals()
     {
-        BuildStadiumSlotVisuals(isRightSide, parallelRows, widthCells, heightCells);
+        int visualW = (this.initialQueueCount == 1) ? 1 : this.widthCells;
+        int visualH = (this.initialQueueCount == 1) ? 1 : this.heightCells;
+        BuildStadiumSlotVisuals(isRightSide, parallelRows, visualW, visualH);
         UpdateBadgeDisplay();
+        if (this.initialQueueCount == 1)
+        {
+            ApplySingleQueueHolderVisualOverride();
+        }
     }
 
     public void BuildStadiumSlotVisuals(bool rightSide, int rows, int wCells = -1, int hCells = -1)
     {
         if (IsPrefabAsset()) return;
+
+        singleQueueVisualOverrideApplied = false;
 
         if (slotRoot != null)
         {
@@ -226,15 +274,18 @@ public class HoleController : MonoBehaviour
         slotRoot.localPosition = Vector3.zero;
         slotRoot.localRotation = Quaternion.identity;
 
-        if (wCells > 0) this.widthCells = wCells;
-        if (hCells > 0) this.heightCells = hCells;
+        if (wCells > 0 && this.widthCells <= 1) this.widthCells = wCells;
+        if (hCells > 0 && this.heightCells <= 1) this.heightCells = hCells;
         if (rows > 0) this.parallelRows = rows;
         this.isRightSide = rightSide;
 
+        int effectiveW = (wCells > 0) ? wCells : this.widthCells;
+        int effectiveH = (hCells > 0) ? hCells : this.heightCells;
+
         float cs = (BoardManager.Instance != null && BoardManager.Instance.CellSize > 0f) ? BoardManager.Instance.CellSize : 1.0f;
         float smallMargin = 0.06f * cs;
-        float outerW = Mathf.Max(0.60f * cs, this.widthCells * cs - smallMargin);
-        float outerH = Mathf.Max(0.60f * cs, this.heightCells * cs - smallMargin);
+        float outerW = Mathf.Max(0.60f * cs, effectiveW * cs - smallMargin);
+        float outerH = Mathf.Max(0.60f * cs, effectiveH * cs - smallMargin);
 
         // Moderate rounded rectangle radius: clearly rectangular body, NOT a pill or capsule!
         float cornerRadius = Mathf.Min(
@@ -253,20 +304,19 @@ public class HoleController : MonoBehaviour
         float pitH = innerH - (pitInset * 2f);
         float pitCornerRadius = Mathf.Max(0.02f * cs, innerCornerRadius - pitInset);
 
-        Material rimMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
+        Material rimMat = AntColorPalette.GetHoleMaterial(holeColor);
         UnityEngine.Color rimCol = AntColorPalette.GetColor(holeColor);
-        rimMat.color = rimCol;
-        if (rimMat.HasProperty("_BaseColor")) rimMat.SetColor("_BaseColor", rimCol);
-        if (rimMat.HasProperty("_Smoothness")) rimMat.SetFloat("_Smoothness", 0.94f);
-        if (rimMat.HasProperty("_Metallic")) rimMat.SetFloat("_Metallic", 0.05f);
 
         Material bevelMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
+        bevelMat.name = $"HoleInnerBevelMat_{holeColor}";
         UnityEngine.Color bevelCol = UnityEngine.Color.Lerp(rimCol, UnityEngine.Color.black, 0.38f);
         bevelMat.color = bevelCol;
         if (bevelMat.HasProperty("_BaseColor")) bevelMat.SetColor("_BaseColor", bevelCol);
         if (bevelMat.HasProperty("_Smoothness")) bevelMat.SetFloat("_Smoothness", 0.70f);
+        if (bevelMat.HasProperty("_Metallic")) bevelMat.SetFloat("_Metallic", 0.05f);
 
         Material pitMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
+        pitMat.name = "HolePitFloorMat";
         UnityEngine.Color pitCol = new UnityEngine.Color(0.08f, 0.08f, 0.09f);
         pitMat.color = pitCol;
         if (pitMat.HasProperty("_BaseColor")) pitMat.SetColor("_BaseColor", pitCol);
@@ -347,6 +397,67 @@ public class HoleController : MonoBehaviour
         countTextMesh.characterSize = (this.widthCells >= 2 || this.heightCells >= 2) ? 0.080f : 0.092f;
         countTextMesh.fontStyle = FontStyle.Bold;
         countTextMesh.color = UnityEngine.Color.white;
+    }
+
+    [ContextMenu("Apply Single Queue Holder Visual Override")]
+    public void ApplySingleQueueHolderVisualOverride(int levelNumber = -1)
+    {
+        if (slotRoot == null) return;
+
+        // SlotRim: LocalScale X = 1.9205, Y = keep existing, Z = keep existing
+        Transform rimTr = rimMeshRenderer != null ? rimMeshRenderer.transform : slotRoot.Find("SlotRim");
+        if (rimTr != null)
+        {
+            Vector3 s = rimTr.localScale;
+            s.x = 1.9205f;
+            rimTr.localScale = s;
+        }
+
+        // SlotInnerBevel: LocalScale X = 2.3861, Y = keep existing, Z = keep existing
+        Transform bevelTr = innerBevelRenderer != null ? innerBevelRenderer.transform : slotRoot.Find("SlotInnerBevel");
+        if (bevelTr != null)
+        {
+            Vector3 s = bevelTr.localScale;
+            s.x = 2.3861f;
+            bevelTr.localScale = s;
+        }
+
+        // SlotPit: LocalScale X = 2.6535, Y = keep existing, Z = keep existing
+        Transform pitTr = pitRenderer != null ? pitRenderer.transform : slotRoot.Find("SlotPit");
+        if (pitTr != null)
+        {
+            Vector3 s = pitTr.localScale;
+            s.x = 2.6535f;
+            pitTr.localScale = s;
+        }
+
+        // SlotCounterBadge: LocalPosition X = 0.35, Y = 0, Z = 0
+        Transform badgeTr = countBadgeObj != null ? countBadgeObj.transform : slotRoot.Find("SlotCounterBadge");
+        if (badgeTr != null)
+        {
+            badgeTr.localPosition = new Vector3(0.35f, 0f, 0f);
+
+            // BadgeMesh: LocalPosition X = 0.25, Y = 0, Z = -0.25
+            Transform badgeMeshTr = badgeBackgroundRenderer != null ? badgeBackgroundRenderer.transform : badgeTr.Find("BadgeMesh");
+            if (badgeMeshTr != null)
+            {
+                badgeMeshTr.localPosition = new Vector3(0.25f, 0f, -0.25f);
+            }
+
+            // BadgeCountText: LocalPosition X = 0.25, Y = 0.22, Z = -0.25
+            Transform badgeTextTr = countTextMesh != null ? countTextMesh.transform : badgeTr.Find("BadgeCountText");
+            if (badgeTextTr != null)
+            {
+                badgeTextTr.localPosition = new Vector3(0.25f, 0.22f, -0.25f);
+            }
+        }
+
+        if (!singleQueueVisualOverrideApplied)
+        {
+            singleQueueVisualOverrideApplied = true;
+            int lvl = levelNumber > 0 ? levelNumber : (BoardManager.Instance?.CurrentLevel?.LevelNumber ?? (LevelManager.Instance != null ? LevelManager.Instance.CurrentLevelNumber : 1));
+            Debug.Log($"[SingleQueueHolderVisual] Level={lvl} Hole={gameObject.name} Color={holeColor} InitialQueueCount={initialQueueCount} OverrideApplied=True");
+        }
     }
 
     /// <summary>
@@ -649,11 +760,6 @@ public class HoleController : MonoBehaviour
         {
             remainingCount = Mathf.Max(0, remainingCount - 1);
             UpdateBadgeDisplay();
-
-            if (remainingCount == 0)
-            {
-                PlayCompletedEffect();
-            }
         }
 
         PlaySwallowEffect();
@@ -667,20 +773,88 @@ public class HoleController : MonoBehaviour
 
     public void OnQueueSwallowed()
     {
+        if (isCompleted) return;
+
         if (isQueueBasedCount)
         {
-            remainingCount = Mathf.Max(0, remainingCount - 1);
-            UpdateBadgeDisplay();
+            remainingCount--;
+        }
 
-            if (remainingCount == 0)
+        UpdateBadgeDisplay();
+
+        if (remainingCount <= 0)
+        {
+            remainingCount = 0;
+            isCompleted = true;
+
+            if (BoardManager.Instance != null)
             {
-                PlayCompletedEffect();
+                BoardManager.Instance.RemoveCompletedHole(this);
+            }
+            else
+            {
+                PlayCompletedEffectAndDisappear();
             }
         }
 
         if (SoundManager.Instance != null && Application.isPlaying)
         {
             SoundManager.Instance.PlaySwallow();
+        }
+    }
+
+    public void PlayCompletedEffectAndDisappear(int releasedCells = -1, bool removedFromHoleMap = true)
+    {
+        if (hasDisappeared) return;
+        hasDisappeared = true;
+        isCompleted = true;
+
+        // Immediately disable any colliders so they cannot interact with clicks
+        var colliders = GetComponentsInChildren<Collider>();
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            if (colliders[i] != null) colliders[i].enabled = false;
+        }
+
+        var cells = OccupiedCells;
+        if (releasedCells < 0)
+        {
+            releasedCells = cells != null ? cells.Count : 0;
+        }
+
+        string cellsFormatted = "[";
+        if (cells != null && cells.Count > 0)
+        {
+            List<string> cellStrings = new List<string>();
+            foreach (var c in cells)
+            {
+                cellStrings.Add($"({c.x},{c.y})");
+            }
+            cellsFormatted += string.Join(",", cellStrings);
+        }
+        cellsFormatted += "]";
+
+        Debug.Log($"[HoleCompleted]\n" +
+                  $"Color={holeColor}\n" +
+                  $"RemainingCount={remainingCount}\n" +
+                  $"OccupiedCells={cellsFormatted}\n" +
+                  $"ReleasedCells={releasedCells}\n" +
+                  $"RemovedFromHoleMap={removedFromHoleMap}\n" +
+                  $"GameObjectRemoval=True");
+
+        if (Application.isPlaying)
+        {
+            KillAllTweens();
+            transform.DOScale(Vector3.zero, 0.20f)
+                .SetEase(Ease.InBack)
+                .OnComplete(() =>
+                {
+                    SafeDestroy(gameObject);
+                });
+        }
+        else
+        {
+            SafeDestroy(gameObject);
         }
     }
 
@@ -771,8 +945,14 @@ public class HoleController : MonoBehaviour
         {
             if (this != null && !Application.isPlaying && !IsPrefabAsset())
             {
-                BuildStadiumSlotVisuals(isRightSide, parallelRows, widthCells, heightCells);
+                int visualW = (this.initialQueueCount == 1) ? 1 : this.widthCells;
+                int visualH = (this.initialQueueCount == 1) ? 1 : this.heightCells;
+                BuildStadiumSlotVisuals(isRightSide, parallelRows, visualW, visualH);
                 UpdateBadgeDisplay();
+                if (this.initialQueueCount == 1)
+                {
+                    ApplySingleQueueHolderVisualOverride();
+                }
             }
         };
     }

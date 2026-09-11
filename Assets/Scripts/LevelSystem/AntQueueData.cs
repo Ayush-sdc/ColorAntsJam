@@ -95,7 +95,7 @@ public class AntQueueData
     public AntQueueData(string queueId, AntColor antColor, int antCount, List<Vector2Int> initialBody, List<Vector2Int> path)
     {
         this.queueId = queueId;
-        this.colorId = (int)antColor;
+        this.colorId = ReferenceColorMapper.ToRawColorId(antColor);
         this.antCount = antCount;
         this.cells = initialBody != null ? new List<Vector2Int>(initialBody) : new List<Vector2Int>();
         this.fullPathToHole = path != null ? new List<Vector2Int>(path) : new List<Vector2Int>();
@@ -167,7 +167,7 @@ public class HoleData
 
     public HoleData(AntColor color, Vector2Int coordinate, int count = 1, int rows = 1)
     {
-        this.colorId = (int)color;
+        this.colorId = ReferenceColorMapper.ToRawColorId(color);
         this.gridCoordinate = coordinate;
         this.displayCount = count;
         this.parallelRows = rows;

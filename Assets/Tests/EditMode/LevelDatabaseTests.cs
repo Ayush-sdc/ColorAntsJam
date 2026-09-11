@@ -8,6 +8,7 @@ namespace Tests.EditMode
     public class LevelDatabaseTests
     {
         private const string RefDatabasePath = "Assets/Data/ReferenceLevelDatabase.asset";
+        private const string NormalDatabasePath = "Assets/Data/Levels/LevelDatabase.asset";
         private const string Level1Path = "Assets/Data/Levels/Level_01.asset";
         private const string Level2Path = "Assets/Data/Levels/Level_02.asset";
 
@@ -18,6 +19,26 @@ namespace Tests.EditMode
             Assert.IsNotNull(db, $"Could not load LevelDatabase at '{RefDatabasePath}'!");
             Assert.IsNotNull(db.Levels, "Levels list is null in ReferenceLevelDatabase!");
             Assert.AreEqual(45, db.Levels.Count, $"ReferenceLevelDatabase must contain exactly 45 levels, but has {db.Levels.Count}!");
+        }
+
+        [Test]
+        public void Test01b_NormalLevelDatabaseContainsExactly45Levels()
+        {
+            LevelDatabase db = AssetDatabase.LoadAssetAtPath<LevelDatabase>(NormalDatabasePath);
+            Assert.IsNotNull(db, $"Could not load LevelDatabase at '{NormalDatabasePath}'!");
+            Assert.IsNotNull(db.Levels, "Levels list is null in normal LevelDatabase!");
+            Assert.AreEqual(45, db.Levels.Count, $"Normal LevelDatabase must contain exactly 45 levels, but has {db.Levels.Count}!");
+            Assert.AreEqual(45, db.LevelCount, $"Normal LevelDatabase.LevelCount must be 45, but was {db.LevelCount}!");
+            
+            // Check first and last levels
+            Assert.AreEqual("Level_001", db.Levels[0].name, "First level must be Level_001");
+            Assert.AreEqual("Level_045", db.Levels[44].name, "Last level must be Level_045");
+            
+            // Check all levels non-null
+            for (int i = 0; i < db.Levels.Count; i++)
+            {
+                Assert.IsNotNull(db.Levels[i], $"Level at index {i} in normal LevelDatabase is null!");
+            }
         }
 
         [Test]
