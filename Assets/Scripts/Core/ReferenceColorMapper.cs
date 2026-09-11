@@ -29,6 +29,22 @@ public static class ReferenceColorMapper
         customIdToColorMap.Clear();
     }
 
+    private static readonly HashSet<int> loggedColorIds = new HashSet<int>();
+
+    /// <summary>
+    /// Logs the color mapping resolution once per distinct ColorID.
+    /// </summary>
+    public static void LogColorMappingOnce(int rawColorId)
+    {
+        if (loggedColorIds.Add(rawColorId))
+        {
+            AntColor antColor = ToAntColor(rawColorId);
+            Material mat = GetMaterial(rawColorId);
+            string matName = mat != null ? mat.name : "null";
+            Debug.Log($"[ColorMap] RawID={rawColorId} -> {antColor} -> Material={matName}");
+        }
+    }
+
     /// <summary>
     /// Converts a raw reference ColorID integer to a runtime AntColor enum safely without direct casting.
     /// </summary>
@@ -39,22 +55,29 @@ public static class ReferenceColorMapper
             return mappedColor;
         }
 
-        // Standard canonical ColorID mappings (preserves Level 1-3 rendering)
+        // Authoritative mapping from Color Slither Jam reference data
         return rawColorId switch
         {
-            0 => AntColor.Blue,
-            1 => AntColor.Green,
-            2 => AntColor.Purple,
-            3 => AntColor.Yellow,
-            4 => AntColor.Red,
-            5 => AntColor.Orange,
-            6 => AntColor.Cyan,
-            7 => AntColor.Pink,
-            8 => AntColor.White,
-            9 => AntColor.Black,
-            10 => AntColor.Brown,
-            _ => (AntColor)(Mathf.Abs(rawColorId) % 11)
+            0 => AntColor.SkyBlue,     // Sky Blue / Light Blue
+            1 => AntColor.Lime,        // Lime Green
+            2 => AntColor.Yellow,      // Yellow
+            3 => AntColor.Purple,      // Purple
+            4 => AntColor.Orange,      // Orange
+            5 => AntColor.Pink,        // Pink / Magenta
+            6 => AntColor.Indigo,      // Indigo / Deep Blue
+            7 => AntColor.Green,       // Green
+            8 => AntColor.Brown,       // Brown
+            9 => AntColor.White,       // White
+            10 => AntColor.Red,        // Red
+            11 => AntColor.Turquoise,  // Turquoise / Aqua
+            _ => LogUnknownColorId(rawColorId)
         };
+    }
+
+    private static AntColor LogUnknownColorId(int rawColorId)
+    {
+        Debug.LogWarning($"[ReferenceColorMapper] Unverified or unknown ColorID {rawColorId}! Falling back to White.");
+        return AntColor.White;
     }
 
     /// <summary>

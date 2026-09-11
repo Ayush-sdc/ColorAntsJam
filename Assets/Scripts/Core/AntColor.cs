@@ -3,17 +3,24 @@ using UnityEngine;
 
 public enum AntColor
 {
-    Blue,
-    Green,
-    Purple,
-    Yellow,
-    Red,
-    Orange,
-    Cyan,
-    Pink,
-    White,
-    Black,
-    Brown
+    // Legacy serialized values (preserved for backward compatibility)
+    Blue = 0,
+    Green = 1,
+    Purple = 2,
+    Yellow = 3,
+    Red = 4,
+    Orange = 5,
+    Cyan = 6,
+    Pink = 7,
+    White = 8,
+    Black = 9,
+    Brown = 10,
+
+    // Extended distinct reference colors
+    SkyBlue = 11,
+    Lime = 12,
+    Indigo = 13,
+    Turquoise = 14
 }
 
 public static class AntColorPalette
@@ -34,16 +41,20 @@ public static class AntColorPalette
     {
         return antColor switch
         {
-            AntColor.Yellow => new Color(1.0f, 0.72f, 0.05f),     // Warm candy yellow #FFB80D
-            AntColor.Green => new Color(0.12f, 0.65f, 0.22f),     // Rich leaf green #1FA638
-            AntColor.Blue => new Color(0.12f, 0.68f, 0.98f),      // Sky candy blue #1EAEEFA
-            AntColor.Brown => new Color(0.55f, 0.32f, 0.17f),     // Milk chocolate brown #8C522B
-            AntColor.Red => new Color(0.95f, 0.24f, 0.26f),       // Vibrant coral ruby red #F23D42
-            AntColor.Purple => new Color(0.68f, 0.28f, 0.95f),
-            AntColor.Orange => new Color(1.0f, 0.55f, 0.12f),
-            AntColor.Cyan => new Color(0.12f, 0.85f, 0.95f),
-            AntColor.Pink => new Color(1.0f, 0.38f, 0.72f),
-            AntColor.White => new Color(0.95f, 0.95f, 0.96f),
+            AntColor.SkyBlue => new Color(0.20f, 0.70f, 1.0f),     // Sky / Light blue #33B3FF
+            AntColor.Lime => new Color(0.48f, 0.85f, 0.15f),        // Vibrant lime green #7BD926
+            AntColor.Yellow => new Color(1.0f, 0.75f, 0.05f),      // Warm candy yellow #FFBF0D
+            AntColor.Purple => new Color(0.58f, 0.22f, 0.88f),      // Rich vivid purple #9438E0
+            AntColor.Orange => new Color(1.0f, 0.50f, 0.05f),      // Juicy citrus orange #FF800D
+            AntColor.Pink => new Color(0.98f, 0.35f, 0.75f),        // Punchy candy pink/magenta #FA59BF
+            AntColor.Indigo => new Color(0.18f, 0.28f, 0.85f),      // Deep royal blue #2E47D9
+            AntColor.Green => new Color(0.12f, 0.65f, 0.22f),       // Rich forest/leaf green #1FA638
+            AntColor.Brown => new Color(0.55f, 0.32f, 0.17f),       // Milk chocolate brown #8C522B
+            AntColor.White => new Color(0.92f, 0.92f, 0.92f),       // Clean warm white #EBEBEB
+            AntColor.Red => new Color(0.95f, 0.24f, 0.26f),         // Coral ruby red #F23D42
+            AntColor.Turquoise => new Color(0.10f, 0.88f, 0.78f),   // Aqua / turquoise #1AE0C7
+            AntColor.Blue => new Color(0.20f, 0.70f, 1.0f),
+            AntColor.Cyan => new Color(0.10f, 0.88f, 0.78f),
             AntColor.Black => new Color(0.18f, 0.18f, 0.20f),
             _ => Color.white
         };
@@ -53,6 +64,10 @@ public static class AntColorPalette
     {
         return antColor switch
         {
+            AntColor.SkyBlue => "blue0",
+            AntColor.Lime => "green0",
+            AntColor.Indigo => "blue0",
+            AntColor.Turquoise => "teal0",
             AntColor.Blue => "blue0",
             AntColor.Green => "green0",
             AntColor.Purple => "purple0",

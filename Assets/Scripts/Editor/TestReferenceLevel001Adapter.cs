@@ -68,7 +68,7 @@ public static class TestReferenceLevel001Adapter
             return;
         }
 
-        Debug.Log($"[Test] Summary: Total Ants = {totalAnts} (Expected: 30), Total Hole Capacity = {totalHoleCapacity} (Expected: 30)");
+        Debug.Log($"[Test] Summary: Total Ants = {totalAnts} (Expected: 30), Total Hole Capacity = {totalHoleCapacity} (Expected: 5)");
 
         // 4. Test BoardManager runtime instantiation and reconstruction
         GameObject boardObj = new GameObject("TestBoardManager");

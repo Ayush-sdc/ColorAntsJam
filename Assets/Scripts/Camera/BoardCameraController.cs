@@ -267,36 +267,10 @@ public class BoardCameraController : MonoBehaviour
             {
                 if (record.HolderType == 0 && record.Cells != null && record.Cells.Count > 0)
                 {
-                    if (record.Cells.Count >= 2)
+                    foreach (var cell in record.Cells)
                     {
-                        Vector2Int entrance = record.Cells[0];
-                        Vector2Int outer = record.Cells[1];
-                        bool isRight = entrance.x <= outer.x;
-                        int rowCount = (record.Cells.Count > 2) ? 2 : 1;
-                        Vector3 ePos = GridToWorld(entrance);
-                        Vector3 hCenter;
-                        float hw = 1.15f * cs;
-                        float hh = (rowCount >= 2) ? 1.15f * cs : 0.55f * cs;
-
-                        if (rowCount >= 2)
-                        {
-                            hCenter = ePos + new Vector3(0.5f * cs, 0f, 0.5f * cs);
-                        }
-                        else
-                        {
-                            float xOff = isRight ? 0.5f : -0.5f;
-                            hCenter = ePos + new Vector3(xOff * cs, 0f, 0f);
-                        }
-
-                        EncapsulatePoint(hCenter.x, hCenter.z, hw + holderVisualMargin * cs, hh + holderVisualMargin * cs);
-                    }
-                    else
-                    {
-                        foreach (var cell in record.Cells)
-                        {
-                            Vector3 cPos = GridToWorld(cell);
-                            EncapsulatePoint(cPos.x, cPos.z, 1.15f * cs + holderVisualMargin * cs, 0.55f * cs + holderVisualMargin * cs);
-                        }
+                        Vector3 cPos = GridToWorld(cell);
+                        EncapsulatePoint(cPos.x, cPos.z, 0.5f * cs + holderVisualMargin * cs, 0.5f * cs + holderVisualMargin * cs);
                     }
                 }
             }

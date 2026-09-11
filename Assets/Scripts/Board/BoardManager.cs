@@ -78,11 +78,19 @@ public class BoardManager : MonoBehaviour
     /// </summary>
     public Vector3 GridToWorldPosition(Vector2Int gridPos, float yOffset = 0f)
     {
+        return GridPointToWorldPosition(gridPos.x, gridPos.y, yOffset);
+    }
+
+    /// <summary>
+    /// Converts continuous grid coordinates (gridX, gridY) into a 3D world position centered around (0, 0, 0).
+    /// </summary>
+    public Vector3 GridPointToWorldPosition(float gridX, float gridY, float yOffset = 0f)
+    {
         int w = width > 0 ? width : 9;
         int h = height > 0 ? height : 6;
         float cs = cellSize > 0 ? cellSize : 1.0f;
-        float x = (gridPos.x - (w - 1) * 0.5f) * cs;
-        float z = (gridPos.y - (h - 1) * 0.5f) * cs;
+        float x = (gridX - (w - 1) * 0.5f) * cs;
+        float z = (gridY - (h - 1) * 0.5f) * cs;
         return new Vector3(x, yOffset, z);
     }
 
@@ -263,18 +271,10 @@ public class BoardManager : MonoBehaviour
         bool isRightSide = rHole.IsRightSide;
         int rowCount = rHole.ParallelRows;
 
-        Vector3 worldPos;
-        if (rowCount >= 2)
-        {
-            float xOffset = 0.5f * cellSize;
-            float zOffset = 0.5f * cellSize;
-            worldPos = GridToWorldPosition(entrance, 0.01f) + new Vector3(xOffset, 0f, zOffset);
-        }
-        else
-        {
-            float xOffset = isRightSide ? 0.5f : -0.5f;
-            worldPos = GridToWorldPosition(entrance, 0.01f) + new Vector3(xOffset * cellSize, 0f, 0f);
-        }
+        // Position the hole at the exact geometric center of its occupied footprint cells
+        float centerX = (rHole.MinX + rHole.MaxX) * 0.5f;
+        float centerY = (rHole.MinY + rHole.MaxY) * 0.5f;
+        Vector3 worldPos = GridPointToWorldPosition(centerX, centerY, 0.01f);
 
         GameObject holeObj;
         if (holePrefab != null)
@@ -283,7 +283,7 @@ public class BoardManager : MonoBehaviour
         }
         else
         {
-            holeObj = new GameObject($"Hole_{rHole.AntColor}_{entrance.x}_{entrance.y}");
+            holeObj = new GameObject($"Hole_{rHole.AntColor}_{rHole.MinX}_{rHole.MinY}");
             holeObj.transform.SetParent(parentTransform, false);
             holeObj.transform.position = worldPos;
         }
@@ -294,7 +294,17 @@ public class BoardManager : MonoBehaviour
             controller = holeObj.AddComponent<HoleController>();
         }
 
-        controller.Initialize(rHole.ColorID, entrance, rHole.OccupiedCells, rHole.Capacity, isRightSide, rowCount);
+        controller.Initialize(
+            rHole.ColorID,
+            entrance,
+            rHole.OccupiedCells,
+            rHole.Capacity,
+            isRightSide,
+            rowCount,
+            widthInCells: rHole.WidthCells,
+            heightInCells: rHole.HeightCells,
+            queueBased: true
+        );
 
         // Register all occupied footprint cells in holesMap
         if (rHole.OccupiedCells != null && rHole.OccupiedCells.Count > 0)
@@ -377,7 +387,7 @@ public class BoardManager : MonoBehaviour
         float maxZ = (h - 1) * 0.5f * cs;
 
         // Expand bounds to tightly fit all holes and their actual physical geometry
-        if (level.Holes != null)
+        if (level.Holes != null && level.Holes.Count > 0)
         {
             foreach (var hole in level.Holes)
             {
@@ -401,6 +411,23 @@ public class BoardManager : MonoBehaviour
                 maxX = Mathf.Max(maxX, hPos.x + halfW);
                 minZ = Mathf.Min(minZ, hPos.z - halfH);
                 maxZ = Mathf.Max(maxZ, hPos.z + halfH);
+            }
+        }
+        else if (level.AntQueues != null)
+        {
+            foreach (var record in level.AntQueues)
+            {
+                if (record.HolderType == 0 && record.Cells != null && record.Cells.Count > 0)
+                {
+                    foreach (var cell in record.Cells)
+                    {
+                        Vector3 cPos = GridToWorldPosition(cell, 0f);
+                        minX = Mathf.Min(minX, cPos.x - 0.55f * cs);
+                        maxX = Mathf.Max(maxX, cPos.x + 0.55f * cs);
+                        minZ = Mathf.Min(minZ, cPos.z - 0.55f * cs);
+                        maxZ = Mathf.Max(maxZ, cPos.z + 0.55f * cs);
+                    }
+                }
             }
         }
 
@@ -743,11 +770,39 @@ public class BoardManager : MonoBehaviour
 
     public void OnQueueCompleted(AntQueueController queue)
     {
-        if (queue != null && activeQueues.Contains(queue))
+        if (queue != null)
         {
-            activeQueues.Remove(queue);
-            queue.transform.DOKill();
-            SafeDestroy(queue.gameObject);
+            bool wasActive = activeQueues.Contains(queue);
+            if (wasActive)
+            {
+                activeQueues.Remove(queue);
+
+                // Find matching hole to notify queue swallow (badge decrement)
+                HoleController targetHole = null;
+                if (queue.CurrentBodyCoordinates != null && queue.CurrentBodyCoordinates.Count > 0)
+                {
+                    targetHole = GetHoleAt(queue.CurrentBodyCoordinates[0]);
+                }
+                if (targetHole == null)
+                {
+                    foreach (var h in holesMap.Values)
+                    {
+                        if (h != null && h.ColorID == queue.ColorID)
+                        {
+                            targetHole = h;
+                            break;
+                        }
+                    }
+                }
+
+                if (targetHole != null)
+                {
+                    targetHole.OnQueueSwallowed();
+                }
+
+                queue.transform.DOKill();
+                SafeDestroy(queue.gameObject);
+            }
         }
 
         if (!isTestInstance)

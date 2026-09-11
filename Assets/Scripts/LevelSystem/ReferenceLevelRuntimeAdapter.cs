@@ -35,21 +35,20 @@ public static class ReferenceLevelRuntimeAdapter
         var holes = new List<RuntimeReferenceHole>();
         if (level == null || level.AntQueues == null) return holes;
 
-        // Count total ants per ColorID from HolderType 1 records in this level
-        var colorAntCounts = new Dictionary<int, int>();
+        // Count active HolderType 1 playable queues per ColorID
+        var matchingQueueCounts = new Dictionary<int, int>();
         foreach (var q in level.AntQueues)
         {
             if (q.HolderType == 1)
             {
                 int cId = q.ColorID;
-                int count = (q.Cells != null && q.Cells.Count > 0) ? q.Cells.Count : q.AntCount;
-                if (colorAntCounts.ContainsKey(cId))
+                if (matchingQueueCounts.ContainsKey(cId))
                 {
-                    colorAntCounts[cId] += count;
+                    matchingQueueCounts[cId]++;
                 }
                 else
                 {
-                    colorAntCounts[cId] = count;
+                    matchingQueueCounts[cId] = 1;
                 }
             }
         }
@@ -65,8 +64,10 @@ public static class ReferenceLevelRuntimeAdapter
                     OccupiedCells = record.Cells != null ? new List<Vector2Int>(record.Cells) : new List<Vector2Int>(),
                 };
 
-                // Determine capacity: matching ants count or explicit lock/capacity
-                if (colorAntCounts.TryGetValue(record.ColorID, out int count) && count > 0)
+                ReferenceColorMapper.LogColorMappingOnce(record.ColorID);
+
+                // Determine display count: number of matching active playable queues
+                if (matchingQueueCounts.TryGetValue(record.ColorID, out int count) && count > 0)
                 {
                     runtimeHole.Capacity = count;
                 }
@@ -75,24 +76,32 @@ public static class ReferenceLevelRuntimeAdapter
                     runtimeHole.Capacity = record.AntCount > 0 ? record.AntCount : 1;
                 }
 
-                // Determine physical orientation, entrance cell, and parallel rows from ordered Cells list
-                if (runtimeHole.OccupiedCells.Count >= 2)
+                // Compute bounding footprint and dimensions
+                if (runtimeHole.OccupiedCells.Count > 0)
                 {
-                    Vector2Int entranceCell = runtimeHole.OccupiedCells[0];
-                    Vector2Int outerCell = runtimeHole.OccupiedCells[1];
-
-                    runtimeHole.EntranceCell = entranceCell;
-
-                    // If entrance is to the left of outer cell (entrance.x < outer.x), entrance is on left, badge is on right -> isRightSide = true
-                    // If entrance is to the right of outer cell (entrance.x > outer.x), entrance is on right, badge is on left -> isRightSide = false
-                    runtimeHole.IsRightSide = entranceCell.x <= outerCell.x;
-                    runtimeHole.ParallelRows = (runtimeHole.OccupiedCells.Count > 2) ? 2 : 1;
-                }
-                else if (runtimeHole.OccupiedCells.Count == 1)
-                {
+                    int minX = int.MaxValue, maxX = int.MinValue;
+                    int minY = int.MaxValue, maxY = int.MinValue;
+                    foreach (var cell in runtimeHole.OccupiedCells)
+                    {
+                        if (cell.x < minX) minX = cell.x;
+                        if (cell.x > maxX) maxX = cell.x;
+                        if (cell.y < minY) minY = cell.y;
+                        if (cell.y > maxY) maxY = cell.y;
+                    }
+                    runtimeHole.MinX = minX;
+                    runtimeHole.MaxX = maxX;
+                    runtimeHole.MinY = minY;
+                    runtimeHole.MaxY = maxY;
+                    runtimeHole.WidthCells = maxX - minX + 1;
+                    runtimeHole.HeightCells = maxY - minY + 1;
                     runtimeHole.EntranceCell = runtimeHole.OccupiedCells[0];
-                    runtimeHole.IsRightSide = runtimeHole.EntranceCell.x >= (level.GridWidth / 2);
-                    runtimeHole.ParallelRows = 1;
+                    runtimeHole.ParallelRows = (runtimeHole.HeightCells >= 2 && runtimeHole.WidthCells >= 2) ? 2 : 1;
+                    runtimeHole.IsRightSide = runtimeHole.EntranceCell.x <= (minX + maxX) / 2;
+                }
+                else
+                {
+                    runtimeHole.WidthCells = 1;
+                    runtimeHole.HeightCells = 1;
                 }
 
                 holes.Add(runtimeHole);
@@ -170,6 +179,12 @@ public class RuntimeReferenceHole
     public int Capacity;
     public bool IsRightSide;
     public int ParallelRows = 1;
+    public int MinX;
+    public int MaxX;
+    public int MinY;
+    public int MaxY;
+    public int WidthCells = 1;
+    public int HeightCells = 1;
 }
 
 /// <summary>

@@ -22,6 +22,9 @@ public class HoleController : MonoBehaviour
     [SerializeField] private float multiRowHeight = 2.05f;
     [SerializeField] private float tubeRadius = 0.095f;
     [SerializeField] private float tubeHeight = 0.085f;
+    [SerializeField] private int widthCells = 1;
+    [SerializeField] private int heightCells = 1;
+    [SerializeField] private bool isQueueBasedCount = true;
 
     [Header("Visual Components")]
     [SerializeField] private Transform slotRoot;
@@ -29,6 +32,8 @@ public class HoleController : MonoBehaviour
     [SerializeField] private TextMesh countTextMesh;
     [SerializeField] private MeshRenderer badgeBackgroundRenderer;
     [SerializeField] private MeshRenderer rimMeshRenderer;
+    [SerializeField] private MeshRenderer innerBevelRenderer;
+    [SerializeField] private MeshRenderer pitRenderer;
 
     private static GameObject swallowVfxPrefab;
     private static Sprite capsuleSprite;
@@ -41,6 +46,9 @@ public class HoleController : MonoBehaviour
     public int InitialCapacity => initialCapacity;
     public bool IsFull => remainingCount <= 0;
     public int ParallelRows => parallelRows;
+    public int WidthCells => widthCells;
+    public int HeightCells => heightCells;
+    public bool IsQueueBasedCount { get => isQueueBasedCount; set => isQueueBasedCount = value; }
     public bool IsRightSide
     {
         get => isRightSide;
@@ -49,7 +57,7 @@ public class HoleController : MonoBehaviour
             isRightSide = value;
             if (!IsPrefabAsset())
             {
-                BuildStadiumSlotVisuals(isRightSide, parallelRows);
+                BuildStadiumSlotVisuals(isRightSide, parallelRows, widthCells, heightCells);
                 UpdateBadgeDisplay();
             }
         }
@@ -87,14 +95,14 @@ public class HoleController : MonoBehaviour
         if (IsPrefabAsset()) return;
 
         bool hasVisuals = slotRoot != null && 
-                          slotRoot.childCount > 0 && 
+                          slotRoot.childCount >= 3 && 
                           rimMeshRenderer != null && 
                           rimMeshRenderer.sharedMaterial != null &&
                           countTextMesh != null;
 
         if (!hasVisuals)
         {
-            BuildStadiumSlotVisuals(isRightSide, parallelRows);
+            BuildStadiumSlotVisuals(isRightSide, parallelRows, widthCells, heightCells);
         }
         else
         {
@@ -102,7 +110,7 @@ public class HoleController : MonoBehaviour
         }
     }
 
-    public void Initialize(int rawColorId, Vector2Int coordinate, List<Vector2Int> allCells, int capacity = 1, bool isRightSideSlot = true, int rowCount = 1)
+    public void Initialize(int rawColorId, Vector2Int coordinate, List<Vector2Int> allCells, int capacity = 1, bool isRightSideSlot = true, int rowCount = 1, int widthInCells = 1, int heightInCells = 1, bool queueBased = true)
     {
         this.colorId = rawColorId;
         this.holeColor = ReferenceColorMapper.ToAntColor(rawColorId);
@@ -111,38 +119,50 @@ public class HoleController : MonoBehaviour
         this.remainingCount = initialCapacity;
         this.isRightSide = isRightSideSlot;
         this.parallelRows = Mathf.Max(1, rowCount);
+        this.isQueueBasedCount = queueBased;
 
-        if (allCells != null && allCells.Count > 1)
+        if (allCells != null && allCells.Count > 0)
         {
             this.occupiedCells = new List<Vector2Int>(allCells);
+            int minX = int.MaxValue, maxX = int.MinValue;
+            int minY = int.MaxValue, maxY = int.MinValue;
+            foreach (var cell in allCells)
+            {
+                if (cell.x < minX) minX = cell.x;
+                if (cell.x > maxX) maxX = cell.x;
+                if (cell.y < minY) minY = cell.y;
+                if (cell.y > maxY) maxY = cell.y;
+            }
+            this.widthCells = (widthInCells > 1) ? widthInCells : (maxX - minX + 1);
+            this.heightCells = (heightInCells > 1) ? heightInCells : (maxY - minY + 1);
         }
         else
         {
-            this.occupiedCells = new List<Vector2Int>();
-            this.occupiedCells.Add(coordinate);
+            this.occupiedCells = new List<Vector2Int> { coordinate };
+            this.widthCells = Mathf.Max(1, widthInCells);
+            this.heightCells = Mathf.Max(1, heightInCells);
             if (this.parallelRows >= 2)
             {
-                this.occupiedCells.Add(coordinate + new Vector2Int(1, 0));
-                this.occupiedCells.Add(coordinate + new Vector2Int(0, 1));
-                this.occupiedCells.Add(coordinate + new Vector2Int(1, 1));
+                this.widthCells = Mathf.Max(this.widthCells, 2);
+                this.heightCells = Mathf.Max(this.heightCells, 2);
             }
             else
             {
-                int xDir = this.isRightSide ? 1 : -1;
-                this.occupiedCells.Add(coordinate + new Vector2Int(xDir, 0));
+                this.widthCells = Mathf.Max(this.widthCells, 2);
+                this.heightCells = 1;
             }
         }
 
         if (!IsPrefabAsset())
         {
-            BuildStadiumSlotVisuals(isRightSideSlot, this.parallelRows);
+            BuildStadiumSlotVisuals(isRightSideSlot, this.parallelRows, this.widthCells, this.heightCells);
             UpdateBadgeDisplay();
         }
     }
 
     public void Initialize(AntColor color, Vector2Int coordinate, int capacity = 1, bool isRightSideSlot = true, int rowCount = 1)
     {
-        Initialize((int)color, coordinate, new List<Vector2Int> { coordinate }, capacity, isRightSideSlot, rowCount);
+        Initialize((int)color, coordinate, new List<Vector2Int> { coordinate }, capacity, isRightSideSlot, rowCount, 2, rowCount >= 2 ? 2 : 1, false);
     }
 
     public static Sprite GetCapsuleSprite()
@@ -153,7 +173,7 @@ public class HoleController : MonoBehaviour
         int h = 512;
         Texture2D tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
         tex.name = "CapsuleShadowTexture";
-        Color[] colors = new Color[w * h];
+        UnityEngine.Color[] colors = new UnityEngine.Color[w * h];
         float radius = (w - 2) * 0.5f;
         float centerX = w * 0.5f;
         float topCenterY = h - radius - 1;
@@ -170,7 +190,7 @@ public class HoleController : MonoBehaviour
 
                 float dist = Mathf.Sqrt(dx * dx + dy * dy);
                 float alpha = Mathf.Clamp01((radius - dist) + 0.5f);
-                colors[y * w + x] = new Color(1f, 1f, 1f, alpha);
+                colors[y * w + x] = new UnityEngine.Color(1f, 1f, 1f, alpha);
             }
         }
         tex.SetPixels(colors);
@@ -183,11 +203,11 @@ public class HoleController : MonoBehaviour
     [ContextMenu("Rebuild Stadium Visuals")]
     public void BuildStadiumSlotVisuals()
     {
-        BuildStadiumSlotVisuals(isRightSide, parallelRows);
+        BuildStadiumSlotVisuals(isRightSide, parallelRows, widthCells, heightCells);
         UpdateBadgeDisplay();
     }
 
-    public void BuildStadiumSlotVisuals(bool rightSide, int rows)
+    public void BuildStadiumSlotVisuals(bool rightSide, int rows, int wCells = -1, int hCells = -1)
     {
         if (IsPrefabAsset()) return;
 
@@ -206,387 +226,383 @@ public class HoleController : MonoBehaviour
         slotRoot.localPosition = Vector3.zero;
         slotRoot.localRotation = Quaternion.identity;
 
-        float outerW = (rows >= 2) ? multiRowWidth : singleRowWidth;
-        float outerH = (rows >= 2) ? multiRowHeight : singleRowHeight;
+        if (wCells > 0) this.widthCells = wCells;
+        if (hCells > 0) this.heightCells = hCells;
+        if (rows > 0) this.parallelRows = rows;
+        this.isRightSide = rightSide;
+
+        float cs = (BoardManager.Instance != null && BoardManager.Instance.CellSize > 0f) ? BoardManager.Instance.CellSize : 1.0f;
+        float smallMargin = 0.06f * cs;
+        float outerW = Mathf.Max(0.60f * cs, this.widthCells * cs - smallMargin);
+        float outerH = Mathf.Max(0.60f * cs, this.heightCells * cs - smallMargin);
+
+        // Moderate rounded rectangle radius: clearly rectangular body, NOT a pill or capsule!
+        float cornerRadius = Mathf.Min(
+            0.22f * cs,
+            Mathf.Min(outerW, outerH) * 0.28f
+        );
+
+        // Visible colored plastic rim border
+        float rimThickness = Mathf.Clamp(0.12f * cs, 0.08f * cs, Mathf.Min(outerW, outerH) * 0.24f);
+        float innerW = outerW - (rimThickness * 2f);
+        float innerH = outerH - (rimThickness * 2f);
+        float innerCornerRadius = Mathf.Max(0.04f * cs, cornerRadius - rimThickness);
+
+        float pitInset = 0.035f * cs;
+        float pitW = innerW - (pitInset * 2f);
+        float pitH = innerH - (pitInset * 2f);
+        float pitCornerRadius = Mathf.Max(0.02f * cs, innerCornerRadius - pitInset);
 
         Material rimMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-        rimMat.color = AntColorPalette.GetColor(holeColor);
-        if (rimMat.HasProperty("_BaseColor")) rimMat.SetColor("_BaseColor", AntColorPalette.GetColor(holeColor));
+        UnityEngine.Color rimCol = AntColorPalette.GetColor(holeColor);
+        rimMat.color = rimCol;
+        if (rimMat.HasProperty("_BaseColor")) rimMat.SetColor("_BaseColor", rimCol);
         if (rimMat.HasProperty("_Smoothness")) rimMat.SetFloat("_Smoothness", 0.94f);
         if (rimMat.HasProperty("_Metallic")) rimMat.SetFloat("_Metallic", 0.05f);
 
+        Material bevelMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
+        UnityEngine.Color bevelCol = UnityEngine.Color.Lerp(rimCol, UnityEngine.Color.black, 0.38f);
+        bevelMat.color = bevelCol;
+        if (bevelMat.HasProperty("_BaseColor")) bevelMat.SetColor("_BaseColor", bevelCol);
+        if (bevelMat.HasProperty("_Smoothness")) bevelMat.SetFloat("_Smoothness", 0.70f);
+
         Material pitMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-        pitMat.color = UnityEngine.Color.black;
-        if (pitMat.HasProperty("_BaseColor")) pitMat.SetColor("_BaseColor", UnityEngine.Color.black);
+        UnityEngine.Color pitCol = new UnityEngine.Color(0.08f, 0.08f, 0.09f);
+        pitMat.color = pitCol;
+        if (pitMat.HasProperty("_BaseColor")) pitMat.SetColor("_BaseColor", pitCol);
         if (pitMat.HasProperty("_Smoothness")) pitMat.SetFloat("_Smoothness", 0.12f);
 
-        // 1. Tubular Stadium Pill / Rounded-Rectangle Rim
+        // 1. Layer 1: Outer Rim (glossy colored rounded-rectangle ring, Y = 0.032)
         GameObject rimObj = new GameObject("SlotRim");
         rimObj.transform.SetParent(slotRoot, false);
         rimObj.transform.localPosition = Vector3.zero;
 
         MeshFilter rimFilter = rimObj.AddComponent<MeshFilter>();
-        rimFilter.sharedMesh = CreateStadiumTubeMesh(outerW, outerH, tubeRadius, tubeHeight, 64, 16, rows);
+        rimFilter.sharedMesh = CreateRoundedRectRingMesh(outerW, outerH, innerW, innerH, cornerRadius, innerCornerRadius, 0.032f, 0.005f, 0.020f, 8);
         rimMeshRenderer = rimObj.AddComponent<MeshRenderer>();
         rimMeshRenderer.material = rimMat;
 
-        // 2. Dark Recessed Stadium Pit Floor
+        // 2. Layer 2: Inner Bevel / Inset Wall (darker shaded colored inset, sloping Y = 0.030 down to 0.016)
+        GameObject bevelObj = new GameObject("SlotInnerBevel");
+        bevelObj.transform.SetParent(slotRoot, false);
+        bevelObj.transform.localPosition = Vector3.zero;
+
+        MeshFilter bevelFilter = bevelObj.AddComponent<MeshFilter>();
+        bevelFilter.sharedMesh = CreateRoundedRectBevelMesh(innerW, innerH, pitW, pitH, innerCornerRadius, pitCornerRadius, 0.030f, 0.016f, 8);
+        innerBevelRenderer = bevelObj.AddComponent<MeshRenderer>();
+        innerBevelRenderer.material = bevelMat;
+
+        // 3. Layer 3: Inner Pit (dark charcoal/black recessed rounded-rectangle floor, Y = 0.010)
         GameObject pitObj = new GameObject("SlotPit");
         pitObj.transform.SetParent(slotRoot, false);
         pitObj.transform.localPosition = Vector3.zero;
 
         MeshFilter pitFilter = pitObj.AddComponent<MeshFilter>();
-        pitFilter.sharedMesh = CreateStadiumPitMesh(outerW, outerH, tubeRadius, 0.012f, 24, rows);
-        var pitRenderer = pitObj.AddComponent<MeshRenderer>();
+        pitFilter.sharedMesh = CreateRoundedRectFilledMesh(pitW, pitH, pitCornerRadius, 0.010f, 8, "StadiumPitFloorMesh");
+        pitRenderer = pitObj.AddComponent<MeshRenderer>();
         pitRenderer.material = pitMat;
 
-        // 2b. Inner Capsule Shadow / Pit Sprite (Single-row only)
-        if (rows < 2)
-        {
-            GameObject capsuleObj = new GameObject("Capsule");
-            capsuleObj.transform.SetParent(pitObj.transform, false);
-            capsuleObj.transform.localPosition = new Vector3(0.02f, 0.014f, 0f);
-            capsuleObj.transform.localRotation = Quaternion.Euler(90f, 0f, 90f);
-
-            float capScaleX = 0.64208f;
-            float capScaleY = 0.92615f;
-            capsuleObj.transform.localScale = new Vector3(capScaleX, capScaleY, 1f);
-
-            SpriteRenderer sr = capsuleObj.AddComponent<SpriteRenderer>();
-            sr.sprite = GetCapsuleSprite();
-            sr.color = UnityEngine.Color.black;
-            sr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            sr.receiveShadows = false;
-        }
-
-        // 3. Integrated Counter Badge
+        // 4. Integrated Counter Badge
         countBadgeObj = new GameObject("SlotCounterBadge");
         countBadgeObj.transform.SetParent(slotRoot, false);
         countBadgeObj.transform.localPosition = Vector3.zero;
 
+        Vector3 badgePos;
+        if (this.widthCells > this.heightCells)
+        {
+            // Horizontal holder: badge on right edge of rim
+            badgePos = new Vector3(outerW * 0.5f - 0.20f * cs, 0f, 0f);
+        }
+        else if (this.heightCells > this.widthCells)
+        {
+            // Vertical holder: badge at bottom edge of rim
+            badgePos = new Vector3(0f, 0f, -(outerH * 0.5f - 0.20f * cs));
+        }
+        else
+        {
+            // Box / rectangular holder: badge at bottom-right
+            badgePos = new Vector3(outerW * 0.5f - 0.22f * cs, 0f, -(outerH * 0.5f - 0.22f * cs));
+        }
+
         GameObject badgeMeshObj = new GameObject("BadgeMesh");
         badgeMeshObj.transform.SetParent(countBadgeObj.transform, false);
-        badgeMeshObj.transform.localPosition = Vector3.zero;
+        badgeMeshObj.transform.localPosition = badgePos;
 
         MeshFilter badgeFilter = badgeMeshObj.AddComponent<MeshFilter>();
-        badgeFilter.sharedMesh = CreateStadiumBadgeMesh(outerW, outerH, tubeRadius, 0.018f, rightSide, rows, 24);
+        float badgeSize = 0.38f * cs;
+        badgeFilter.sharedMesh = CreateRoundedRectFilledMesh(badgeSize, badgeSize, 0.08f * cs, 0.038f, 8, "StadiumBadgeTabMesh");
         badgeBackgroundRenderer = badgeMeshObj.AddComponent<MeshRenderer>();
         badgeBackgroundRenderer.material = rimMat;
 
         // Number Text
         GameObject textObj = new GameObject("BadgeCountText");
         textObj.transform.SetParent(countBadgeObj.transform, false);
-
-        float rCap = (rows >= 2) ? 0.36f : Mathf.Max(0.08f, (outerH * 0.5f) - tubeRadius);
-        float straightLen = (rows >= 2) ? Mathf.Max(0.1f, outerW - 2f * rCap) : Mathf.Max(0f, outerW - 2f * (rCap + tubeRadius));
-        float halfL = straightLen * 0.5f;
-        float rInner = Mathf.Max(0.04f, rCap - tubeRadius);
-
-        float badgeLeftX = (rows >= 2) ? (halfL - 0.20f) : (halfL - 0.10f);
-        float centerBadgeX = (badgeLeftX + (halfL + rInner)) * 0.5f;
-
-        float textX = rightSide ? centerBadgeX : -centerBadgeX;
-        float textY = 0.22f;
-        float textZ = 0f;
-        textObj.transform.localPosition = new Vector3(textX, textY, textZ);
+        textObj.transform.localPosition = new Vector3(badgePos.x, 0.22f, badgePos.z);
         textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
 
         countTextMesh = textObj.AddComponent<TextMesh>();
         countTextMesh.alignment = TextAlignment.Center;
         countTextMesh.anchor = TextAnchor.MiddleCenter;
         countTextMesh.fontSize = 62;
-        countTextMesh.characterSize = (rows >= 2) ? 0.080f : 0.092f;
+        countTextMesh.characterSize = (this.widthCells >= 2 || this.heightCells >= 2) ? 0.080f : 0.092f;
         countTextMesh.fontStyle = FontStyle.Bold;
         countTextMesh.color = UnityEngine.Color.white;
     }
 
-    public static Mesh CreateStadiumTubeMesh(float outerW, float outerH, float tubeRadius, float tubeHeight, int pathResolution = 64, int crossResolution = 16, int rows = 1)
+    /// <summary>
+    /// Generates 2D perimeter points of a rounded rectangle in CLOCKWISE order starting from Top-Left.
+    /// </summary>
+    private static List<Vector2> GenerateRoundedRectPerimeter(float w, float h, float r, int pointsPerCorner = 8)
+    {
+        var points = new List<Vector2>();
+        float halfW = w * 0.5f;
+        float halfH = h * 0.5f;
+        r = Mathf.Clamp(r, 0.005f, Mathf.Min(halfW, halfH) - 0.001f);
+
+        float straightW = Mathf.Max(0f, halfW - r);
+        float straightH = Mathf.Max(0f, halfH - r);
+
+        // 1. Top Edge (moving right: -straightW to +straightW at +halfH)
+        points.Add(new Vector2(-straightW, halfH));
+        points.Add(new Vector2(straightW, halfH));
+
+        // 2. Top-Right Corner (arc from PI/2 down to 0)
+        Vector2 cTR = new Vector2(straightW, straightH);
+        for (int i = 1; i <= pointsPerCorner; i++)
+        {
+            float ang = Mathf.PI * 0.5f - ((float)i / pointsPerCorner) * Mathf.PI * 0.5f;
+            points.Add(cTR + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * r);
+        }
+
+        // 3. Right Edge (moving down: +straightH to -straightH at +halfW)
+        points.Add(new Vector2(halfW, -straightH));
+
+        // 4. Bottom-Right Corner (arc from 0 down to -PI/2)
+        Vector2 cBR = new Vector2(straightW, -straightH);
+        for (int i = 1; i <= pointsPerCorner; i++)
+        {
+            float ang = 0f - ((float)i / pointsPerCorner) * Mathf.PI * 0.5f;
+            points.Add(cBR + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * r);
+        }
+
+        // 5. Bottom Edge (moving left: +straightW to -straightW at -halfH)
+        points.Add(new Vector2(-straightW, -halfH));
+
+        // 6. Bottom-Left Corner (arc from -PI/2 down to -PI)
+        Vector2 cBL = new Vector2(-straightW, -straightH);
+        for (int i = 1; i <= pointsPerCorner; i++)
+        {
+            float ang = -Mathf.PI * 0.5f - ((float)i / pointsPerCorner) * Mathf.PI * 0.5f;
+            points.Add(cBL + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * r);
+        }
+
+        // 7. Left Edge (moving up: -straightH to +straightH at -halfW)
+        points.Add(new Vector2(-halfW, straightH));
+
+        // 8. Top-Left Corner (arc from PI down to PI/2)
+        Vector2 cTL = new Vector2(-straightW, straightH);
+        for (int i = 1; i < pointsPerCorner; i++)
+        {
+            float ang = Mathf.PI - ((float)i / pointsPerCorner) * Mathf.PI * 0.5f;
+            points.Add(cTL + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * r);
+        }
+
+        return points;
+    }
+
+    /// <summary>
+    /// Generates a glossy 3D rounded-rectangle rim ring with top face and outer bevel skirt.
+    /// All triangles are wound clockwise looking from above for proper top-down camera rendering.
+    /// </summary>
+    public static Mesh CreateRoundedRectRingMesh(float outerW, float outerH, float innerW, float innerH, float rOuter, float rInner, float topY = 0.032f, float outerBaseY = 0.005f, float innerBaseY = 0.020f, int pointsPerCorner = 8)
     {
         Mesh mesh = new Mesh();
-        mesh.name = (rows >= 2) ? "RoundedRectTubeMesh" : "StadiumTubeMesh";
+        mesh.name = "StadiumRimRingMesh";
 
-        List<Vector3> pathPoints = new List<Vector3>();
-        List<Vector3> pathNormals = new List<Vector3>();
+        List<Vector2> pOut = GenerateRoundedRectPerimeter(outerW, outerH, rOuter, pointsPerCorner);
+        List<Vector2> pIn = GenerateRoundedRectPerimeter(innerW, innerH, rInner, pointsPerCorner);
+        float baseOutW = outerW + 0.035f;
+        float baseOutH = outerH + 0.035f;
+        float baseROuter = rOuter + 0.0175f;
+        List<Vector2> pBase = GenerateRoundedRectPerimeter(baseOutW, baseOutH, baseROuter, pointsPerCorner);
 
-        if (rows >= 2)
+        int N = pOut.Count;
+        List<Vector3> verts = new List<Vector3>();
+        List<Vector3> norms = new List<Vector3>();
+        List<Vector2> uvs = new List<Vector2>();
+        List<int> tris = new List<int>();
+
+        // 1. Top Flat Face of the Rim Ring
+        int topStart = verts.Count;
+        for (int i = 0; i < N; i++)
         {
-            // Proper 4-sided rounded-corner rectangle for 2-row multi-queue holders
-            float rCorner = 0.36f;
-            float straightW = Mathf.Max(0.1f, outerW - 2f * rCorner);
-            float straightH = Mathf.Max(0.1f, outerH - 2f * rCorner);
-            float halfLx = straightW * 0.5f;
-            float halfLz = straightH * 0.5f;
-            int segRes = Mathf.Max(3, pathResolution / 16);
-            int arcRes = Mathf.Max(6, pathResolution / 8);
-
-            // 1. Top straight (from left to right)
-            for (int i = 0; i < segRes; i++)
-            {
-                float t = (float)i / segRes;
-                float x = Mathf.Lerp(-halfLx, halfLx, t);
-                pathPoints.Add(new Vector3(x, 0f, halfLz + rCorner));
-                pathNormals.Add(Vector3.forward);
-            }
-            // 2. Top-Right corner (PI/2 -> 0)
-            for (int i = 0; i < arcRes; i++)
-            {
-                float t = (float)i / arcRes;
-                float ang = Mathf.PI * 0.5f - t * Mathf.PI * 0.5f;
-                pathPoints.Add(new Vector3(halfLx + rCorner * Mathf.Cos(ang), 0f, halfLz + rCorner * Mathf.Sin(ang)));
-                pathNormals.Add(new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)).normalized);
-            }
-            // 3. Right straight (from top to bottom)
-            for (int i = 0; i < segRes; i++)
-            {
-                float t = (float)i / segRes;
-                float z = Mathf.Lerp(halfLz, -halfLz, t);
-                pathPoints.Add(new Vector3(halfLx + rCorner, 0f, z));
-                pathNormals.Add(Vector3.right);
-            }
-            // 4. Bottom-Right corner (0 -> -PI/2)
-            for (int i = 0; i < arcRes; i++)
-            {
-                float t = (float)i / arcRes;
-                float ang = 0f - t * Mathf.PI * 0.5f;
-                pathPoints.Add(new Vector3(halfLx + rCorner * Mathf.Cos(ang), 0f, -halfLz + rCorner * Mathf.Sin(ang)));
-                pathNormals.Add(new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)).normalized);
-            }
-            // 5. Bottom straight (from right to left)
-            for (int i = 0; i < segRes; i++)
-            {
-                float t = (float)i / segRes;
-                float x = Mathf.Lerp(halfLx, -halfLx, t);
-                pathPoints.Add(new Vector3(x, 0f, -halfLz - rCorner));
-                pathNormals.Add(Vector3.back);
-            }
-            // 6. Bottom-Left corner (-PI/2 -> -PI)
-            for (int i = 0; i < arcRes; i++)
-            {
-                float t = (float)i / arcRes;
-                float ang = -Mathf.PI * 0.5f - t * Mathf.PI * 0.5f;
-                pathPoints.Add(new Vector3(-halfLx + rCorner * Mathf.Cos(ang), 0f, -halfLz + rCorner * Mathf.Sin(ang)));
-                pathNormals.Add(new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)).normalized);
-            }
-            // 7. Left straight (from bottom to top)
-            for (int i = 0; i < segRes; i++)
-            {
-                float t = (float)i / segRes;
-                float z = Mathf.Lerp(-halfLz, halfLz, t);
-                pathPoints.Add(new Vector3(-halfLx - rCorner, 0f, z));
-                pathNormals.Add(Vector3.left);
-            }
-            // 8. Top-Left corner (PI -> PI/2)
-            for (int i = 0; i < arcRes; i++)
-            {
-                float t = (float)i / arcRes;
-                float ang = Mathf.PI - t * Mathf.PI * 0.5f;
-                pathPoints.Add(new Vector3(-halfLx + rCorner * Mathf.Cos(ang), 0f, halfLz + rCorner * Mathf.Sin(ang)));
-                pathNormals.Add(new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)).normalized);
-            }
+            verts.Add(new Vector3(pOut[i].x, topY, pOut[i].y));
+            norms.Add(Vector3.up);
+            uvs.Add(new Vector2((pOut[i].x / outerW) + 0.5f, (pOut[i].y / outerH) + 0.5f));
         }
-        else
+        for (int i = 0; i < N; i++)
         {
-            // Standard single-row horizontal stadium pill
-            float rCap = Mathf.Max(0.08f, (outerH * 0.5f) - tubeRadius);
-            float straightLen = Mathf.Max(0f, outerW - 2f * (rCap + tubeRadius));
-            float halfL = straightLen * 0.5f;
-
-            int straightRes = Mathf.Max(4, pathResolution / 8);
-            int arcRes = Mathf.Max(12, (pathResolution - 2 * straightRes) / 2);
-
-            for (int i = 0; i < straightRes; i++)
-            {
-                float t = (float)i / straightRes;
-                float x = Mathf.Lerp(-halfL, halfL, t);
-                pathPoints.Add(new Vector3(x, 0f, rCap));
-                pathNormals.Add(Vector3.forward);
-            }
-
-            for (int i = 0; i < arcRes; i++)
-            {
-                float t = (float)i / arcRes;
-                float ang = Mathf.PI * 0.5f - t * Mathf.PI;
-                pathPoints.Add(new Vector3(halfL + rCap * Mathf.Cos(ang), 0f, rCap * Mathf.Sin(ang)));
-                pathNormals.Add(new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)).normalized);
-            }
-
-            for (int i = 0; i < straightRes; i++)
-            {
-                float t = (float)i / straightRes;
-                float x = Mathf.Lerp(halfL, -halfL, t);
-                pathPoints.Add(new Vector3(x, 0f, -rCap));
-                pathNormals.Add(Vector3.back);
-            }
-
-            for (int i = 0; i < arcRes; i++)
-            {
-                float t = (float)i / arcRes;
-                float ang = -Mathf.PI * 0.5f - t * Mathf.PI;
-                pathPoints.Add(new Vector3(-halfL + rCap * Mathf.Cos(ang), 0f, rCap * Mathf.Sin(ang)));
-                pathNormals.Add(new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)).normalized);
-            }
+            verts.Add(new Vector3(pIn[i].x, topY, pIn[i].y));
+            norms.Add(Vector3.up);
+            uvs.Add(new Vector2((pIn[i].x / outerW) + 0.5f, (pIn[i].y / outerH) + 0.5f));
         }
 
-        int M = pathPoints.Count;
-        int K = crossResolution;
-        Vector3[] vertices = new Vector3[M * (K + 1)];
-        Vector3[] normals = new Vector3[M * (K + 1)];
-        Vector2[] uvs = new Vector2[M * (K + 1)];
-
-        for (int i = 0; i < M; i++)
+        for (int i = 0; i < N; i++)
         {
-            Vector3 center = pathPoints[i];
-            Vector3 norm2D = pathNormals[i];
+            int nxt = (i + 1) % N;
+            int outCurr = topStart + i;
+            int outNxt = topStart + nxt;
+            int inNxt = topStart + N + nxt;
+            int inCurr = topStart + N + i;
 
-            for (int j = 0; j <= K; j++)
-            {
-                float phi = ((float)j / K) * Mathf.PI;
-                float cosPhi = Mathf.Cos(phi);
-                float sinPhi = Mathf.Sin(phi);
+            // Clockwise from above
+            tris.Add(outCurr);
+            tris.Add(outNxt);
+            tris.Add(inNxt);
 
-                Vector3 pos = center + norm2D * (-cosPhi * tubeRadius) + Vector3.up * (sinPhi * tubeHeight);
-                Vector3 n = (norm2D * (-cosPhi) + Vector3.up * sinPhi).normalized;
-
-                int vIdx = i * (K + 1) + j;
-                vertices[vIdx] = pos;
-                normals[vIdx] = n;
-                uvs[vIdx] = new Vector2((float)i / M, (float)j / K);
-            }
+            tris.Add(outCurr);
+            tris.Add(inNxt);
+            tris.Add(inCurr);
         }
 
-        int[] triangles = new int[M * K * 6];
-        int tIdx = 0;
-
-        for (int i = 0; i < M; i++)
+        // 2. Outer Beveled Skirt (slopes down from top outer to base outer)
+        int skirtStart = verts.Count;
+        for (int i = 0; i < N; i++)
         {
-            int nextI = (i + 1) % M;
-            for (int j = 0; j < K; j++)
-            {
-                int v00 = i * (K + 1) + j;
-                int v01 = i * (K + 1) + j + 1;
-                int v10 = nextI * (K + 1) + j;
-                int v11 = nextI * (K + 1) + j + 1;
+            Vector3 topPt = new Vector3(pOut[i].x, topY, pOut[i].y);
+            Vector3 basePt = new Vector3(pBase[i].x, outerBaseY, pBase[i].y);
+            Vector3 norm = (new Vector3(pOut[i].x, 0f, pOut[i].y).normalized + Vector3.up * 0.5f).normalized;
 
-                triangles[tIdx++] = v00;
-                triangles[tIdx++] = v01;
-                triangles[tIdx++] = v10;
+            verts.Add(topPt);
+            norms.Add(norm);
+            uvs.Add(new Vector2(0f, (float)i / N));
 
-                triangles[tIdx++] = v01;
-                triangles[tIdx++] = v11;
-                triangles[tIdx++] = v10;
-            }
+            verts.Add(basePt);
+            norms.Add(norm);
+            uvs.Add(new Vector2(1f, (float)i / N));
         }
 
-        mesh.vertices = vertices;
-        mesh.normals = normals;
-        mesh.uv = uvs;
-        mesh.triangles = triangles;
+        for (int i = 0; i < N; i++)
+        {
+            int nxt = (i + 1) % N;
+            int topCurr = skirtStart + (i * 2);
+            int baseCurr = skirtStart + (i * 2) + 1;
+            int topNxt = skirtStart + (nxt * 2);
+            int baseNxt = skirtStart + (nxt * 2) + 1;
+
+            // Clockwise
+            tris.Add(topCurr);
+            tris.Add(topNxt);
+            tris.Add(baseNxt);
+
+            tris.Add(topCurr);
+            tris.Add(baseNxt);
+            tris.Add(baseCurr);
+        }
+
+        mesh.vertices = verts.ToArray();
+        mesh.normals = norms.ToArray();
+        mesh.uv = uvs.ToArray();
+        mesh.triangles = tris.ToArray();
         mesh.RecalculateBounds();
         return mesh;
     }
 
-    public static Mesh CreateStadiumPitMesh(float outerW, float outerH, float tubeRadius, float yOffset = 0.012f, int arcSegments = 24, int rows = 1)
+    /// <summary>
+    /// Generates a darker shaded inner bevel wall dropping from the inner rim edge into the pit.
+    /// </summary>
+    public static Mesh CreateRoundedRectBevelMesh(float topW, float topH, float botW, float botH, float rTop, float rBot, float topY = 0.030f, float botY = 0.016f, int pointsPerCorner = 8)
     {
         Mesh mesh = new Mesh();
-        mesh.name = (rows >= 2) ? "RoundedRectPitMesh" : "StadiumPitMesh";
+        mesh.name = "StadiumInnerBevelMesh";
+
+        List<Vector2> pTop = GenerateRoundedRectPerimeter(topW, topH, rTop, pointsPerCorner);
+        List<Vector2> pBot = GenerateRoundedRectPerimeter(botW, botH, rBot, pointsPerCorner);
+
+        int N = pTop.Count;
+        List<Vector3> verts = new List<Vector3>();
+        List<Vector3> norms = new List<Vector3>();
+        List<Vector2> uvs = new List<Vector2>();
+        List<int> tris = new List<int>();
+
+        for (int i = 0; i < N; i++)
+        {
+            Vector3 topPt = new Vector3(pTop[i].x, topY, pTop[i].y);
+            Vector3 botPt = new Vector3(pBot[i].x, botY, pBot[i].y);
+            Vector3 norm = (new Vector3(-pTop[i].x, 0f, -pTop[i].y).normalized + Vector3.up * 0.7f).normalized;
+
+            verts.Add(topPt);
+            norms.Add(norm);
+            uvs.Add(new Vector2(0f, (float)i / N));
+
+            verts.Add(botPt);
+            norms.Add(norm);
+            uvs.Add(new Vector2(1f, (float)i / N));
+        }
+
+        for (int i = 0; i < N; i++)
+        {
+            int nxt = (i + 1) % N;
+            int topCurr = i * 2;
+            int botCurr = i * 2 + 1;
+            int topNxt = nxt * 2;
+            int botNxt = nxt * 2 + 1;
+
+            // Clockwise from top
+            tris.Add(topCurr);
+            tris.Add(topNxt);
+            tris.Add(botNxt);
+
+            tris.Add(topCurr);
+            tris.Add(botNxt);
+            tris.Add(botCurr);
+        }
+
+        mesh.vertices = verts.ToArray();
+        mesh.normals = norms.ToArray();
+        mesh.uv = uvs.ToArray();
+        mesh.triangles = tris.ToArray();
+        mesh.RecalculateBounds();
+        return mesh;
+    }
+
+    /// <summary>
+    /// Generates a flat filled rounded-rectangle mesh (used for recessed pit floor and badge tab).
+    /// Triangles are wound clockwise from above, normal pointing straight up.
+    /// </summary>
+    public static Mesh CreateRoundedRectFilledMesh(float w, float h, float r, float yOffset = 0.010f, int pointsPerCorner = 8, string meshName = "StadiumFilledMesh")
+    {
+        Mesh mesh = new Mesh();
+        mesh.name = meshName;
+
+        List<Vector2> pts = GenerateRoundedRectPerimeter(w, h, r, pointsPerCorner);
+        int N = pts.Count;
 
         List<Vector3> verts = new List<Vector3>();
         List<Vector3> norms = new List<Vector3>();
         List<Vector2> uvs = new List<Vector2>();
         List<int> tris = new List<int>();
 
+        // Center vertex
         verts.Add(new Vector3(0f, yOffset, 0f));
         norms.Add(Vector3.up);
         uvs.Add(new Vector2(0.5f, 0.5f));
 
-        List<Vector3> perimeter = new List<Vector3>();
-
-        if (rows >= 2)
+        for (int i = 0; i < N; i++)
         {
-            float rCorner = 0.36f;
-            float rInner = Mathf.Max(0.04f, rCorner - tubeRadius);
-            float straightW = Mathf.Max(0.1f, outerW - 2f * rCorner);
-            float straightH = Mathf.Max(0.1f, outerH - 2f * rCorner);
-            float halfLx = straightW * 0.5f;
-            float halfLz = straightH * 0.5f;
-            int arcRes = Mathf.Max(4, arcSegments / 4);
-
-            perimeter.Add(new Vector3(-halfLx, yOffset, halfLz + rInner));
-            perimeter.Add(new Vector3(halfLx, yOffset, halfLz + rInner));
-
-            for (int i = 0; i <= arcRes; i++)
-            {
-                float ang = Mathf.PI * 0.5f - ((float)i / arcRes) * Mathf.PI * 0.5f;
-                perimeter.Add(new Vector3(halfLx + rInner * Mathf.Cos(ang), yOffset, halfLz + rInner * Mathf.Sin(ang)));
-            }
-
-            perimeter.Add(new Vector3(halfLx + rInner, yOffset, -halfLz));
-
-            for (int i = 0; i <= arcRes; i++)
-            {
-                float ang = 0f - ((float)i / arcRes) * Mathf.PI * 0.5f;
-                perimeter.Add(new Vector3(halfLx + rInner * Mathf.Cos(ang), yOffset, -halfLz + rInner * Mathf.Sin(ang)));
-            }
-
-            perimeter.Add(new Vector3(-halfLx, yOffset, -halfLz - rInner));
-
-            for (int i = 0; i <= arcRes; i++)
-            {
-                float ang = -Mathf.PI * 0.5f - ((float)i / arcRes) * Mathf.PI * 0.5f;
-                perimeter.Add(new Vector3(-halfLx + rInner * Mathf.Cos(ang), yOffset, -halfLz + rInner * Mathf.Sin(ang)));
-            }
-
-            perimeter.Add(new Vector3(-halfLx - rInner, yOffset, halfLz));
-
-            for (int i = 0; i <= arcRes; i++)
-            {
-                float ang = Mathf.PI - ((float)i / arcRes) * Mathf.PI * 0.5f;
-                perimeter.Add(new Vector3(-halfLx + rInner * Mathf.Cos(ang), yOffset, halfLz + rInner * Mathf.Sin(ang)));
-            }
-        }
-        else
-        {
-            float rCap = Mathf.Max(0.08f, (outerH * 0.5f) - tubeRadius);
-            float rInner = Mathf.Max(0.04f, rCap - tubeRadius);
-            float straightLen = Mathf.Max(0f, outerW - 2f * (rCap + tubeRadius));
-            float halfL = straightLen * 0.5f;
-
-            perimeter.Add(new Vector3(halfL, yOffset, rInner));
-            perimeter.Add(new Vector3(-halfL, yOffset, rInner));
-
-            for (int i = 0; i <= arcSegments; i++)
-            {
-                float ang = Mathf.PI * 0.5f + ((float)i / arcSegments) * Mathf.PI;
-                perimeter.Add(new Vector3(-halfL + rInner * Mathf.Cos(ang), yOffset, rInner * Mathf.Sin(ang)));
-            }
-
-            perimeter.Add(new Vector3(-halfL, yOffset, -rInner));
-            perimeter.Add(new Vector3(halfL, yOffset, -rInner));
-
-            for (int i = 0; i <= arcSegments; i++)
-            {
-                float ang = -Mathf.PI * 0.5f + ((float)i / arcSegments) * Mathf.PI;
-                perimeter.Add(new Vector3(halfL + rInner * Mathf.Cos(ang), yOffset, rInner * Mathf.Sin(ang)));
-            }
-        }
-
-        int perimStartIdx = verts.Count;
-        for (int i = 0; i < perimeter.Count; i++)
-        {
-            verts.Add(perimeter[i]);
+            verts.Add(new Vector3(pts[i].x, yOffset, pts[i].y));
             norms.Add(Vector3.up);
-            uvs.Add(new Vector2((perimeter[i].x + outerW * 0.5f) / outerW, (perimeter[i].z + outerH * 0.5f) / outerH));
+            uvs.Add(new Vector2((pts[i].x / w) + 0.5f, (pts[i].y / h) + 0.5f));
         }
 
-        for (int i = 0; i < perimeter.Count - 1; i++)
+        for (int i = 0; i < N; i++)
         {
+            int nxt = (i + 1) % N;
+            // Center -> pts[i] -> pts[nxt] is clockwise from above
             tris.Add(0);
-            tris.Add(perimStartIdx + i);
-            tris.Add(perimStartIdx + i + 1);
+            tris.Add(1 + i);
+            tris.Add(1 + nxt);
         }
-        tris.Add(0);
-        tris.Add(perimStartIdx + perimeter.Count - 1);
-        tris.Add(perimStartIdx);
 
         mesh.vertices = verts.ToArray();
         mesh.normals = norms.ToArray();
@@ -596,132 +612,26 @@ public class HoleController : MonoBehaviour
         return mesh;
     }
 
-    public static Mesh CreateStadiumBadgeMesh(float outerW, float outerH, float tubeRadius, float yOffset = 0.018f, bool rightSide = true, int rows = 1, int arcSegments = 24)
+    public static Mesh CreateStadiumTubeMesh(float outerW, float outerH, float tubeRadius, float tubeHeight, int pathResolution = 64, int crossResolution = 16, float rCorner = 0.36f)
     {
-        Mesh mesh = new Mesh();
-        mesh.name = rightSide ? "StadiumBadgeMesh_Right" : "StadiumBadgeMesh_Left";
+        float rimTh = Mathf.Clamp(tubeRadius * 1.5f, 0.08f, 0.20f);
+        float inW = outerW - rimTh * 2f;
+        float inH = outerH - rimTh * 2f;
+        float rIn = Mathf.Max(0.04f, rCorner - rimTh);
+        return CreateRoundedRectRingMesh(outerW, outerH, inW, inH, rCorner, rIn, 0.032f, 0.005f, 0.020f, 8);
+    }
 
-        float rCap = (rows >= 2) ? 0.36f : Mathf.Max(0.08f, (outerH * 0.5f) - tubeRadius);
-        float rInner = Mathf.Max(0.04f, rCap - tubeRadius);
-        float straightLen = (rows >= 2) ? Mathf.Max(0.1f, outerW - 2f * rCap) : Mathf.Max(0f, outerW - 2f * (rCap + tubeRadius));
-        float halfL = straightLen * 0.5f;
+    public static Mesh CreateStadiumPitMesh(float outerW, float outerH, float tubeRadius, float yOffset = 0.012f, int arcSegments = 24, float rCorner = 0.36f)
+    {
+        float inW = outerW - tubeRadius * 2f;
+        float inH = outerH - tubeRadius * 2f;
+        float rIn = Mathf.Max(0.04f, rCorner - tubeRadius);
+        return CreateRoundedRectFilledMesh(inW, inH, rIn, yOffset, 8, "StadiumPitMesh");
+    }
 
-        float badgeLeftX = (rows >= 2) ? (halfL - 0.20f) : (halfL - 0.10f);
-        float cornerR = 0.06f;
-        float centerBadgeX = (badgeLeftX + (halfL + rInner)) * 0.5f;
-
-        List<Vector3> verts = new List<Vector3>();
-        List<Vector3> norms = new List<Vector3>();
-        List<Vector2> uvs = new List<Vector2>();
-        List<int> tris = new List<int>();
-
-        List<Vector3> perimeter = new List<Vector3>();
-
-        if (rightSide)
-        {
-            verts.Add(new Vector3(centerBadgeX, yOffset, 0f));
-            norms.Add(Vector3.up);
-            uvs.Add(new Vector2(0.5f, 0.5f));
-
-            perimeter.Add(new Vector3(halfL, yOffset, rInner));
-            perimeter.Add(new Vector3(badgeLeftX + cornerR, yOffset, rInner));
-
-            for (int i = 0; i <= 6; i++)
-            {
-                float ang = Mathf.PI * 0.5f + ((float)i / 6) * Mathf.PI * 0.5f;
-                perimeter.Add(new Vector3(badgeLeftX + cornerR + cornerR * Mathf.Cos(ang), yOffset, rInner - cornerR + cornerR * Mathf.Sin(ang)));
-            }
-
-            perimeter.Add(new Vector3(badgeLeftX, yOffset, -rInner + cornerR));
-
-            for (int i = 0; i <= 6; i++)
-            {
-                float ang = Mathf.PI + ((float)i / 6) * Mathf.PI * 0.5f;
-                perimeter.Add(new Vector3(badgeLeftX + cornerR + cornerR * Mathf.Cos(ang), yOffset, -rInner + cornerR + cornerR * Mathf.Sin(ang)));
-            }
-
-            perimeter.Add(new Vector3(halfL, yOffset, -rInner));
-
-            for (int i = 0; i <= arcSegments; i++)
-            {
-                float ang = -Mathf.PI * 0.5f + ((float)i / arcSegments) * Mathf.PI;
-                perimeter.Add(new Vector3(halfL + rInner * Mathf.Cos(ang), yOffset, rInner * Mathf.Sin(ang)));
-            }
-
-            int pStart = verts.Count;
-            for (int i = 0; i < perimeter.Count; i++)
-            {
-                verts.Add(perimeter[i]);
-                norms.Add(Vector3.up);
-                uvs.Add(new Vector2(perimeter[i].x, perimeter[i].z));
-            }
-
-            for (int i = 0; i < perimeter.Count - 1; i++)
-            {
-                tris.Add(0);
-                tris.Add(pStart + i);
-                tris.Add(pStart + i + 1);
-            }
-            tris.Add(0);
-            tris.Add(pStart + perimeter.Count - 1);
-            tris.Add(pStart);
-        }
-        else
-        {
-            verts.Add(new Vector3(-centerBadgeX, yOffset, 0f));
-            norms.Add(Vector3.up);
-            uvs.Add(new Vector2(0.5f, 0.5f));
-
-            perimeter.Add(new Vector3(-halfL, yOffset, rInner));
-            perimeter.Add(new Vector3(-badgeLeftX - cornerR, yOffset, rInner));
-
-            for (int i = 0; i <= 6; i++)
-            {
-                float ang = Mathf.PI * 0.5f - ((float)i / 6) * Mathf.PI * 0.5f;
-                perimeter.Add(new Vector3(-badgeLeftX - cornerR + cornerR * Mathf.Cos(ang), yOffset, rInner - cornerR + cornerR * Mathf.Sin(ang)));
-            }
-
-            perimeter.Add(new Vector3(-badgeLeftX, yOffset, -rInner + cornerR));
-
-            for (int i = 0; i <= 6; i++)
-            {
-                float ang = 0f - ((float)i / 6) * Mathf.PI * 0.5f;
-                perimeter.Add(new Vector3(-badgeLeftX - cornerR + cornerR * Mathf.Cos(ang), yOffset, -rInner + cornerR + cornerR * Mathf.Sin(ang)));
-            }
-
-            perimeter.Add(new Vector3(-halfL, yOffset, -rInner));
-
-            for (int i = 0; i <= arcSegments; i++)
-            {
-                float ang = -Mathf.PI * 0.5f - ((float)i / arcSegments) * Mathf.PI;
-                perimeter.Add(new Vector3(-halfL + rInner * Mathf.Cos(ang), yOffset, rInner * Mathf.Sin(ang)));
-            }
-
-            int pStart = verts.Count;
-            for (int i = 0; i < perimeter.Count; i++)
-            {
-                verts.Add(perimeter[i]);
-                norms.Add(Vector3.up);
-                uvs.Add(new Vector2(perimeter[i].x, perimeter[i].z));
-            }
-
-            for (int i = 0; i < perimeter.Count - 1; i++)
-            {
-                tris.Add(0);
-                tris.Add(pStart + i + 1);
-                tris.Add(pStart + i);
-            }
-            tris.Add(0);
-            tris.Add(pStart);
-            tris.Add(pStart + perimeter.Count - 1);
-        }
-
-        mesh.vertices = verts.ToArray();
-        mesh.normals = norms.ToArray();
-        mesh.uv = uvs.ToArray();
-        mesh.triangles = tris.ToArray();
-        mesh.RecalculateBounds();
-        return mesh;
+    public static Mesh CreateStadiumBadgeTabMesh(Vector3 center, float w, float h, float r, float yOffset = 0.018f, int arcRes = 12)
+    {
+        return CreateRoundedRectFilledMesh(w, h, r, yOffset, 8, "StadiumBadgeTabMesh");
     }
 
     private void UpdateBadgeDisplay()
@@ -735,14 +645,37 @@ public class HoleController : MonoBehaviour
 
     public void OnAntSwallowed()
     {
-        remainingCount = Mathf.Max(0, remainingCount - 1);
-        UpdateBadgeDisplay();
+        if (!isQueueBasedCount)
+        {
+            remainingCount = Mathf.Max(0, remainingCount - 1);
+            UpdateBadgeDisplay();
+
+            if (remainingCount == 0)
+            {
+                PlayCompletedEffect();
+            }
+        }
+
         PlaySwallowEffect();
         SpawnSwallowVFX();
 
-        if (remainingCount == 0)
+        if (SoundManager.Instance != null && Application.isPlaying)
         {
-            PlayCompletedEffect();
+            SoundManager.Instance.PlaySwallow();
+        }
+    }
+
+    public void OnQueueSwallowed()
+    {
+        if (isQueueBasedCount)
+        {
+            remainingCount = Mathf.Max(0, remainingCount - 1);
+            UpdateBadgeDisplay();
+
+            if (remainingCount == 0)
+            {
+                PlayCompletedEffect();
+            }
         }
 
         if (SoundManager.Instance != null && Application.isPlaying)
@@ -838,7 +771,7 @@ public class HoleController : MonoBehaviour
         {
             if (this != null && !Application.isPlaying && !IsPrefabAsset())
             {
-                BuildStadiumSlotVisuals(isRightSide, parallelRows);
+                BuildStadiumSlotVisuals(isRightSide, parallelRows, widthCells, heightCells);
                 UpdateBadgeDisplay();
             }
         };
