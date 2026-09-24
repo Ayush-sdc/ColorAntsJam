@@ -64,7 +64,7 @@ public static class AntColorPalette
             AntColor.Turquoise => new Color(0.031f, 0.922f, 0.757f),   // Raw 11: Bright aqua turquoise #08EBC1 (L4)
             AntColor.Blue => new Color(0.071f, 0.596f, 0.902f),        // Legacy alias for SkyBlue
             AntColor.Cyan => new Color(0.031f, 0.922f, 0.757f),        // Legacy alias for Turquoise
-            AntColor.Black => new Color(0.12f, 0.14f, 0.17f),
+            AntColor.Black => new Color(0.24f, 0.26f, 0.30f),          // Raw 12: Charcoal black / dark graphite (L8/L10)
             _ => Color.white
         };
     }
@@ -95,30 +95,7 @@ public static class AntColorPalette
         eyePupilMaterial = null;
         legMaterial = null;
         groundDotMaterial = null;
-        visualLibrary = null;
     }
-
-    private static AntVisualLibrary visualLibrary;
-
-    public static AntVisualLibrary VisualLibrary
-    {
-        get
-        {
-            if (visualLibrary == null)
-            {
-                visualLibrary = Resources.Load<AntVisualLibrary>("AntVisualLibrary");
-            }
-            return visualLibrary;
-        }
-        set => visualLibrary = value;
-    }
-
-    public static GameObject GetAntVisualPrefab(AntColor color)
-    {
-        return VisualLibrary != null ? VisualLibrary.GetAntPrefab(color) : null;
-    }
-
-    public static float AntVisualScale => VisualLibrary != null ? VisualLibrary.AntScale : 0.58f;
 
     /// <summary>
     /// Retrieves or creates the shared URP Lit ant material for a given AntColor.

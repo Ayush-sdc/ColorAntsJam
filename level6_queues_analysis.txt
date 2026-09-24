@@ -1,0 +1,672 @@
+QUEUE #0
+Record/queue ID: Record_0_0
+Raw ColorID: 0
+Resolved color: SkyBlue
+Ant count: 9
+Complete Cells: [(8, 2), (8, 1), (7, 1), (6, 1), (6, 2), (5, 2), (4, 2), (3, 2), (3, 1)]
+Head: (8, 2)
+Neck: (8, 1)
+Derived forward direction: (0, 1) (UP)
+Expected movement: UP
+Tail: (3, 1)
+Bounding box: [3, 8] x [1, 2]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #0 (SkyBlue) at cell (8, 9)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #1
+Record/queue ID: Record_1_0
+Raw ColorID: 0
+Resolved color: SkyBlue
+Ant count: 9
+Complete Cells: [(11, 2), (11, 1), (12, 1), (13, 1), (13, 2), (14, 2), (15, 2), (16, 2), (16, 1)]
+Head: (11, 2)
+Neck: (11, 1)
+Derived forward direction: (0, 1) (UP)
+Expected movement: UP
+Tail: (16, 1)
+Bounding box: [11, 16] x [1, 2]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #0 (SkyBlue) at cell (11, 9)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #2
+Record/queue ID: Record_2_1
+Raw ColorID: 1
+Resolved color: Lime
+Ant count: 10
+Complete Cells: [(6, 17), (6, 18), (7, 18), (8, 18), (9, 18), (10, 18), (11, 18), (12, 18), (13, 18), (13, 17)]
+Head: (6, 17)
+Neck: (6, 18)
+Derived forward direction: (0, -1) (DOWN)
+Expected movement: DOWN
+Tail: (13, 17)
+Bounding box: [6, 13] x [17, 18]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #7 (Lime) at cell (6, 8)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #3
+Record/queue ID: Record_3_3
+Raw ColorID: 3
+Resolved color: Purple
+Ant count: 6
+Complete Cells: [(15, 5), (16, 5), (16, 6), (16, 7), (16, 8), (16, 9)]
+Head: (15, 5)
+Neck: (16, 5)
+Derived forward direction: (-1, 0) (LEFT)
+Expected movement: LEFT
+Tail: (16, 9)
+Bounding box: [15, 16] x [5, 9]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #3 (Purple) at cell (11, 5)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #4
+Record/queue ID: Record_4_3
+Raw ColorID: 3
+Resolved color: Purple
+Ant count: 6
+Complete Cells: [(4, 5), (3, 5), (3, 6), (3, 7), (3, 8), (3, 9)]
+Head: (4, 5)
+Neck: (3, 5)
+Derived forward direction: (1, 0) (RIGHT)
+Expected movement: RIGHT
+Tail: (3, 9)
+Bounding box: [3, 4] x [5, 9]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #3 (Purple) at cell (8, 5)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #5
+Record/queue ID: Record_5_3
+Raw ColorID: 3
+Resolved color: Purple
+Ant count: 6
+Complete Cells: [(6, 4), (5, 4), (4, 4), (4, 3), (5, 3), (6, 3)]
+Head: (6, 4)
+Neck: (5, 4)
+Derived forward direction: (1, 0) (RIGHT)
+Expected movement: RIGHT
+Tail: (6, 3)
+Bounding box: [4, 6] x [3, 4]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #3 (Purple) at cell (8, 4)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #6
+Record/queue ID: Record_6_3
+Raw ColorID: 3
+Resolved color: Purple
+Ant count: 6
+Complete Cells: [(13, 4), (14, 4), (15, 4), (15, 3), (14, 3), (13, 3)]
+Head: (13, 4)
+Neck: (14, 4)
+Derived forward direction: (-1, 0) (LEFT)
+Expected movement: LEFT
+Tail: (13, 3)
+Bounding box: [13, 15] x [3, 4]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #3 (Purple) at cell (11, 4)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #7
+Record/queue ID: Record_7_0
+Raw ColorID: 0
+Resolved color: SkyBlue
+Ant count: 3
+Complete Cells: [(5, 9), (4, 9), (4, 8)]
+Head: (5, 9)
+Neck: (4, 9)
+Derived forward direction: (1, 0) (RIGHT)
+Expected movement: RIGHT
+Tail: (4, 8)
+Bounding box: [4, 5] x [8, 9]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #0 (SkyBlue) at cell (8, 9)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #8
+Record/queue ID: Record_8_2
+Raw ColorID: 2
+Resolved color: Yellow
+Ant count: 3
+Complete Cells: [(7, 8), (7, 9), (6, 9)]
+Head: (7, 8)
+Neck: (7, 9)
+Derived forward direction: (0, -1) (DOWN)
+Expected movement: DOWN
+Tail: (6, 9)
+Bounding box: [6, 7] x [8, 9]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #5 (Yellow) at cell (7, 6)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #9
+Record/queue ID: Record_9_0
+Raw ColorID: 0
+Resolved color: SkyBlue
+Ant count: 6
+Complete Cells: [(12, 9), (13, 9), (13, 8), (12, 8), (11, 8), (10, 8)]
+Head: (12, 9)
+Neck: (13, 9)
+Derived forward direction: (-1, 0) (LEFT)
+Expected movement: LEFT
+Tail: (10, 8)
+Bounding box: [10, 13] x [8, 9]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #0 (SkyBlue) at cell (11, 9)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #10
+Record/queue ID: Record_10_0
+Raw ColorID: 0
+Resolved color: SkyBlue
+Ant count: 3
+Complete Cells: [(9, 10), (9, 11), (9, 12)]
+Head: (9, 10)
+Neck: (9, 11)
+Derived forward direction: (0, -1) (DOWN)
+Expected movement: DOWN
+Tail: (9, 12)
+Bounding box: [9, 9] x [10, 12]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #0 (SkyBlue) at cell (9, 9)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #11
+Record/queue ID: Record_11_0
+Raw ColorID: 0
+Resolved color: SkyBlue
+Ant count: 9
+Complete Cells: [(14, 9), (15, 9), (15, 10), (16, 10), (16, 11), (15, 11), (15, 12), (16, 12), (16, 13)]
+Head: (14, 9)
+Neck: (15, 9)
+Derived forward direction: (-1, 0) (LEFT)
+Expected movement: LEFT
+Tail: (16, 13)
+Bounding box: [14, 16] x [9, 13]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #0 (SkyBlue) at cell (11, 9)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #12
+Record/queue ID: Record_12_3
+Raw ColorID: 3
+Resolved color: Purple
+Ant count: 2
+Complete Cells: [(13, 5), (14, 5)]
+Head: (13, 5)
+Neck: (14, 5)
+Derived forward direction: (-1, 0) (LEFT)
+Expected movement: LEFT
+Tail: (14, 5)
+Bounding box: [13, 14] x [5, 5]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #3 (Purple) at cell (11, 5)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #13
+Record/queue ID: Record_13_2
+Raw ColorID: 2
+Resolved color: Yellow
+Ant count: 3
+Complete Cells: [(13, 6), (14, 6), (15, 6)]
+Head: (13, 6)
+Neck: (14, 6)
+Derived forward direction: (-1, 0) (LEFT)
+Expected movement: LEFT
+Tail: (15, 6)
+Bounding box: [13, 15] x [6, 6]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #5 (Yellow) at cell (7, 6)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #14
+Record/queue ID: Record_14_10
+Raw ColorID: 10
+Resolved color: Red
+Ant count: 2
+Complete Cells: [(9, 6), (10, 6)]
+Head: (9, 6)
+Neck: (10, 6)
+Derived forward direction: (-1, 0) (LEFT)
+Expected movement: LEFT
+Tail: (10, 6)
+Bounding box: [9, 10] x [6, 6]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #6 (Red) at cell (8, 6)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #15
+Record/queue ID: Record_15_6
+Raw ColorID: 6
+Resolved color: Indigo
+Ant count: 14
+Complete Cells: [(14, 8), (15, 8), (15, 7), (14, 7), (13, 7), (12, 7), (11, 7), (10, 7), (9, 7), (8, 7), (7, 7), (6, 7), (5, 7), (5, 8)]
+Head: (14, 8)
+Neck: (15, 8)
+Derived forward direction: (-1, 0) (LEFT)
+Expected movement: LEFT
+Tail: (5, 8)
+Bounding box: [5, 15] x [7, 8]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #10 (Indigo) at cell (9, 8)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #16
+Record/queue ID: Record_16_9
+Raw ColorID: 9
+Resolved color: White
+Ant count: 3
+Complete Cells: [(10, 11), (10, 12), (10, 13)]
+Head: (10, 11)
+Neck: (10, 12)
+Derived forward direction: (0, -1) (DOWN)
+Expected movement: DOWN
+Tail: (10, 13)
+Bounding box: [10, 10] x [11, 13]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #8 (White) at cell (10, 10)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #17
+Record/queue ID: Record_17_0
+Raw ColorID: 0
+Resolved color: SkyBlue
+Ant count: 4
+Complete Cells: [(10, 14), (10, 15), (10, 16), (11, 16)]
+Head: (10, 14)
+Neck: (10, 15)
+Derived forward direction: (0, -1) (DOWN)
+Expected movement: DOWN
+Tail: (11, 16)
+Bounding box: [10, 11] x [14, 16]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #0 (SkyBlue) at cell (10, 9)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #18
+Record/queue ID: Record_18_6
+Raw ColorID: 6
+Resolved color: Indigo
+Ant count: 7
+Complete Cells: [(9, 16), (9, 17), (10, 17), (11, 17), (12, 17), (12, 16), (13, 16)]
+Head: (9, 16)
+Neck: (9, 17)
+Derived forward direction: (0, -1) (DOWN)
+Expected movement: DOWN
+Tail: (13, 16)
+Bounding box: [9, 13] x [16, 17]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #10 (Indigo) at cell (9, 8)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #19
+Record/queue ID: Record_19_6
+Raw ColorID: 6
+Resolved color: Indigo
+Ant count: 5
+Complete Cells: [(13, 15), (14, 15), (14, 14), (13, 14), (12, 14)]
+Head: (13, 15)
+Neck: (14, 15)
+Derived forward direction: (-1, 0) (LEFT)
+Expected movement: LEFT
+Tail: (12, 14)
+Bounding box: [12, 14] x [14, 15]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #9 (Indigo) at cell (12, 15)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #20
+Record/queue ID: Record_20_0
+Raw ColorID: 0
+Resolved color: SkyBlue
+Ant count: 2
+Complete Cells: [(11, 14), (11, 15)]
+Head: (11, 14)
+Neck: (11, 15)
+Derived forward direction: (0, -1) (DOWN)
+Expected movement: DOWN
+Tail: (11, 15)
+Bounding box: [11, 11] x [14, 15]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #0 (SkyBlue) at cell (11, 9)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #21
+Record/queue ID: Record_21_0
+Raw ColorID: 0
+Resolved color: SkyBlue
+Ant count: 7
+Complete Cells: [(8, 12), (8, 13), (7, 13), (6, 13), (5, 13), (4, 13), (3, 13)]
+Head: (8, 12)
+Neck: (8, 13)
+Derived forward direction: (0, -1) (DOWN)
+Expected movement: DOWN
+Tail: (3, 13)
+Bounding box: [3, 8] x [12, 13]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #0 (SkyBlue) at cell (8, 9)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #22
+Record/queue ID: Record_22_4
+Raw ColorID: 4
+Resolved color: Orange
+Ant count: 4
+Complete Cells: [(3, 11), (3, 10), (4, 10), (4, 11)]
+Head: (3, 11)
+Neck: (3, 10)
+Derived forward direction: (0, 1) (UP)
+Expected movement: UP
+Tail: (4, 11)
+Bounding box: [3, 4] x [10, 11]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #4 (Orange) at cell (3, 12)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #23
+Record/queue ID: Record_23_0
+Raw ColorID: 0
+Resolved color: SkyBlue
+Ant count: 7
+Complete Cells: [(11, 12), (11, 13), (12, 13), (13, 13), (14, 13), (15, 13), (15, 14)]
+Head: (11, 12)
+Neck: (11, 13)
+Derived forward direction: (0, -1) (DOWN)
+Expected movement: DOWN
+Tail: (15, 14)
+Bounding box: [11, 15] x [12, 14]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #0 (SkyBlue) at cell (11, 9)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #24
+Record/queue ID: Record_24_9
+Raw ColorID: 9
+Resolved color: White
+Ant count: 3
+Complete Cells: [(8, 3), (9, 3), (9, 2)]
+Head: (8, 3)
+Neck: (9, 3)
+Derived forward direction: (-1, 0) (LEFT)
+Expected movement: LEFT
+Tail: (9, 2)
+Bounding box: [8, 9] x [2, 3]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #2 (White) at cell (3, 3)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #25
+Record/queue ID: Record_25_4
+Raw ColorID: 4
+Resolved color: Orange
+Ant count: 9
+Complete Cells: [(4, 7), (4, 6), (5, 6), (5, 5), (6, 5), (7, 5), (7, 4), (7, 3), (7, 2)]
+Head: (4, 7)
+Neck: (4, 6)
+Derived forward direction: (0, 1) (UP)
+Expected movement: UP
+Tail: (7, 2)
+Bounding box: [4, 7] x [2, 7]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #4 (Orange) at cell (4, 12)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #26
+Record/queue ID: Record_26_9
+Raw ColorID: 9
+Resolved color: White
+Ant count: 3
+Complete Cells: [(11, 3), (10, 3), (10, 2)]
+Head: (11, 3)
+Neck: (10, 3)
+Derived forward direction: (1, 0) (RIGHT)
+Expected movement: RIGHT
+Tail: (10, 2)
+Bounding box: [10, 11] x [2, 3]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #1 (White) at cell (16, 3)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #27
+Record/queue ID: Record_27_2
+Raw ColorID: 2
+Resolved color: Yellow
+Ant count: 6
+Complete Cells: [(11, 6), (12, 6), (12, 5), (12, 4), (12, 3), (12, 2)]
+Head: (11, 6)
+Neck: (12, 6)
+Derived forward direction: (-1, 0) (LEFT)
+Expected movement: LEFT
+Tail: (12, 2)
+Bounding box: [11, 12] x [2, 6]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #5 (Yellow) at cell (7, 6)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #28
+Record/queue ID: Record_28_6
+Raw ColorID: 6
+Resolved color: Indigo
+Ant count: 5
+Complete Cells: [(9, 13), (9, 14), (8, 14), (7, 14), (6, 14)]
+Head: (9, 13)
+Neck: (9, 14)
+Derived forward direction: (0, -1) (DOWN)
+Expected movement: DOWN
+Tail: (6, 14)
+Bounding box: [6, 9] x [13, 14]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #10 (Indigo) at cell (9, 8)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #29
+Record/queue ID: Record_29_9
+Raw ColorID: 9
+Resolved color: White
+Ant count: 8
+Complete Cells: [(3, 14), (3, 15), (4, 15), (4, 16), (5, 16), (5, 15), (5, 14), (4, 14)]
+Head: (3, 14)
+Neck: (3, 15)
+Derived forward direction: (0, -1) (DOWN)
+Expected movement: DOWN
+Tail: (4, 14)
+Bounding box: [3, 5] x [14, 16]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #2 (White) at cell (3, 4)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #30
+Record/queue ID: Record_30_9
+Raw ColorID: 9
+Resolved color: White
+Ant count: 5
+Complete Cells: [(16, 14), (16, 15), (15, 15), (15, 16), (14, 16)]
+Head: (16, 14)
+Neck: (16, 15)
+Derived forward direction: (0, -1) (DOWN)
+Expected movement: DOWN
+Tail: (14, 16)
+Bounding box: [14, 16] x [14, 16]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #1 (White) at cell (16, 4)
+Straight-forward movement approaches holder: YES
+---
+QUEUE #31
+Record/queue ID: Record_31_6
+Raw ColorID: 6
+Resolved color: Indigo
+Ant count: 9
+Complete Cells: [(9, 15), (8, 15), (7, 15), (6, 15), (6, 16), (7, 16), (7, 17), (8, 17), (8, 16)]
+Head: (9, 15)
+Neck: (8, 15)
+Derived forward direction: (1, 0) (RIGHT)
+Expected movement: RIGHT
+Tail: (8, 16)
+Bounding box: [6, 9] x [15, 17]
+Connected: False
+ConnectedIndex: 0
+SecondColor: False (0)
+PipeCount: 0
+Locked: False
+LockAmount: 0
+Nearest expected matching holder: Holder #9 (Indigo) at cell (12, 15)
+Straight-forward movement approaches holder: YES
+---

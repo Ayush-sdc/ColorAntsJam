@@ -70,6 +70,7 @@ public static class ReferenceColorMapper
             9 => AntColor.White,       // White
             10 => AntColor.Red,        // Red
             11 => AntColor.Turquoise,  // Turquoise / Aqua
+            12 => AntColor.Black,      // Black / Dark Charcoal Grey
             _ => LogUnknownColorId(rawColorId)
         };
     }
@@ -100,6 +101,7 @@ public static class ReferenceColorMapper
             AntColor.White => 9,
             AntColor.Red => 10,
             AntColor.Turquoise => 11,
+            AntColor.Black => 12,
             AntColor.Blue => 0,
             AntColor.Cyan => 11,
             _ => 9

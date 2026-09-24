@@ -247,20 +247,13 @@ public class PlayerInputHandler : MonoBehaviour
         }
 
         bool canMove = false;
-        int pathLen = 0;
-
         if (targetQueue != null && BoardManager.Instance != null)
         {
-            var path = AntPathfinder.FindPath(BoardManager.Instance, targetQueue);
-            if (path != null && path.Count >= 2)
-            {
-                canMove = true;
-                pathLen = path.Count;
-            }
+            canMove = BoardManager.Instance.IsPathClearForQueue(targetQueue);
         }
 
         // Concise diagnostic log per click
-        Debug.Log($"[INPUT] screen={screenPos} world={worldHitPos} grid={gridCoord} queue={(targetQueue != null ? targetQueue.QueueId : "null")} movingQueuesCount={movingQueuesCount} canMove={canMove} pathLength={pathLen}");
+        Debug.Log($"[INPUT] screen={screenPos} world={worldHitPos} grid={gridCoord} queue={(targetQueue != null ? targetQueue.QueueId : "null")} movingQueuesCount={movingQueuesCount} canMove={canMove}");
 
         if (targetQueue != null)
         {

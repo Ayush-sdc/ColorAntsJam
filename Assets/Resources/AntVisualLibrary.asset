@@ -12,13 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30d87644bd9c7114b82904a84d61e751, type: 3}
   m_Name: AntVisualLibrary
   m_EditorClassIdentifier: SlitherAnts.Runtime::AntVisualLibrary
-  antCyanPrefab: {fileID: 8499031454159023981, guid: 3cf641e8a7024154994a2bb9c028760f, type: 3}
-  antGreenPrefab: {fileID: 621203779986238669, guid: 3cf22822ac40e664599786b8b71981f9, type: 3}
-  antPinkPrefab: {fileID: 7419786995410882471, guid: e8b185d287d626247bb37051db4585e2, type: 3}
-  antYellowPrefab: {fileID: 526155495142179129, guid: 6a90a8218594d784c98c98e95aad7557, type: 3}
-  antIndigoPrefab: {fileID: 3834639354280630182, guid: 2cd56cd8a414eb54d8066debf14171e4, type: 3}
-  antBrownPrefab: {fileID: 3667818019880089811, guid: 613ceede2baca224c92517f48b9f8eae, type: 3}
-  antScale: 0.58
   holeCyanPrefab: {fileID: 5528748837468296573, guid: 3334dbeede9e6724a85c145ad7173f69, type: 3}
   holeGreenPrefab: {fileID: 1585002430222995961, guid: ca4433b2293381245bb1c816a696cb12, type: 3}
   holePinkPrefab: {fileID: 8182007819854571270, guid: 7bab98bdcfb4dea42b2ee1ef4e32efc9, type: 3}

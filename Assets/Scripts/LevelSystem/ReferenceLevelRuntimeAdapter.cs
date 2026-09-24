@@ -66,16 +66,6 @@ public static class ReferenceLevelRuntimeAdapter
 
                 ReferenceColorMapper.LogColorMappingOnce(record.ColorID);
 
-                // Determine display count: number of matching active playable queues
-                if (matchingQueueCounts.TryGetValue(record.ColorID, out int count) && count > 0)
-                {
-                    runtimeHole.Capacity = count;
-                }
-                else
-                {
-                    runtimeHole.Capacity = record.AntCount > 0 ? record.AntCount : 1;
-                }
-
                 // Compute bounding footprint and dimensions
                 if (runtimeHole.OccupiedCells.Count > 0)
                 {
@@ -108,6 +98,66 @@ public static class ReferenceLevelRuntimeAdapter
             }
         }
 
+        // Map occupied cell -> hole
+        var cellToHole = new Dictionary<Vector2Int, RuntimeReferenceHole>();
+        foreach (var h in holes)
+        {
+            foreach (var c in h.OccupiedCells)
+            {
+                cellToHole[c] = h;
+            }
+        }
+
+        // Count queues whose forward direction directly faces each hole
+        var forwardCounts = new Dictionary<RuntimeReferenceHole, int>();
+        foreach (var h in holes) forwardCounts[h] = 0;
+
+        int gridW = level.GridWidth > 0 ? level.GridWidth : 20;
+        int gridH = level.GridHeight > 0 ? level.GridHeight : 20;
+
+        foreach (var q in level.AntQueues)
+        {
+            if (q.HolderType == 1 && q.Cells != null && q.Cells.Count >= 2)
+            {
+                Vector2Int head = q.Cells[0];
+                Vector2Int neck = q.Cells[1];
+                Vector2Int dir = head - neck;
+                if (dir == Vector2Int.right || dir == Vector2Int.left || dir == Vector2Int.up || dir == Vector2Int.down)
+                {
+                    Vector2Int cur = head + dir;
+                    while (cur.x >= 0 && cur.x < gridW && cur.y >= 0 && cur.y < gridH)
+                    {
+                        if (cellToHole.TryGetValue(cur, out var targetHole))
+                        {
+                            if (targetHole.ColorID == q.ColorID)
+                            {
+                                forwardCounts[targetHole]++;
+                                break;
+                            }
+                        }
+                        cur += dir;
+                    }
+                }
+            }
+        }
+
+        // Assign capacity: if forward-facing queues were found, use that count; otherwise fallback to total color count
+        foreach (var h in holes)
+        {
+            if (forwardCounts.TryGetValue(h, out int count) && count > 0)
+            {
+                h.Capacity = count;
+            }
+            else if (matchingQueueCounts.TryGetValue(h.ColorID, out int totalCount) && totalCount > 0)
+            {
+                h.Capacity = totalCount;
+            }
+            else
+            {
+                h.Capacity = 1;
+            }
+        }
+
         return holes;
     }
 
@@ -119,6 +169,9 @@ public static class ReferenceLevelRuntimeAdapter
     {
         var queues = new List<RuntimeReferenceQueue>();
         if (level == null || level.AntQueues == null) return queues;
+
+        int gridW = level.GridWidth > 0 ? level.GridWidth : 20;
+        int gridH = level.GridHeight > 0 ? level.GridHeight : 20;
 
         int queueIndex = 0;
         foreach (var record in level.AntQueues)
@@ -144,13 +197,37 @@ public static class ReferenceLevelRuntimeAdapter
                 if (runtimeQueue.BodyCoordinates.Count > 0)
                 {
                     Vector2Int head = runtimeQueue.BodyCoordinates[0];
+                    RuntimeReferenceHole matchingHole = null;
 
-                    // Find matching hole of the same ColorID
-                    RuntimeReferenceHole matchingHole = holes.Find(h => h.ColorID == record.ColorID);
+                    // Trace forward along cardinal direction to find matching hole
+                    if (runtimeQueue.BodyCoordinates.Count >= 2)
+                    {
+                        Vector2Int neck = runtimeQueue.BodyCoordinates[1];
+                        Vector2Int dir = head - neck;
+                        if (dir == Vector2Int.right || dir == Vector2Int.left || dir == Vector2Int.up || dir == Vector2Int.down)
+                        {
+                            Vector2Int cur = head + dir;
+                            while (cur.x >= 0 && cur.x < gridW && cur.y >= 0 && cur.y < gridH)
+                            {
+                                var hit = holes.Find(h => h.ColorID == record.ColorID && h.OccupiedCells.Contains(cur));
+                                if (hit != null)
+                                {
+                                    matchingHole = hit;
+                                    break;
+                                }
+                                cur += dir;
+                            }
+                        }
+                    }
+
+                    if (matchingHole == null)
+                    {
+                        matchingHole = holes.Find(h => h.ColorID == record.ColorID);
+                    }
+
                     if (matchingHole != null && matchingHole.OccupiedCells.Count > 0)
                     {
                         Vector2Int holeEntrance = matchingHole.EntranceCell;
-                        // Initial step: path from head into adjacent hole entrance
                         runtimeQueue.PathToHole = new List<Vector2Int> { head, holeEntrance };
                     }
                     else

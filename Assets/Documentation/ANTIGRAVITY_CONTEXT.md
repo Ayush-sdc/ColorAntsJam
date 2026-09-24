@@ -25,7 +25,7 @@ LevelManager
   - If true, calls `SetupReferenceBoard(level)` -> `SpawnReferenceHole()` and `SpawnReferenceAntQueue()`.
   - If false, calls `SetupHandmadeBoard(level)`.
 - **Current Holder System:** `HoleController.cs` procedural stadium slot geometry (`SlotRim`, `SlotInnerBevel`, `SlotPit`, `SlotCounterBadge`). Dynamically sizes to multi-cell footprints, caches entrance cell, counts matching queues, and applies single-queue visual overrides when initial count == 1.
-- **Current Queue System:** `AntQueueController.cs` and `AntUnit.cs`. Slithers segment-by-segment along BFS path (`AntPathfinder.cs`). Caches `DestinationHole` on movement start and enters hole sequentially.
+- **Current Queue System:** `AntQueueController.cs` and `AntUnit.cs`. Moves strictly straight forward step-by-step along `forwardDirection` derived from `head - neck`. Followers strictly inherit previous position of the ant immediately ahead (`newBody[i] = oldBody[i - 1]`). Caches `DestinationHole` on movement start and enters hole sequentially. NO pathfinding, BFS, A*, or automatic turns are used.
 - **Current Color Mapping System:** `ReferenceColorMapper.cs` maps raw ColorIDs (0..11) to `AntColor` enum and `AntColorPalette` materials/colors. 100% RGB parity between ant units and holder rims.
 - **Current Completion/Removal System:** When a holder's remaining queue count reaches 0, `isCompleted = true`. `BoardManager.RemoveCompletedHole()` immediately unregisters its entire multi-cell footprint from `holesMap` before visual shrinkage (`0.20s`, `Ease.InBack`) and destruction.
 
@@ -75,22 +75,33 @@ Do not flip coordinates.
 Do not swap X/Y.
 Cells[0] is the leader / head.
 
-### Movement Rule
-Ant queues move from the head and may not immediately reverse through their own neck/body.
+### CORE MOVEMENT MECHANIC — DO NOT CHANGE
 
-### Queue Concurrency Rule (Max 2 Concurrent Moving Queues)
+- **Slither Ants Jam does NOT use pathfinding for normal queue movement.**
+- Queue head is index 0 (`body[0]`), second ant is neck (`body[1]`).
+- Forward direction is derived from Head - Neck (`forwardDirection = head - neck`). Must be a valid cardinal direction: `(1,0)`, `(-1,0)`, `(0,1)`, or `(0,-1)`.
+- Leading ant moves continuously in that SAME forward direction step-by-step.
+- Head does NOT automatically turn, reroute, BFS, or A* toward its holder.
+- Reference levels are designed so correct straight forward movement reaches the corresponding holder.
+- Followers only inherit the previous position of the ant immediately in front (`newBody[i] = oldBody[i - 1]` for `i = 1 to bodyCount - 1`).
+- Followers never pathfind.
+- If direct forward movement is invalid (blocked by another queue, wrong-color holder, boundary, disabled cell, or full holder), no alternate route is searched.
+- Invalid player move attempt = maximum one heart penalty (3 -> 2 -> 1 -> 0 -> LevelLost).
+- Maximum 4 queues may move simultaneously.
 
-- **Concurrency Limit:** Maximum 2 ant queues may move simultaneously (`MAX_CONCURRENT_MOVING_QUEUES = 2`).
-- **Parallel Movement:** When Queue A starts moving, the player can immediately tap Queue B to start moving concurrently. Both movement coroutines run in parallel.
+### Queue Concurrency Rule (Max 4 Concurrent Moving Queues)
+
+- **Concurrency Limit:** Maximum 4 ant queues may move simultaneously (`MAX_CONCURRENT_MOVING_QUEUES = 4`).
+- **Parallel Movement:** When Queue A starts moving, the player can immediately tap Queue B, C, and D to start moving concurrently. All movement coroutines run in parallel.
 - **Individual Queue Protection:** Each queue maintains independent `IsMoving` protection (`queue.IsMoving`). Tapping a queue that is already moving is ignored (no duplicate coroutines, no penalty).
-- **Third Queue Input & Heart Safety:** When 2 queues are moving (`movingQueues.Count >= 2`), tapping a third queue does NOT start movement and does NOT deduct a heart. It triggers subtle blocked feedback (shake) without penalty (`PlayerLives` unchanged).
+- **Fifth Queue Input & Heart Safety:** When 4 queues are moving (`movingQueues.Count >= 4`), tapping a fifth queue does NOT start movement and does NOT deduct a heart. It triggers subtle blocked feedback (shake) without penalty (`PlayerLives` unchanged).
 - **Concurrency Tracking:** Managed authoritatively in `BoardManager.movingQueues` (`HashSet<AntQueueController>`). Added on `TryStartMove()`, removed on `OnQueueCompleted()` or `OnQueueMoveStoppedEarly()`. Cleared during `Awake()`, `ClearBoard()`, and `RestartLevel()`.
 - **Destination Capacity & Inbound Reservations:**
   - Simultaneous queues may target different holders OR the same holder if that holder has enough available capacity.
   - Available capacity is calculated as: `AvailableCapacity = remainingCount - inboundReservations`.
   - When movement begins, a slot is reserved via `HoleController.TryReserveSlot()`.
   - Inbound reservations prevent holder oversubscription (`IsFull => isCompleted || AvailableCapacity <= 0`).
-  - If a holder's available capacity is 0, subsequent matching queues cannot reserve or pathfind to it.
+  - If a holder's available capacity is 0, subsequent matching queues cannot reserve or target it.
   - If movement is cancelled or interrupted early, `ReleaseReservation()` frees the slot without decrementing `remainingCount`.
 - **Holder Counter Timing:**
   - Holder counter does NOT decrement when movement starts or when a reservation is placed.
@@ -99,10 +110,8 @@ Ant queues move from the head and may not immediately reverse through their own 
   - A holder may only be removed when `remainingCount <= 0 && inboundReservations <= 0`.
   - Ensures multi-capacity holders remain active until ALL in-flight reserved queues have entered.
 - **Path Conflict Handling:**
-  - `AntPathfinder` incorporates `otherQueue.GetReservedPathCells()` into blocked cells for any moving queue.
-  - Reserved path cells cover unreached path cells ahead of the moving queue's head (excluding final hole entrance).
-  - As a queue advances, vacated cells are released immediately (`remainingPath.RemoveAt(0)`), allowing other queues to cross previously vacated tiles safely.
-  - Conflicting paths are prevented before movement begins; non-conflicting paths move simultaneously with zero interference.
+  - Moving queues reserve unreached cells directly ahead of the head along `forwardDirection` via `GetReservedPathCells()`.
+  - If two moving queues would occupy the same cell, the collision is detected and handled without rerouting or pathfinding.
 - **Terminal State Safety:**
   - Level timeout (`00:00`) or 0 lives transitions `GameState` to `LevelLost`.
   - `TryStartMove()` requires `GameManager.Instance.State == GameState.Playing`, preventing new moves in terminal states.
@@ -112,7 +121,7 @@ Ant queues move from the head and may not immediately reverse through their own 
 
 ### Invalid Move Rule
 An invalid player move or gameplay collision deducts exactly one life per move attempt.
-Tapping a third queue while 2 queues are moving is NOT an invalid move and does NOT deduct a life.
+Tapping a fifth queue while 4 queues are moving is NOT an invalid move and does NOT deduct a life.
 
 ### Lives Rule
 Player begins each level with 3 lives.
@@ -265,7 +274,149 @@ Holders:
 Queues:
 23
 
+---
+
+Level 6 (Screenshot 4, Badge 6)
+Asset:
+Assets/Data/ReferenceLevels/Level_006.asset
+
+Grid:
+20x20
+
+Holders:
+11 (SkyBlue: 10, White: 2, White: 2, Purple: 5, Orange: 2, Yellow: 3, Red: 1, Lime: 1, White: 1, Indigo: 2, Indigo: 3)
+
+Queues:
+32
+
+---
+
+Level 7 (Screenshot 5, Badge 7)
+Asset:
+Assets/Data/ReferenceLevels/Level_007.asset
+
+Grid:
+15x15
+
+Holders:
+5 (Pink center: 12, Indigo top-left: 4, Turquoise top-right: 4, Green bottom-left: 4, Orange bottom-right: 4)
+
+Queues:
+28 (26 rope-tied / connected in groups)
+
+---
+
+Level 8 (Screenshot 2, Badge 8)
+Asset:
+Assets/Data/ReferenceLevels/Level_008.asset
+
+Grid:
+15x15
+
+Holders:
+14 (Purple: 3, Orange: 2, Red: 2, Red: 3, Indigo: 2, Yellow: 2, Pink: 2, Brown: 1, White: 3, Lime: 4, Turquoise: 1, Black: 3, Brown: 1, Orange: 1)
+
+Queues:
+30 (7 rope-tied / connected in groups)
+
+---
+
+Level 9 (Screenshot 1, Badge 9)
+Asset:
+Assets/Data/ReferenceLevels/Level_009.asset
+
+Grid:
+15x15
+
+Holders:
+17 (Brown: 9, Brown: 7, Brown: 2, Pink: 5, Red: 4, Indigo: 4, SkyBlue: 2, Orange: 2, Green: 2, Lime: 2, Indigo: 2, SkyBlue: 1, Red: 2, Pink: 2, Orange: 2, Green: 2, Indigo: 2)
+
+Queues:
+52 (43 rope-tied / connected in groups)
+
+---
+
+Level 10 (Screenshot 3, Badge 10)
+Asset:
+Assets/Data/ReferenceLevels/Level_010.asset
+
+Grid:
+20x20
+
+Holders:
+18 (Yellow: 4, Lime: 5, Indigo: 4, Red: 5, Pink: 1, Brown: 4, White: 3, Orange: 5, Purple: 1, Turquoise: 3, Black: 1, SkyBlue: 3, Green: 2, Purple: 1, Green: 1, Red: 1, Red: 1, Turquoise: 2)
+
+Queues:
+47 (16 rope-tied / connected in groups)
+
+### AUTHORITATIVE REFERENCE GRID DIMENSIONS
+
+REFERENCE GAME AUTHORITATIVE GRID SIZE
+DO NOT CHANGE WITHOUT NEW SOURCE DATA
+
+01 = 8x5
+02 = 10x10
+03 = 10x10
+04 = 10x10
+05 = 15x15
+06 = 20x20
+07 = 15x15
+08 = 15x15
+09 = 15x15
+10 = 20x20
+11 = 7x25
+12 = 30x30
+13 = 20x20
+14 = 30x30
+15 = 13x13
+16 = 17x17
+17 = 20x20
+18 = 20x20
+19 = 30x30
+20 = 17x17
+21 = 12x12
+22 = 15x15
+23 = 25x30
+24 = 20x20
+25 = 25x30
+26 = 20x20
+27 = 30x30
+28 = 25x40
+29 = 30x30
+30 = 11x11
+31 = 15x15
+32 = 25x25
+33 = 25x25
+34 = 30x30
+35 = 20x20
+36 = 30x30
+37 = 15x15
+38 = 30x30
+39 = 20x25
+40 = 20x20
+41 = 30x30
+42 = 30x30
+43 = 20x20
+44 = 32x31
+45 = 40x40
+
 ## 5. Current Visual Systems (Ants & Holders)
+
+### AI Asset Kit & Ant Prefab Integration Status
+
+ANT PREFAB INTEGRATION:
+REVERTED
+
+AI AntQueueKit Ant_* prefabs are currently NOT used by runtime gameplay.
+
+Native/original AntUnit visuals have been restored.
+
+AntQueueKit Assets:
+IMPORTED / UNUSED
+
+- **AI Ant Prefabs Status:** `Assets/AntQueueKit/Prefabs/Ant_*.prefab` (`Ant_Cyan`, `Ant_Green`, `Ant_Pink`, `Ant_Yellow`, `Ant_Indigo`, `Ant_Brown`) are completely detached from runtime gameplay.
+- **AntUnit Visual Hierarchy:** AntUnit instantiates native 3D geometry (`AntModel_3D` with `WorkerAntMesh` and `HeadPivot` with expressive googly eyes). No `VisualRoot` or 2D AI sprite child is created.
+- **AI Hole Artwork:** `Hole_*.prefab` remain preserved in `Assets/AntQueueKit/Prefabs/` (not deleted). Live gameplay holders continue using procedural stadium slot geometry (`HoleSlotRoot`, `SlotRim`, `SlotInnerBevel`, `SlotPit`).
 
 ### Ant Material & Visual Appearance
 - **Shader:** `Universal Render Pipeline/Lit`
@@ -666,6 +817,145 @@ Tests:
   - Test 10 (Timer Failure / Terminal State): LevelLost stops new moves; completed queues during loss cannot cause Win (PASS).
   - Test 11 (Restart): `RestartLevel()` reset `PlayerLives = 3`, `State = Playing`, `MovingQueuesCount = 0`, all inbound reservations reset to 0 (PASS).
 
+### 2026-09-25 00:30 — Targeted Revert: AI Ant Prefab Visual Integration
 
+User request:
+Revert ONLY the AI-generated ant prefab visual integration (`Ant_Cyan`, `Ant_Green`, `Ant_Pink`, `Ant_Yellow`, `Ant_Indigo`, `Ant_Brown` from `Assets/AntQueueKit/Prefabs/`). Restore the ant visual system to exactly how it worked immediately before the integration (native 3D worker ant model and procedural composite fallback). Preserve newer gameplay additions including 4 concurrent moving queues (`MAX_CONCURRENT_MOVING_QUEUES = 4`), heart deduction rules, 3-life game over, holder mechanics, camera, and level data. Keep `Assets/AntQueueKit/` in the project marked as IMPORTED / UNUSED.
 
+Files changed:
+- `Assets/Scripts/Ants/AntUnit.cs`
+- `Assets/Scripts/Core/AntVisualLibrary.cs`
+- `Assets/Scripts/Core/AntColor.cs`
+- `Assets/Scripts/Board/BoardManager.cs`
+- `Assets/Resources/AntVisualLibrary.asset`
+- `Assets/Scenes/main.unity`
+- `Assets/Documentation/ANTIGRAVITY_CONTEXT.md`
+
+Changes:
+- **`AntUnit.cs`:**
+  - Removed AI 2D sprite visual child instantiation (`VisualRoot` and `Instantiate(aiPrefab)`).
+  - Restored native 3D ant visual generation in `BuildVisuals()`: uses `AntModel_3D` mesh filter with `WorkerAntMesh` (from `AntColorPalette.GetWorkerAntMesh()`), shared URP Lit glossy body material (`AntColorPalette.GetMaterial(antColor)`), and `HeadPivot` with expressive googly eyes (shared eye white and pupil materials).
+  - Preserved procedural composite fallback (`Abdomen`, `Thorax`, `HeadSphere`, `FootBead`, `Antenna`) if mesh is unavailable.
+- **`AntVisualLibrary.cs` & `AntVisualLibrary.asset`:**
+  - Stripped all ant prefab fields (`antCyanPrefab`, `antGreenPrefab`, `antPinkPrefab`, `antYellowPrefab`, `antIndigoPrefab`, `antBrownPrefab`), `antScale`, `GetAntPrefab()`, and `SetAntPrefabs()`.
+  - Preserved hole prefab references (`Hole_*.prefab`) without disruption.
+- **`AntColor.cs`:**
+  - Removed `visualLibrary`, `VisualLibrary`, `GetAntVisualPrefab()`, and `AntVisualScale`.
+  - Preserved full 12-color authoritative palette, `GetWorkerAntMesh()`, shared materials, and URP Lit shading.
+- **`BoardManager.cs`:**
+  - Removed `visualLibrary` serialized field and runtime assignment.
+  - Preserved authoritative `MAX_CONCURRENT_MOVING_QUEUES = 4`.
+  - Preserved fifth queue soft-block without heart penalty.
+- **`Assets/Scenes/main.unity`:**
+  - Cleaned up serialized references and removed baked `VisualRoot` / `Ant_*` children from scene queues.
+- **`Assets/AntQueueKit/`:**
+  - Left completely intact in project; marked as **IMPORTED / UNUSED**.
+
+Tests:
+- compile: PASS (0 errors, 8 pre-existing warnings)
+- live unity testing (Play Mode):
+  - Ant Visual Check: 77/77 active AntUnits verified using native 3D `AntModel_3D` + `HeadPivot` (PASS).
+  - AI Ant Prefab Check: 0 `VisualRoot` objects, 0 `Ant_*` AI prefabs instantiated (PASS).
+  - Head-first forward movement: Verified (PASS).
+  - Follow-the-leader: Verified (PASS).
+  - 4 Simultaneous Queues: 4 queues started concurrently, `MovingQueuesCount = 4` (PASS).
+  - Fifth Queue Block: Attempt to start 5th queue blocked (`false`), Lives = 3 -> 3, heart penalty = NONE (PASS).
+  - Ingestion / Holder Counter: 4 queues entered holes, counters decremented, completed holes removed (PASS).
+  - Lives Depletion: 3 -> 2 -> 1 -> 0 triggers `GameState.LevelLost` (PASS).
+  - Timer Expiry: Timer reaching 0 triggers `GameState.LevelLost` (PASS).
+  - Restart: `RestartLevel()` cleanly restores lives = 3, timer = limit, state = Playing (PASS).
+
+### 2026-09-25 00:50 — Updated Authoritative Reference Grid Dimensions for Levels 1–45
+
+User request:
+Update the authoritative grid dimensions for Levels 1–45 to exactly match the reference game. Target only `Assets/Data/ReferenceLevels/Level_001.asset` through `Level_045.asset`. Validate all coordinates (queues, holders, disabled cells, cellInfo) before saving. Preserve all gameplay rules, cells, color IDs, camera, and prefabs.
+
+Files changed:
+- `Assets/Data/ReferenceLevels/Level_001.asset` ... `Level_045.asset` (45 assets)
+- `Assets/Scripts/LevelSystem/Level.cs`
+- `Assets/Documentation/ANTIGRAVITY_CONTEXT.md`
+
+Changes:
+- **`Level.cs`:**
+  - Added `SetGridDimensions(int width, int height)` method updating `gridSize` (`Vector2Int`), `gridWidth`, and `gridHeight` in sync.
+- **Reference Level Assets (1–45):**
+  - Updated serialized `gridSize`, `gridWidth`, `gridHeight` across all 45 reference level assets to exact authoritative values:
+    - 01: 8x5, 02–04: 10x10, 05: 15x15, 06: 20x20, 07–09: 15x15, 10: 20x20, 11: 7x25, 12: 30x30, 13: 20x20, 14: 30x30, 15: 13x13, 16: 17x17, 17–18: 20x20, 19: 30x30, 20: 17x17, 21: 12x12, 22: 15x15, 23: 25x30, 24: 20x20, 25: 25x30, 26: 20x20, 27: 30x30, 28: 25x40, 29: 30x30, 30: 11x11, 31: 15x15, 32–33: 25x25, 34: 30x30, 35: 20x20, 36: 30x30, 37: 15x15, 38: 30x30, 39: 20x25, 40: 20x20, 41–42: 30x30, 43: 20x20, 44: 32x31, 45: 40x40.
+  - Zero queue cells, holder cells, color IDs, or paths modified.
+- **Validation:**
+  - Pre-save coordinate validation verified 0 out-of-bounds coordinates across all 45 levels.
+  - Database mapping verified: all 45 database indices match 1-to-1 without off-by-one errors.
+  - Spot checks in Play Mode confirmed `Level.GridWidth`, `Level.GridHeight`, and `BoardManager` runtime dimensions agree 100% for Level 1 (8x5), Level 5 (15x15), Level 11 (7x25), Level 12 (30x30), Level 28 (25x40), Level 44 (32x31), and Level 45 (40x40).
+
+### 2026-09-25 01:25 — Removed Pathfinding (BFS / AntPathfinder) from Normal Ant Queue Movement
+
+User request:
+Remove BFS, shortest-path search, automatic turning, and route selection from normal ant queue movement. Queues must move purely forward in cardinal direction `forwardDirection = head - neck`. Followers strictly follow previous coordinates of the ant ahead. Blocked forward move costs 1 heart; up to 4 queues can move simultaneously (tapping 5th costs 0 hearts). Level data, camera, visual assets, and UI must remain unchanged.
+
+Files changed:
+- `Assets/Scripts/Board/BoardManager.cs`
+- `Assets/Scripts/Ants/AntQueueController.cs`
+- `Assets/Scripts/Core/PlayerInputHandler.cs`
+- `Assets/Documentation/ANTIGRAVITY_CONTEXT.md`
+
+Changes:
+- **`BoardManager.cs`:**
+  - Added `IsInBounds(Vector2Int coord)` helper.
+  - Implemented `ValidateForwardMove(...)` projecting a straight cardinal ray in `forwardDirection = head - neck` to find matching holder and validate path clearance.
+  - Replaced `AntPathfinder.FindPath` in `TryStartMove()` with `ValidateForwardMove()`.
+  - Added structured diagnostic logging: `[ForwardMove]` and `[ForwardMoveBlocked]`.
+  - Preserved group reservation, holder slot reservations, 4 concurrent queue limit, 5th queue soft-block (0 heart penalty), and 1 heart penalty on genuine invalid queue move.
+  - Updated `IsPathClearForQueue(queue)` to evaluate via `ValidateForwardMove` instead of `AntPathfinder.FindPath`.
+- **`AntQueueController.cs`:**
+  - Added `forwardDirection` and `holeEntranceCoordinate` serialized fields and public properties.
+  - Implemented `StartForwardMovement(Vector2Int direction, HoleController targetHole, Vector2Int entranceCell)`.
+  - Implemented `ForwardMoveRoutine()` executing discrete forward hops with exact follower inheritance `newBody[i] = oldBody[i - 1]`.
+  - Preserved jump/scale tweening into hole entrance and `hole.OnAntSwallowed()`.
+  - Updated `GetReservedPathCells()` to return straight ray coordinates ahead of head to entrance cell.
+- **`PlayerInputHandler.cs`:**
+  - Replaced `AntPathfinder.FindPath` call in tap validation with `BoardManager.Instance.IsPathClearForQueue(targetQueue)`.
+- **`AntPathfinder.cs`:**
+  - Completely detached from runtime gameplay movement (0 runtime callers). Preserved in project without deletion.
+- **`Assets/Documentation/ANTIGRAVITY_CONTEXT.md`:**
+  - Added prominent `CORE MOVEMENT MECHANIC — DO NOT CHANGE` section and updated queue movement specifications.
+
+Tests:
+- compile: PASS (0 errors, 8 pre-existing warnings)
+- live unity testing (Play Mode):
+  - Pathfinding not called: Verified `PathfindingUsed=False` in logs.
+  - Forward direction: Verified `Direction = (-1, 0)` for `Head=(12, 9), Neck=(13, 9)` on Level 6.
+  - Continues straight: Verified step-by-step progress along same direction.
+  - Followers: Verified exact follow-the-leader coordinate replication.
+  - Blocked forward: Verified shake feedback, `[ForwardMoveBlocked]`, and exactly 1 heart deduction.
+  - Matching holder: Head reaches holder, swallowed sequentially, hole count decrements cleanly.
+  - 4 concurrent queues: Started 4 valid queues concurrently, all moved simultaneously.
+  - 5th queue: Tapping 5th queue rejected with 0 heart penalty.
+
+### 2026-09-25 01:45 — Verified & Reconstructed Levels 6–10 from Screenshot References
+
+User request:
+Create / update Levels 6, 7, 8, 9, and 10 using the 5 uploaded reference screenshots as authoritative source of truth. Match grid sizes (Level 6: 20x20, Level 7: 15x15, Level 8: 15x15, Level 9: 15x15, Level 10: 20x20), queue layouts, orientation, rope-tied connected groups, and holder capacities.
+
+Files changed:
+- `Assets/Scripts/LevelSystem/ReferenceLevelRuntimeAdapter.cs`
+- `Assets/Scripts/Core/ReferenceColorMapper.cs`
+- `Assets/Scripts/Core/AntColor.cs`
+- `Assets/Documentation/ANTIGRAVITY_CONTEXT.md`
+
+Changes:
+- **Screenshot Mapping Confirmed:**
+  - Level 6 = Screenshot 4 (HUD badge 6, 20x20): 32 queues, 11 holders, 187 disabled grid cells shaping the board.
+  - Level 7 = Screenshot 5 (HUD badge 7, 15x15): 28 queues (26 rope-tied in groups), 5 holders (Pink 12, Indigo 4, Turquoise 4, Green 4, Orange 4).
+  - Level 8 = Screenshot 2 (HUD badge 8, 15x15): 30 queues (7 rope-tied in groups), 14 holders including Charcoal Black (ColorID 12).
+  - Level 9 = Screenshot 1 (HUD badge 9, 15x15): 52 queues (43 rope-tied in groups), 17 holders (Brown 9, Brown 7, Brown 2, Pink 5, etc.).
+  - Level 10 = Screenshot 3 (HUD badge 10, 20x20): 47 queues (16 rope-tied in groups), 18 holders.
+- **`ReferenceLevelRuntimeAdapter.cs`:**
+  - Upgraded `ExtractHoles` and `ExtractPlayableQueues` to compute holder capacities and specific queue destination holders via straight-forward ray tracing from ant queue heads along `forwardDirection`.
+  - Accurately resolves individual holder counts when multiple holders share the same ColorID (e.g. Level 9 brown holders 9, 7, 2; Level 8 red holders 2, 3; Level 6 white/indigo holders).
+- **`ReferenceColorMapper.cs` & `AntColor.cs`:**
+  - Added support for ColorID 12 mapping to `AntColor.Black` (dark charcoal glossy finish `#3D424E`), eliminating fallback warnings on Level 8 and Level 10.
+- **Live Play Mode Verification:**
+  - Loaded Levels 6, 7, 8, 9, 10 sequentially in Play Mode.
+  - Verified active database (`LevelDatabase.asset`), grid sizes, queue counts, holder counts, and holder capacities match the screenshots 100%.
+  - Verified forward ant queue movement on Level 6 with 0 compile/runtime errors.
 

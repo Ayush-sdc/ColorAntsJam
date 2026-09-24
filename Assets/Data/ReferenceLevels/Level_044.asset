@@ -15,7 +15,7 @@ MonoBehaviour:
   levelNumber: 44
   levelName: Reference Level 44
   difficulty: 0
-  duration: 0.0
+  duration: 0
   gridSize: {x: 32, y: 31}
   gridWidth: 32
   gridHeight: 31

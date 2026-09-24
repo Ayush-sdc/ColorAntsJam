@@ -128,6 +128,16 @@ public class Level : ScriptableObject
         SetLevelData(number, name, diff, new Vector2Int(width, height), cell, holeList, queueList);
     }
 
+    /// <summary>
+    /// Updates authoritative grid dimensions (gridSize, gridWidth, gridHeight).
+    /// </summary>
+    public void SetGridDimensions(int width, int height)
+    {
+        gridSize = new Vector2Int(width, height);
+        gridWidth = width;
+        gridHeight = height;
+    }
+
     public void SetReferenceLevelData(
         int number,
         string name,

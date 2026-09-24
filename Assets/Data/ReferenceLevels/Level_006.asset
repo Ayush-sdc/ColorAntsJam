@@ -15,7 +15,7 @@ MonoBehaviour:
   levelNumber: 6
   levelName: Reference Level 6
   difficulty: 0
-  duration: 0.0
+  duration: 0
   gridSize: {x: 20, y: 20}
   gridWidth: 20
   gridHeight: 20

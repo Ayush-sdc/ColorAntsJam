@@ -15,7 +15,7 @@ MonoBehaviour:
   levelNumber: 45
   levelName: Reference Level 45
   difficulty: 2
-  duration: 0.0
+  duration: 0
   gridSize: {x: 40, y: 40}
   gridWidth: 40
   gridHeight: 40

@@ -22,6 +22,8 @@ public class AntQueueController : MonoBehaviour
     [SerializeField] private bool isMoving = false;
     [SerializeField] private List<Vector2Int> currentBodyCoordinates = new List<Vector2Int>();
     [SerializeField] private List<Vector2Int> remainingPath = new List<Vector2Int>();
+    [SerializeField] private Vector2Int forwardDirection = Vector2Int.zero;
+    [SerializeField] private Vector2Int holeEntranceCoordinate = Vector2Int.zero;
 
     [Header("Animation Settings")]
     [SerializeField] private float stepDuration = 0.16f;
@@ -38,6 +40,8 @@ public class AntQueueController : MonoBehaviour
     public bool IsConnected => isConnected;
     public int ConnectedIndex => connectedIndex;
     public bool IsMoving => isMoving;
+    public Vector2Int ForwardDirection => forwardDirection;
+    public Vector2Int HoleEntranceCoordinate => holeEntranceCoordinate;
     public HoleController DestinationHole { get => destinationHole; set => destinationHole = value; }
     public IReadOnlyList<Vector2Int> CurrentBodyCoordinates => currentBodyCoordinates;
     public IReadOnlyList<Vector2Int> RemainingPath => remainingPath;
@@ -206,16 +210,24 @@ public class AntQueueController : MonoBehaviour
 
     public IEnumerable<Vector2Int> GetReservedPathCells()
     {
-        if (!isMoving || remainingPath == null) yield break;
-        // Remaining path cells ahead of the head, excluding the final hole entrance cell
-        for (int i = 1; i < remainingPath.Count - 1; i++)
+        if (!isMoving) yield break;
+        if (currentBodyCoordinates == null || currentBodyCoordinates.Count == 0) yield break;
+        if (forwardDirection == Vector2Int.zero) yield break;
+
+        Vector2Int curr = currentBodyCoordinates[0] + forwardDirection;
+        while (curr != holeEntranceCoordinate)
         {
-            yield return remainingPath[i];
+            if (BoardManager.Instance != null && !BoardManager.Instance.IsInBounds(curr))
+            {
+                yield break;
+            }
+            yield return curr;
+            curr += forwardDirection;
         }
     }
 
     /// <summary>
-    /// Attempts to trigger this queue (or its connected group) to move along its path to its matching hole.
+    /// Attempts to trigger this queue (or its connected group) to move straight forward to its matching hole.
     /// Returns true if movement started, false if blocked or unable to move.
     /// </summary>
     public bool TryStartMove()
@@ -228,32 +240,40 @@ public class AntQueueController : MonoBehaviour
             return BoardManager.Instance.TryStartMove(this);
         }
 
-        // Fallback for isolated unit tests without BoardManager
-        List<Vector2Int> path = AntPathfinder.FindPath(null, this);
-        if (path == null || path.Count < 2)
+        // Standalone fallback without BoardManager
+        if (currentBodyCoordinates == null || currentBodyCoordinates.Count < 2)
         {
             TriggerBlockedFeedback();
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.LoseLife(InvalidMoveReason.NoValidPath);
-            }
             return false;
         }
 
-        StartMoveAlongPath(path);
+        Vector2Int head = currentBodyCoordinates[0];
+        Vector2Int neck = currentBodyCoordinates[1];
+        Vector2Int dir = head - neck;
+        StartForwardMovement(dir, null, head + dir);
         return true;
+    }
+
+    public void StartForwardMovement(Vector2Int direction, HoleController targetHole, Vector2Int entranceCell)
+    {
+        if (isMoving) return;
+        this.forwardDirection = direction;
+        this.destinationHole = targetHole;
+        this.holeEntranceCoordinate = entranceCell;
+        StartCoroutine(ForwardMoveRoutine());
     }
 
     public void StartMoveAlongPath(List<Vector2Int> path)
     {
         if (isMoving || path == null || path.Count < 2) return;
-        remainingPath = new List<Vector2Int>(path);
-        Vector2Int targetCoord = remainingPath[remainingPath.Count - 1];
+        Vector2Int dir = path[1] - path[0];
+        Vector2Int entrance = path[path.Count - 1];
+        HoleController hole = null;
         if (BoardManager.Instance != null)
         {
-            destinationHole = BoardManager.Instance.GetHoleAt(targetCoord);
+            hole = BoardManager.Instance.GetHoleAt(entrance);
         }
-        StartCoroutine(MoveRoutine());
+        StartForwardMovement(dir, hole, entrance);
     }
 
     private void OnDisable()
@@ -312,78 +332,65 @@ public class AntQueueController : MonoBehaviour
     }
 
     /// <summary>
-    /// Strict follow-the-leader chain movement:
-    /// - Segment [i] only steps into the exact cell vacated by segment [i-1].
-    /// - No segment skips any grid cell.
-    /// - Each segment only dives into the tray once it reaches the cell directly adjacent to the tray.
+    /// Strict straight-forward follow-the-leader chain movement:
+    /// - Head moves strictly forward along forwardDirection step-by-step.
+    /// - Follower [i] only steps into the exact cell vacated by segment [i-1].
+    /// - Each segment only dives into the hole pit once it reaches the hole entrance cell.
+    /// - No automatic turns, BFS, A*, or rerouting.
     /// </summary>
-    private IEnumerator MoveRoutine()
+    private IEnumerator ForwardMoveRoutine()
     {
         isMoving = true;
         foreach (var u in antUnits) { if (u != null) u.IsMoving = true; }
         OnQueueMoveStarted?.Invoke(this);
 
-        Vector2Int holeCoord = remainingPath[remainingPath.Count - 1];
-        if (destinationHole == null && BoardManager.Instance != null)
-        {
-            destinationHole = BoardManager.Instance.GetHoleAt(holeCoord);
-        }
         HoleController hole = destinationHole;
+        Vector2Int holeCoord = holeEntranceCoordinate;
+        if (hole != null && holeCoord == Vector2Int.zero)
+        {
+            holeCoord = hole.GridCoordinate;
+        }
         Vector3 holeWorldPos = GetWorldPositionForGrid(holeCoord);
 
-        // Precompute the complete unbroken path of coordinates that each ant must traverse
-        // For Ant 0: [ remainingPath[1], remainingPath[2], ..., holeCoord ]
-        // For Ant i: [ bodyCoord[i-1], bodyCoord[i-2], ..., bodyCoord[0], remainingPath[1], ..., holeCoord ]
-        int initialAntCount = antUnits.Count;
-        List<List<Vector2Int>> antTracks = new List<List<Vector2Int>>(initialAntCount);
-
-        for (int i = 0; i < initialAntCount; i++)
-        {
-            List<Vector2Int> track = new List<Vector2Int>();
-            // Historical body coordinates ahead of ant i
-            for (int h = i - 1; h >= 0; h--)
-            {
-                track.Add(currentBodyCoordinates[h]);
-            }
-            // Path steps ahead of the head
-            for (int p = 1; p < remainingPath.Count; p++)
-            {
-                track.Add(remainingPath[p]);
-            }
-            antTracks.Add(track);
-        }
-
-        // Total number of discrete steps to ingest the entire queue
-        int totalSteps = (remainingPath.Count - 1) + initialAntCount;
-
-        // Active tracking lists
         List<AntUnit> activeUnits = new List<AntUnit>(antUnits);
-        List<int> originalIndices = new List<int>();
-        for (int i = 0; i < initialAntCount; i++) originalIndices.Add(i);
 
-        for (int step = 0; step < totalSteps; step++)
+        while (activeUnits.Count > 0)
         {
-            // Runtime collision check: Verify next target cells are not blocked by another active queue
+            // Snapshot active body coordinates before step begins
+            List<Vector2Int> previousActiveCoords = new List<Vector2Int>(currentBodyCoordinates);
+
+            // Determine target cell for each active ant:
+            // Leading ant (index 0): previous body[0] + forwardDirection
+            // Followers (index a >= 1): previous body[a - 1]
+            List<Vector2Int> targetCoords = new List<Vector2Int>(activeUnits.Count);
+            for (int a = 0; a < activeUnits.Count; a++)
+            {
+                if (a == 0)
+                {
+                    targetCoords.Add(previousActiveCoords[0] + forwardDirection);
+                }
+                else
+                {
+                    targetCoords.Add(previousActiveCoords[a - 1]);
+                }
+            }
+
+            // Moving queue collision check before hop execution
             bool collisionDetected = false;
             Vector2Int collisionCoord = Vector2Int.zero;
             if (BoardManager.Instance != null)
             {
                 for (int a = 0; a < activeUnits.Count; a++)
                 {
-                    int origIndex = originalIndices[a];
-                    var track = antTracks[origIndex];
-                    if (step < track.Count)
+                    Vector2Int target = targetCoords[a];
+                    if (target != holeCoord)
                     {
-                        Vector2Int targetCoord = track[step];
-                        if (targetCoord != holeCoord)
+                        var otherQueue = BoardManager.Instance.GetQueueOccupying(target, this);
+                        if (otherQueue != null)
                         {
-                            var otherQueue = BoardManager.Instance.GetQueueOccupying(targetCoord, this);
-                            if (otherQueue != null)
-                            {
-                                collisionDetected = true;
-                                collisionCoord = targetCoord;
-                                break;
-                            }
+                            collisionDetected = true;
+                            collisionCoord = target;
+                            break;
                         }
                     }
                 }
@@ -418,65 +425,40 @@ public class AntQueueController : MonoBehaviour
                 var unit = activeUnits[a];
                 if (unit == null) continue;
 
-                int origIndex = originalIndices[a];
-                var track = antTracks[origIndex];
+                Vector2Int target = targetCoords[a];
 
-                if (step < track.Count)
+                if (target == holeCoord)
                 {
-                    Vector2Int targetCoord = track[step];
+                    // Ant reaches the hole entrance cell: high-arc dive jump into the pit!
+                    Vector3 targetPit = holeWorldPos + new Vector3(0f, -0.2f, 0f);
+                    stepSequence.Join(unit.transform.DOJump(targetPit, enterHoleJumpPower, 1, stepDuration * 1.2f).SetEase(Ease.InQuad));
+                    stepSequence.Join(unit.transform.DOScale(Vector3.zero, stepDuration * 1.2f).SetEase(Ease.InBack));
 
-                    if (targetCoord == holeCoord)
+                    if (hole != null)
                     {
-                        // High-arc dive jump into hole pit from the entrance cell
-                        Vector3 targetPit = holeWorldPos + new Vector3(0f, -0.2f, 0f);
-                        stepSequence.Join(unit.transform.DOJump(targetPit, enterHoleJumpPower, 1, stepDuration * 1.2f).SetEase(Ease.InQuad));
-                        stepSequence.Join(unit.transform.DOScale(Vector3.zero, stepDuration * 1.2f).SetEase(Ease.InBack));
-
-                        if (a == 0 && remainingPath != null)
-                        {
-                            remainingPath.Clear();
-                        }
-
-                        // Decrement hole count immediately as soon as the ant enters the hole!
-                        if (hole != null)
-                        {
-                            hole.OnAntSwallowed();
-                        }
-
-                        toRemoveAtStepEnd.Add(a);
+                        hole.OnAntSwallowed();
                     }
-                    else
+
+                    toRemoveAtStepEnd.Add(a);
+                }
+                else
+                {
+                    // Strict 1-tile hop along the grid
+                    Vector3 targetPos = GetWorldPositionForGrid(target);
+                    Vector3 moveDir = targetPos - unit.transform.position;
+                    moveDir.y = 0;
+
+                    if (moveDir.sqrMagnitude > 0.001f)
                     {
-                        // Strict 1-tile hop along the grid
-                        Vector3 targetPos = GetWorldPositionForGrid(targetCoord);
-                        Vector3 moveDir = targetPos - unit.transform.position;
-                        moveDir.y = 0;
+                        stepSequence.Join(unit.transform.DORotateQuaternion(Quaternion.LookRotation(moveDir), stepDuration * 0.5f));
+                    }
+                    stepSequence.Join(unit.transform.DOJump(targetPos, jumpPower, 1, stepDuration).SetEase(Ease.Linear));
 
-                        if (moveDir.sqrMagnitude > 0.001f)
-                        {
-                            stepSequence.Join(unit.transform.DORotateQuaternion(Quaternion.LookRotation(moveDir), stepDuration * 0.5f));
-                        }
-                        stepSequence.Join(unit.transform.DOJump(targetPos, jumpPower, 1, stepDuration).SetEase(Ease.Linear));
-
-                        // Update current coordinates of active body
-                        if (a < currentBodyCoordinates.Count)
-                        {
-                            currentBodyCoordinates[a] = targetCoord;
-                        }
-
-                        // Prune remaining path as head advances so vacated path reservations release immediately
-                        if (a == 0 && remainingPath != null && remainingPath.Count > 1 && remainingPath[1] == targetCoord)
-                        {
-                            remainingPath.RemoveAt(0);
-                        }
+                    if (a < currentBodyCoordinates.Count)
+                    {
+                        currentBodyCoordinates[a] = target;
                     }
                 }
-            }
-
-            if (activeUnits.Count == 0)
-            {
-                stepSequence.Kill();
-                break;
             }
 
             if (stepSequence != null && stepSequence.IsActive() && !stepSequence.IsComplete())
@@ -500,7 +482,6 @@ public class AntQueueController : MonoBehaviour
                 }
 
                 activeUnits.RemoveAt(remIdx);
-                originalIndices.RemoveAt(remIdx);
                 antUnits.Remove(swallowedUnit);
 
                 SafeDestroy(swallowedUnit.gameObject);

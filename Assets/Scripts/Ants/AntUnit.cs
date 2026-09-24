@@ -55,116 +55,88 @@ public class AntUnit : MonoBehaviour
     {
         ClearVisuals();
 
-        GameObject aiPrefab = AntColorPalette.GetAntVisualPrefab(antColor);
-        if (aiPrefab != null)
+        // Native 3D Ant Visuals: Worker Ant Mesh or Procedural Fallback Composite Ant
+        Material antMat = AntColorPalette.GetMaterial(antColor);
+        Mesh workerMesh = AntColorPalette.GetWorkerAntMesh();
+
+        if (workerMesh != null)
         {
-            // 1. AI 2D Sprite Visual Child (aligned top-down with 3D board plane)
-            GameObject visualRootObj = new GameObject("VisualRoot");
-            visualRootObj.transform.SetParent(transform, false);
-            // Slight Y elevation (0.04f) ensures sprite sits cleanly above board ground tiles
-            visualRootObj.transform.localPosition = new Vector3(0f, 0.04f, 0f);
-            // Rotate 90 degrees around X so the 2D sprite lies flat on the board facing up toward the camera
-            visualRootObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            // 1. Compact 3D Worker Ant Mesh (Length scaled to maintain readability and separation)
+            GameObject modelObj = new GameObject("AntModel_3D");
+            modelObj.transform.SetParent(transform, false);
+            modelObj.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+            modelObj.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            modelObj.transform.localScale = new Vector3(0.95f, 0.95f, 0.82f);
+            modelRoot = modelObj.transform;
 
-            GameObject visualChild = Instantiate(aiPrefab, visualRootObj.transform, false);
-            visualChild.name = aiPrefab.name;
-            visualChild.transform.localPosition = Vector3.zero;
-            visualChild.transform.localRotation = Quaternion.identity;
-            visualChild.transform.localScale = Vector3.one * AntColorPalette.AntVisualScale;
+            var meshFilter = modelObj.AddComponent<MeshFilter>();
+            meshFilter.sharedMesh = workerMesh;
 
-            var sr = visualChild.GetComponent<SpriteRenderer>();
-            if (sr != null)
-            {
-                sr.sortingOrder = 5;
-            }
+            bodyRenderer = modelObj.AddComponent<MeshRenderer>();
+            bodyRenderer.sharedMaterial = antMat;
+            bodyRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+            bodyRenderer.receiveShadows = true;
 
-            modelRoot = visualRootObj.transform;
+            // 2. Head Pivot
+            GameObject headPivotObj = new GameObject("HeadPivot");
+            headPivotObj.transform.SetParent(transform, false);
+            headPivotObj.transform.localPosition = new Vector3(0f, 0.25f, 0.20f);
+            headPivot = headPivotObj.transform;
+
+            // Expressive Googly Eyes
+            float eyeScale = isHead ? 0.22f : 0.18f;
+            Vector3 leftEyePos = new Vector3(-0.12f, -0.02f, 0.12f);
+            Vector3 rightEyePos = new Vector3(0.12f, -0.02f, 0.12f);
+
+            leftPupil = CreateEye(headPivot, leftEyePos, "LeftEye", eyeScale);
+            rightPupil = CreateEye(headPivot, rightEyePos, "RightEye", eyeScale);
         }
         else
         {
-            // Fallback: Existing 3D Worker Ant Mesh / Procedural Fallback Composite Ant
-            Material antMat = AntColorPalette.GetMaterial(antColor);
-            Mesh workerMesh = AntColorPalette.GetWorkerAntMesh();
+            // Procedural Fallback Composite Ant
+            GameObject abdomen = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            abdomen.name = "Abdomen";
+            abdomen.transform.SetParent(transform, false);
+            abdomen.transform.localPosition = new Vector3(0f, 0.24f, -0.14f);
+            abdomen.transform.localScale = new Vector3(0.58f, 0.50f, 0.60f);
+            SafeDestroy(abdomen.GetComponent<Collider>());
+            var abRen = abdomen.GetComponent<MeshRenderer>();
+            if (abRen != null) abRen.sharedMaterial = antMat;
 
-            if (workerMesh != null)
-            {
-                // 1. Compact 3D Worker Ant Mesh (Length scaled to maintain readability and separation)
-                GameObject modelObj = new GameObject("AntModel_3D");
-                modelObj.transform.SetParent(transform, false);
-                modelObj.transform.localPosition = new Vector3(0f, 0.05f, 0f);
-                modelObj.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
-                modelObj.transform.localScale = new Vector3(0.95f, 0.95f, 0.82f);
-                modelRoot = modelObj.transform;
+            GameObject thorax = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            thorax.name = "Thorax";
+            thorax.transform.SetParent(transform, false);
+            thorax.transform.localPosition = new Vector3(0f, 0.20f, 0.04f);
+            thorax.transform.localScale = new Vector3(0.46f, 0.40f, 0.42f);
+            SafeDestroy(thorax.GetComponent<Collider>());
+            var thRen = thorax.GetComponent<MeshRenderer>();
+            if (thRen != null) thRen.sharedMaterial = antMat;
 
-                var meshFilter = modelObj.AddComponent<MeshFilter>();
-                meshFilter.sharedMesh = workerMesh;
+            CreateLeg(new Vector3(-0.30f, 0.10f, 0.10f));
+            CreateLeg(new Vector3(0.30f, 0.10f, 0.10f));
+            CreateLeg(new Vector3(-0.30f, 0.10f, -0.12f));
+            CreateLeg(new Vector3(0.30f, 0.10f, -0.12f));
 
-                bodyRenderer = modelObj.AddComponent<MeshRenderer>();
-                bodyRenderer.sharedMaterial = antMat;
-                bodyRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
-                bodyRenderer.receiveShadows = true;
+            GameObject headPivotObj = new GameObject("HeadPivot");
+            headPivotObj.transform.SetParent(transform, false);
+            headPivotObj.transform.localPosition = new Vector3(0f, 0.22f, 0.18f);
+            headPivot = headPivotObj.transform;
 
-                // 2. Head Pivot
-                GameObject headPivotObj = new GameObject("HeadPivot");
-                headPivotObj.transform.SetParent(transform, false);
-                headPivotObj.transform.localPosition = new Vector3(0f, 0.25f, 0.20f);
-                headPivot = headPivotObj.transform;
+            GameObject headSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            headSphere.name = "HeadSphere";
+            headSphere.transform.SetParent(headPivot, false);
+            headSphere.transform.localPosition = new Vector3(0f, 0.02f, 0.05f);
+            headSphere.transform.localScale = isHead ? new Vector3(0.48f, 0.42f, 0.44f) : new Vector3(0.40f, 0.36f, 0.38f);
+            SafeDestroy(headSphere.GetComponent<Collider>());
+            var hdRen = headSphere.GetComponent<MeshRenderer>();
+            if (hdRen != null) hdRen.sharedMaterial = antMat;
 
-                // Expressive Googly Eyes
-                float eyeScale = isHead ? 0.22f : 0.18f;
-                Vector3 leftEyePos = new Vector3(-0.12f, -0.02f, 0.12f);
-                Vector3 rightEyePos = new Vector3(0.12f, -0.02f, 0.12f);
+            CreateAntenna(headPivot, new Vector3(-0.07f, 0.18f, 0.10f), new Vector3(-15f, -18f, 0f));
+            CreateAntenna(headPivot, new Vector3(0.07f, 0.18f, 0.10f), new Vector3(-15f, 18f, 0f));
 
-                leftPupil = CreateEye(headPivot, leftEyePos, "LeftEye", eyeScale);
-                rightPupil = CreateEye(headPivot, rightEyePos, "RightEye", eyeScale);
-            }
-            else
-            {
-                // Procedural Fallback Composite Ant
-                GameObject abdomen = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                abdomen.name = "Abdomen";
-                abdomen.transform.SetParent(transform, false);
-                abdomen.transform.localPosition = new Vector3(0f, 0.24f, -0.14f);
-                abdomen.transform.localScale = new Vector3(0.58f, 0.50f, 0.60f);
-                SafeDestroy(abdomen.GetComponent<Collider>());
-                var abRen = abdomen.GetComponent<MeshRenderer>();
-                if (abRen != null) abRen.sharedMaterial = antMat;
-
-                GameObject thorax = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                thorax.name = "Thorax";
-                thorax.transform.SetParent(transform, false);
-                thorax.transform.localPosition = new Vector3(0f, 0.20f, 0.04f);
-                thorax.transform.localScale = new Vector3(0.46f, 0.40f, 0.42f);
-                SafeDestroy(thorax.GetComponent<Collider>());
-                var thRen = thorax.GetComponent<MeshRenderer>();
-                if (thRen != null) thRen.sharedMaterial = antMat;
-
-                CreateLeg(new Vector3(-0.30f, 0.10f, 0.10f));
-                CreateLeg(new Vector3(0.30f, 0.10f, 0.10f));
-                CreateLeg(new Vector3(-0.30f, 0.10f, -0.12f));
-                CreateLeg(new Vector3(0.30f, 0.10f, -0.12f));
-
-                GameObject headPivotObj = new GameObject("HeadPivot");
-                headPivotObj.transform.SetParent(transform, false);
-                headPivotObj.transform.localPosition = new Vector3(0f, 0.22f, 0.18f);
-                headPivot = headPivotObj.transform;
-
-                GameObject headSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                headSphere.name = "HeadSphere";
-                headSphere.transform.SetParent(headPivot, false);
-                headSphere.transform.localPosition = new Vector3(0f, 0.02f, 0.05f);
-                headSphere.transform.localScale = isHead ? new Vector3(0.48f, 0.42f, 0.44f) : new Vector3(0.40f, 0.36f, 0.38f);
-                SafeDestroy(headSphere.GetComponent<Collider>());
-                var hdRen = headSphere.GetComponent<MeshRenderer>();
-                if (hdRen != null) hdRen.sharedMaterial = antMat;
-
-                CreateAntenna(headPivot, new Vector3(-0.07f, 0.18f, 0.10f), new Vector3(-15f, -18f, 0f));
-                CreateAntenna(headPivot, new Vector3(0.07f, 0.18f, 0.10f), new Vector3(-15f, 18f, 0f));
-
-                float eyeScale = isHead ? 0.22f : 0.18f;
-                leftPupil = CreateEye(headPivot, new Vector3(-0.11f, 0.08f, 0.15f), "LeftEye", eyeScale);
-                rightPupil = CreateEye(headPivot, new Vector3(0.11f, 0.08f, 0.15f), "RightEye", eyeScale);
-            }
+            float eyeScale = isHead ? 0.22f : 0.18f;
+            leftPupil = CreateEye(headPivot, new Vector3(-0.11f, 0.08f, 0.15f), "LeftEye", eyeScale);
+            rightPupil = CreateEye(headPivot, new Vector3(0.11f, 0.08f, 0.15f), "RightEye", eyeScale);
         }
 
         // 3. Interaction Raycast Collider

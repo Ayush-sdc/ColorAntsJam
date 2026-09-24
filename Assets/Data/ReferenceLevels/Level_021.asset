@@ -15,7 +15,7 @@ MonoBehaviour:
   levelNumber: 21
   levelName: Reference Level 21
   difficulty: 0
-  duration: 0.0
+  duration: 0
   gridSize: {x: 12, y: 12}
   gridWidth: 12
   gridHeight: 12

@@ -15,7 +15,7 @@ MonoBehaviour:
   levelNumber: 28
   levelName: Reference Level 28
   difficulty: 0
-  duration: 0.0
+  duration: 0
   gridSize: {x: 25, y: 40}
   gridWidth: 25
   gridHeight: 40

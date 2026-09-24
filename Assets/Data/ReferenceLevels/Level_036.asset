@@ -15,7 +15,7 @@ MonoBehaviour:
   levelNumber: 36
   levelName: Reference Level 36
   difficulty: 0
-  duration: 0.0
+  duration: 0
   gridSize: {x: 30, y: 30}
   gridWidth: 30
   gridHeight: 30

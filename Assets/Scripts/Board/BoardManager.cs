@@ -12,7 +12,6 @@ public class BoardManager : MonoBehaviour
     [SerializeField] private Transform boardParent;
     [SerializeField] private GameObject holePrefab;
     [SerializeField] private GameObject antQueuePrefab;
-    [SerializeField] private AntVisualLibrary visualLibrary;
 
     [Header("Debug Options")]
     [Tooltip("Debug only: If true, BoardManager will preserve manually placed scene Hole and Queue GameObjects instead of spawning from Level assets. Keep false for normal gameplay.")]
@@ -52,7 +51,7 @@ public class BoardManager : MonoBehaviour
     private bool isSettingUpBoard = false;
     public bool IsSettingUpBoard => isSettingUpBoard;
 
-    public const int MAX_CONCURRENT_MOVING_QUEUES = 2;
+    public const int MAX_CONCURRENT_MOVING_QUEUES = 4;
     private readonly HashSet<AntQueueController> movingQueues = new HashSet<AntQueueController>();
 
     public int MovingQueuesCount => movingQueues.Count;
@@ -71,10 +70,6 @@ public class BoardManager : MonoBehaviour
         }
         instance = this;
         movingQueues.Clear();
-        if (visualLibrary != null)
-        {
-            AntColorPalette.VisualLibrary = visualLibrary;
-        }
     }
 
     private void OnEnable()
@@ -652,18 +647,155 @@ public class BoardManager : MonoBehaviour
         return group;
     }
 
+    public bool IsInBounds(Vector2Int coord)
+    {
+        return coord.x >= 0 && coord.x < width && coord.y >= 0 && coord.y < height;
+    }
+
     /// <summary>
-    /// Validates movement for a queue or its entire connected group atomically.
-    /// If all members have valid paths, starts synchronized movement for all members together.
-    /// If any member is blocked, all members remain stationary and play blocked feedback.
+    /// Checks whether the given queue can legally move straight forward into its matching holder.
+    /// Does NOT use BFS, A*, or any pathfinding.
+    /// </summary>
+    public bool ValidateForwardMove(
+        AntQueueController queue, 
+        List<AntQueueController> group,
+        Dictionary<HoleController, int> pendingReservations,
+        out Vector2Int forwardDir, 
+        out HoleController targetHole, 
+        out Vector2Int entranceCell, 
+        out string blockedReason)
+    {
+        forwardDir = Vector2Int.zero;
+        targetHole = null;
+        entranceCell = Vector2Int.zero;
+        blockedReason = "None";
+
+        if (queue == null || queue.CurrentBodyCoordinates == null || queue.CurrentBodyCoordinates.Count == 0)
+        {
+            blockedReason = "NullOrEmptyCoordinates";
+            return false;
+        }
+
+        if (queue.CurrentBodyCoordinates.Count < 2)
+        {
+            Debug.LogError($"[ForwardMove] Single-ant queue {queue.QueueId} has no neck to derive direction and no explicit forward-direction data.");
+            blockedReason = "SingleAntNoDirection";
+            return false;
+        }
+
+        Vector2Int head = queue.CurrentBodyCoordinates[0];
+        Vector2Int neck = queue.CurrentBodyCoordinates[1];
+        forwardDir = head - neck;
+
+        // Authoritative Rule: Must be one of the four cardinal directions
+        if (!((forwardDir.x == 0 && Mathf.Abs(forwardDir.y) == 1) || (forwardDir.y == 0 && Mathf.Abs(forwardDir.x) == 1)))
+        {
+            Debug.LogError($"[ForwardMove] Non-cardinal forward direction {forwardDir} for Queue={queue.QueueId} (Head={head}, Neck={neck})");
+            blockedReason = "NonCardinalDirection";
+            return false;
+        }
+
+        // Trace straight ray forward from head
+        Vector2Int curr = head + forwardDir;
+        while (IsInBounds(curr))
+        {
+            // 1. Check disabled cells from level data
+            if (currentLevel != null && currentLevel.GetCombinedDisabledCells().Contains(curr))
+            {
+                blockedReason = "DisabledCell";
+                return false;
+            }
+
+            // 2. Check stationary queues (ignore queues in the same connected moving group)
+            var otherQueue = GetQueueOccupying(curr, queue);
+            if (otherQueue != null && (group == null || !group.Contains(otherQueue)))
+            {
+                blockedReason = "OccupiedByStationaryQueue";
+                return false;
+            }
+
+            // 3. Check moving queues and their path reservations
+            if (movingQueues != null)
+            {
+                foreach (var mq in movingQueues)
+                {
+                    if (mq != null && mq != queue && (group == null || !group.Contains(mq)))
+                    {
+                        if (mq.Occupies(curr))
+                        {
+                            blockedReason = "OccupiedByMovingQueue";
+                            return false;
+                        }
+                        if (mq.GetReservedPathCells() != null)
+                        {
+                            foreach (var rCell in mq.GetReservedPathCells())
+                            {
+                                if (rCell == curr)
+                                {
+                                    blockedReason = "ReservedByMovingQueue";
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. Check if cell has a holder
+            HoleController hole = GetHoleAt(curr);
+            if (hole != null)
+            {
+                // Holder encountered!
+                if (hole.ColorID == queue.ColorID)
+                {
+                    int alreadyReserved = 0;
+                    if (pendingReservations != null && pendingReservations.TryGetValue(hole, out int count))
+                    {
+                        alreadyReserved = count;
+                    }
+
+                    int available = hole.AvailableCapacity - alreadyReserved;
+                    if (available > 0)
+                    {
+                        targetHole = hole;
+                        entranceCell = curr;
+                        blockedReason = "None";
+                        return true;
+                    }
+                    else
+                    {
+                        blockedReason = "MatchingHolderFull";
+                        return false;
+                    }
+                }
+                else
+                {
+                    // Reached holder of wrong color!
+                    blockedReason = "WrongColorHolder";
+                    return false;
+                }
+            }
+
+            curr += forwardDir;
+        }
+
+        // Exited board boundaries without reaching matching holder
+        blockedReason = "OutOfBoundsNoHolder";
+        return false;
+    }
+
+    /// <summary>
+    /// Validates forward movement for a queue or its entire connected group atomically.
+    /// If all members have clear straight paths to matching holders, starts forward movement for all members together.
+    /// If any member is blocked, all members remain stationary, play blocked shake, and lose 1 life.
     /// </summary>
     public bool TryStartMove(AntQueueController queue)
     {
         if (queue == null || queue.IsMoving || movingQueues.Contains(queue)) return false;
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) return false;
 
-        // Concurrency check: Maximum 2 queues can move simultaneously.
-        // Third queue tap is temporarily ignored/soft-blocked WITHOUT deducting a life/heart!
+        // Concurrency check: Maximum 4 queues can move simultaneously.
+        // Fifth queue tap is temporarily ignored/soft-blocked WITHOUT deducting a life/heart!
         if (movingQueues.Count >= MAX_CONCURRENT_MOVING_QUEUES)
         {
             Debug.Log($"[QueueMoveBlocked] Queue={queue.QueueId} Reason=ConcurrentMoveLimit MovingQueues={movingQueues.Count} HeartPenalty=False");
@@ -686,23 +818,53 @@ public class BoardManager : MonoBehaviour
             if (member == null || member.IsMoving || movingQueues.Contains(member)) return false;
         }
 
-        // Validate path for every member in the connected group
-        var groupPaths = new Dictionary<AntQueueController, List<Vector2Int>>();
+        // Validate straight forward movement for every member in the connected group
+        var groupDirections = new Dictionary<AntQueueController, Vector2Int>();
+        var groupTargetHoles = new Dictionary<AntQueueController, HoleController>();
+        var groupEntranceCells = new Dictionary<AntQueueController, Vector2Int>();
+        var pendingReservations = new Dictionary<HoleController, int>();
         bool allValid = true;
+        AntQueueController firstBlockedMember = null;
+        string failureReason = "";
+        Vector2Int failureHead = Vector2Int.zero;
+        Vector2Int failureDir = Vector2Int.zero;
 
         foreach (var member in group)
         {
-            var path = AntPathfinder.FindPath(this, member);
-            if (path == null || path.Count < 2)
+            if (ValidateForwardMove(member, group, pendingReservations, out var dir, out var hole, out var entrance, out var blockedReason))
+            {
+                groupDirections[member] = dir;
+                groupTargetHoles[member] = hole;
+                groupEntranceCells[member] = entrance;
+
+                if (!pendingReservations.ContainsKey(hole))
+                {
+                    pendingReservations[hole] = 0;
+                }
+                pendingReservations[hole]++;
+            }
+            else
             {
                 allValid = false;
+                firstBlockedMember = member;
+                failureReason = blockedReason;
+                if (member.CurrentBodyCoordinates != null && member.CurrentBodyCoordinates.Count > 0)
+                {
+                    failureHead = member.CurrentBodyCoordinates[0];
+                }
+                failureDir = dir;
                 break;
             }
-            groupPaths[member] = path;
         }
 
         if (!allValid)
         {
+            // Blocked debug log as required
+            if (firstBlockedMember != null)
+            {
+                Debug.Log($"[ForwardMoveBlocked] Queue={firstBlockedMember.QueueId} Head={failureHead} Direction={failureDir} Next={failureHead + failureDir} Reason={failureReason} PathfindingFallback=False");
+            }
+
             // Atomic rejection: all group members stay stationary and play blocked feedback
             foreach (var member in group)
             {
@@ -721,26 +883,24 @@ public class BoardManager : MonoBehaviour
         }
 
         // Reserve destination slots to prevent oversubscription
-        var groupTargetHoles = new Dictionary<AntQueueController, HoleController>();
         bool allReserved = true;
+        List<HoleController> reservedHoles = new List<HoleController>();
 
-        foreach (var kvp in groupPaths)
+        foreach (var kvp in groupTargetHoles)
         {
-            var path = kvp.Value;
-            Vector2Int goalCoord = path[path.Count - 1];
-            HoleController targetHole = GetHoleAt(goalCoord);
+            HoleController targetHole = kvp.Value;
             if (targetHole == null || !targetHole.TryReserveSlot())
             {
                 allReserved = false;
                 break;
             }
-            groupTargetHoles[kvp.Key] = targetHole;
+            reservedHoles.Add(targetHole);
         }
 
         if (!allReserved)
         {
             // Rollback any reservations made in this attempt
-            foreach (var hole in groupTargetHoles.Values)
+            foreach (var hole in reservedHoles)
             {
                 hole.ReleaseReservation();
             }
@@ -749,16 +909,22 @@ public class BoardManager : MonoBehaviour
             return false;
         }
 
-        // All valid and reserved: atomically launch synchronized movement
-        foreach (var kvp in groupPaths)
+        // All valid and reserved: atomically launch synchronized forward movement
+        foreach (var member in group)
         {
-            var member = kvp.Key;
             if (member != null)
             {
                 movingQueues.Add(member);
-                member.DestinationHole = groupTargetHoles[member];
-                Debug.Log($"[QueueMoveStarted] Queue={member.QueueId} MovingQueues={movingQueues.Count} Destination={groupTargetHoles[member].Color}");
-                member.StartMoveAlongPath(kvp.Value);
+                var dir = groupDirections[member];
+                var hole = groupTargetHoles[member];
+                var entrance = groupEntranceCells[member];
+                member.DestinationHole = hole;
+
+                Vector2Int head = member.CurrentBodyCoordinates[0];
+                Vector2Int neck = member.CurrentBodyCoordinates.Count > 1 ? member.CurrentBodyCoordinates[1] : head - dir;
+                Debug.Log($"[ForwardMove] Queue={member.QueueId} Head={head} Neck={neck} Direction={dir} Next={head + dir} PathfindingUsed=False");
+
+                member.StartForwardMovement(dir, hole, entrance);
             }
         }
 
@@ -766,21 +932,31 @@ public class BoardManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Checks whether an ant queue (or all members of its connected group) has a valid unblocked path.
+    /// Checks whether an ant queue (or all members of its connected group) has a valid unblocked straight forward path to its holder.
+    /// Does NOT use BFS, A*, or any pathfinding.
     /// </summary>
     public bool IsPathClearForQueue(AntQueueController queue)
     {
         if (queue == null) return false;
 
         var group = GetConnectedGroup(queue);
+        var pendingReservations = new Dictionary<HoleController, int>();
         foreach (var member in group)
         {
             if (member == null) return false;
-            var path = AntPathfinder.FindPath(this, member);
-            if (path == null || path.Count < 2)
+            if (!ValidateForwardMove(member, group, pendingReservations, out _, out var targetHole, out _, out _))
             {
                 return false;
             }
+            if (targetHole == null)
+            {
+                return false;
+            }
+            if (!pendingReservations.ContainsKey(targetHole))
+            {
+                pendingReservations[targetHole] = 0;
+            }
+            pendingReservations[targetHole]++;
         }
 
         return true;
