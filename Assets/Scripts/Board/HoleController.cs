@@ -54,7 +54,29 @@ public class HoleController : MonoBehaviour
     public int InitialCapacity => initialCapacity;
     public int InitialQueueCount => initialQueueCount;
     public bool SingleQueueVisualOverrideApplied => singleQueueVisualOverrideApplied;
-    public bool IsFull => remainingCount <= 0;
+
+    [SerializeField] private int inboundReservations = 0;
+    public int InboundReservations => inboundReservations;
+    public int AvailableCapacity => Mathf.Max(0, remainingCount - inboundReservations);
+    public bool HasAvailableCapacity => !isCompleted && AvailableCapacity > 0;
+    public bool IsFull => isCompleted || AvailableCapacity <= 0;
+
+    public bool TryReserveSlot()
+    {
+        if (!HasAvailableCapacity) return false;
+        inboundReservations++;
+        Debug.Log($"[HolderReservation] Color={holeColor} Remaining={remainingCount} Reservations={inboundReservations} Available={AvailableCapacity}");
+        return true;
+    }
+
+    public void ReleaseReservation()
+    {
+        if (inboundReservations > 0)
+        {
+            inboundReservations--;
+            Debug.Log($"[HolderReservationReleased] Color={holeColor} Remaining={remainingCount} Reservations={inboundReservations} Available={AvailableCapacity}");
+        }
+    }
     public int ParallelRows => parallelRows;
     public int WidthCells => widthCells;
     public int HeightCells => heightCells;
@@ -143,6 +165,7 @@ public class HoleController : MonoBehaviour
         this.initialCapacity = Mathf.Max(0, capacity);
         this.initialQueueCount = this.initialCapacity;
         this.remainingCount = initialCapacity;
+        this.inboundReservations = 0;
         this.isRightSide = isRightSideSlot;
         this.parallelRows = Mathf.Max(1, rowCount);
         this.isQueueBasedCount = queueBased;
@@ -305,22 +328,8 @@ public class HoleController : MonoBehaviour
         float pitCornerRadius = Mathf.Max(0.02f * cs, innerCornerRadius - pitInset);
 
         Material rimMat = AntColorPalette.GetHoleMaterial(holeColor);
-        UnityEngine.Color rimCol = AntColorPalette.GetColor(holeColor);
-
-        Material bevelMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-        bevelMat.name = $"HoleInnerBevelMat_{holeColor}";
-        UnityEngine.Color bevelCol = UnityEngine.Color.Lerp(rimCol, UnityEngine.Color.black, 0.38f);
-        bevelMat.color = bevelCol;
-        if (bevelMat.HasProperty("_BaseColor")) bevelMat.SetColor("_BaseColor", bevelCol);
-        if (bevelMat.HasProperty("_Smoothness")) bevelMat.SetFloat("_Smoothness", 0.70f);
-        if (bevelMat.HasProperty("_Metallic")) bevelMat.SetFloat("_Metallic", 0.05f);
-
-        Material pitMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-        pitMat.name = "HolePitFloorMat";
-        UnityEngine.Color pitCol = new UnityEngine.Color(0.08f, 0.08f, 0.09f);
-        pitMat.color = pitCol;
-        if (pitMat.HasProperty("_BaseColor")) pitMat.SetColor("_BaseColor", pitCol);
-        if (pitMat.HasProperty("_Smoothness")) pitMat.SetFloat("_Smoothness", 0.12f);
+        Material bevelMat = AntColorPalette.GetHoleBevelMaterial(holeColor);
+        Material pitMat = AntColorPalette.GetHolePitMaterial();
 
         // 1. Layer 1: Outer Rim (glossy colored rounded-rectangle ring, Y = 0.032)
         GameObject rimObj = new GameObject("SlotRim");
@@ -775,6 +784,11 @@ public class HoleController : MonoBehaviour
     {
         if (isCompleted) return;
 
+        if (inboundReservations > 0)
+        {
+            inboundReservations--;
+        }
+
         if (isQueueBasedCount)
         {
             remainingCount--;
@@ -782,7 +796,7 @@ public class HoleController : MonoBehaviour
 
         UpdateBadgeDisplay();
 
-        if (remainingCount <= 0)
+        if (remainingCount <= 0 && inboundReservations <= 0)
         {
             remainingCount = 0;
             isCompleted = true;
@@ -795,6 +809,10 @@ public class HoleController : MonoBehaviour
             {
                 PlayCompletedEffectAndDisappear();
             }
+        }
+        else if (remainingCount <= 0)
+        {
+            remainingCount = 0;
         }
 
         if (SoundManager.Instance != null && Application.isPlaying)

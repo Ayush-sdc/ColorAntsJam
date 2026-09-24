@@ -1,12 +1,18 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class PlayerInputHandler : MonoBehaviour
 {
     [SerializeField] private Camera mainCamera;
     [SerializeField] private LayerMask interactableLayers = ~0;
+    [SerializeField] private float dragThresholdPixels = 12f;
 
     private bool canInteract = true;
     private int movingQueuesCount = 0;
+
+    private bool isPointerDown = false;
+    private bool isCameraDragging = false;
+    private Vector2 pointerDownScreenPos;
 
     public static Vector3 MouseWorldPosition { get; private set; } = Vector3.zero;
 
@@ -45,25 +51,15 @@ public class PlayerInputHandler : MonoBehaviour
     private void HandleMoveStarted(AntQueueController queue)
     {
         movingQueuesCount++;
-        canInteract = false;
     }
 
     private void HandleMoveCompleted(AntQueueController queue)
     {
         movingQueuesCount = Mathf.Max(0, movingQueuesCount - 1);
-        if (movingQueuesCount == 0)
-        {
-            canInteract = true;
-        }
     }
 
     private void Update()
     {
-        if (Input.GetMouseButtonDown(0))
-        {
-            Debug.Log("[MOUSE INPUT REGISTERED]");
-        }
-
         if (mainCamera == null)
         {
             EnsureCamera();
@@ -106,35 +102,114 @@ public class PlayerInputHandler : MonoBehaviour
             }
         }
 
-        if (!canInteract) return;
-
-        // Support both mouse click and screen touch
-        bool inputTriggered = false;
-        Vector2 screenPosition = Vector2.zero;
-
-        if (Input.GetMouseButtonDown(0))
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing)
         {
-            inputTriggered = true;
-            screenPosition = Input.mousePosition;
+            if (isCameraDragging)
+            {
+                BoardCameraController.Instance?.OnDragEnd();
+            }
+            isPointerDown = false;
+            isCameraDragging = false;
+            return;
         }
-        else if (Input.touchCount > 0)
+
+        HandleUnifiedPointerInput();
+    }
+
+    private void HandleUnifiedPointerInput()
+    {
+        bool pointerDown = false;
+        bool pointerHeld = false;
+        bool pointerUp = false;
+        Vector2 pointerPos = Vector2.zero;
+        int pointerId = -1;
+
+        if (Input.touchCount > 0)
         {
             Touch touch = Input.GetTouch(0);
-            if (touch.phase == TouchPhase.Began)
+            pointerPos = touch.position;
+            pointerId = touch.fingerId;
+
+            if (touch.phase == TouchPhase.Began) pointerDown = true;
+            else if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary) pointerHeld = true;
+            else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled) pointerUp = true;
+        }
+        else
+        {
+            pointerPos = Input.mousePosition;
+            if (Input.GetMouseButtonDown(0)) pointerDown = true;
+            else if (Input.GetMouseButton(0)) pointerHeld = true;
+            if (Input.GetMouseButtonUp(0)) pointerUp = true;
+        }
+
+        if (pointerDown)
+        {
+            bool isOverUI = false;
+            if (EventSystem.current != null)
             {
-                inputTriggered = true;
-                screenPosition = touch.position;
+                if (Input.touchCount > 0)
+                    isOverUI = EventSystem.current.IsPointerOverGameObject(pointerId);
+                else
+                    isOverUI = EventSystem.current.IsPointerOverGameObject();
+            }
+
+            if (!isOverUI)
+            {
+                isPointerDown = true;
+                isCameraDragging = false;
+                pointerDownScreenPos = pointerPos;
             }
         }
 
-        if (inputTriggered)
+        if (isPointerDown && pointerHeld)
         {
-            ProcessClickOrTap(screenPosition);
+            if (!isCameraDragging)
+            {
+                float moveDist = Vector2.Distance(pointerPos, pointerDownScreenPos);
+                if (moveDist >= dragThresholdPixels)
+                {
+                    isCameraDragging = true;
+                    if (BoardCameraController.Instance != null)
+                    {
+                        BoardCameraController.Instance.OnDragStart(pointerDownScreenPos);
+                        BoardCameraController.Instance.OnDrag(pointerPos);
+                    }
+                }
+            }
+            else
+            {
+                if (BoardCameraController.Instance != null)
+                {
+                    BoardCameraController.Instance.OnDrag(pointerPos);
+                }
+            }
+        }
+
+        if (pointerUp)
+        {
+            if (isPointerDown)
+            {
+                if (isCameraDragging)
+                {
+                    if (BoardCameraController.Instance != null)
+                    {
+                        BoardCameraController.Instance.OnDragEnd();
+                    }
+                }
+                else
+                {
+                    // TAP GESTURE: process ant selection / move
+                    ProcessClickOrTap(pointerDownScreenPos);
+                }
+            }
+            isPointerDown = false;
+            isCameraDragging = false;
         }
     }
 
-    private void ProcessClickOrTap(Vector2 screenPos)
+    public void ProcessClickOrTap(Vector2 screenPos)
     {
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) return;
         EnsureCamera();
         if (mainCamera == null) return;
 

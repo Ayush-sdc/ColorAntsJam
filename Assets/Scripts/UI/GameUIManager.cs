@@ -194,6 +194,8 @@ public class GameUIManager : MonoBehaviour
                 if (heartImages[i] != null)
                 {
                     bool isAlive = i < lives;
+                    heartImages[i].gameObject.SetActive(isAlive);
+                    heartImages[i].enabled = isAlive;
                     heartImages[i].color = isAlive ? Color.white : new Color(0.25f, 0.25f, 0.30f, 0.35f);
                 }
             }

@@ -12,6 +12,7 @@ public class BoardManager : MonoBehaviour
     [SerializeField] private Transform boardParent;
     [SerializeField] private GameObject holePrefab;
     [SerializeField] private GameObject antQueuePrefab;
+    [SerializeField] private AntVisualLibrary visualLibrary;
 
     [Header("Debug Options")]
     [Tooltip("Debug only: If true, BoardManager will preserve manually placed scene Hole and Queue GameObjects instead of spawning from Level assets. Keep false for normal gameplay.")]
@@ -51,6 +52,14 @@ public class BoardManager : MonoBehaviour
     private bool isSettingUpBoard = false;
     public bool IsSettingUpBoard => isSettingUpBoard;
 
+    public const int MAX_CONCURRENT_MOVING_QUEUES = 2;
+    private readonly HashSet<AntQueueController> movingQueues = new HashSet<AntQueueController>();
+
+    public int MovingQueuesCount => movingQueues.Count;
+    public bool CanStartQueueMove => movingQueues.Count < MAX_CONCURRENT_MOVING_QUEUES;
+    public bool IsQueueMoving(AntQueueController queue) => queue != null && movingQueues.Contains(queue);
+    public IEnumerable<AntQueueController> MovingQueues => movingQueues;
+
     public static event Action OnBoardStateChanged;
 
     private void Awake()
@@ -61,6 +70,11 @@ public class BoardManager : MonoBehaviour
             return;
         }
         instance = this;
+        movingQueues.Clear();
+        if (visualLibrary != null)
+        {
+            AntColorPalette.VisualLibrary = visualLibrary;
+        }
     }
 
     private void OnEnable()
@@ -371,106 +385,37 @@ public class BoardManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Dynamically frames the camera to fit any board dimensions (GridWidth, GridHeight, CellSize),
-    /// accounting for flank holders, top gameplay UI safe area headroom, and screen aspect ratio.
+    /// Configures the fixed-view camera and calculates pan limits for the level.
+    /// Dynamic level-size zoom is removed in favor of a constant baseline view.
     /// </summary>
     private void AdjustCameraFraming(Level level)
     {
         if (BoardCameraController.Instance != null)
         {
-            BoardCameraController.Instance.FrameLevel(level);
+            BoardCameraController.Instance.SetupCameraForLevel(level);
             return;
         }
 
+        var ctrl = FindFirstObjectByType<BoardCameraController>();
+        if (ctrl == null && Camera.main != null)
+        {
+            ctrl = Camera.main.gameObject.AddComponent<BoardCameraController>();
+        }
+        if (ctrl != null)
+        {
+            ctrl.SetupCameraForLevel(level);
+            return;
+        }
+
+        // Fallback: fixed camera baseline (no dynamic zoom)
         Camera cam = Camera.main;
-        if (cam == null) return;
-
-        int w = level.GridWidth > 0 ? level.GridWidth : 9;
-        int h = level.GridHeight > 0 ? level.GridHeight : 6;
-        float cs = level.CellSize > 0f ? level.CellSize : 1.0f;
-
-        // Visual bounds in world coordinates centered around (0,0)
-        float minX = -(w - 1) * 0.5f * cs;
-        float maxX = (w - 1) * 0.5f * cs;
-        float minZ = -(h - 1) * 0.5f * cs;
-        float maxZ = (h - 1) * 0.5f * cs;
-
-        // Expand bounds to tightly fit all holes and their actual physical geometry
-        if (level.Holes != null && level.Holes.Count > 0)
+        if (cam != null)
         {
-            foreach (var hole in level.Holes)
-            {
-                int rowCount = hole.ParallelRows;
-                bool isRight = (rowCount >= 2) ? (hole.GridCoordinate.x >= w / 2) : (hole.GridCoordinate.x >= 4);
-                Vector3 hPos;
-                float halfW = (rowCount >= 2) ? 1.05f : 1.05f;
-                float halfH = (rowCount >= 2) ? 1.05f : 0.48f;
-
-                if (rowCount >= 2)
-                {
-                    hPos = GridToWorldPosition(hole.GridCoordinate, 0f) + new Vector3(0.5f * cs, 0f, 0.5f * cs);
-                }
-                else
-                {
-                    float xOff = isRight ? 0.5f : -0.5f;
-                    hPos = GridToWorldPosition(hole.GridCoordinate, 0f) + new Vector3(xOff * cs, 0f, 0f);
-                }
-
-                minX = Mathf.Min(minX, hPos.x - halfW);
-                maxX = Mathf.Max(maxX, hPos.x + halfW);
-                minZ = Mathf.Min(minZ, hPos.z - halfH);
-                maxZ = Mathf.Max(maxZ, hPos.z + halfH);
-            }
+            cam.orthographic = false;
+            cam.fieldOfView = 78f;
+            cam.transform.position = new Vector3(0f, 13.04f, -0.17f);
+            cam.transform.rotation = Quaternion.Euler(88f, 0f, 0f);
         }
-        else if (level.AntQueues != null)
-        {
-            foreach (var record in level.AntQueues)
-            {
-                if (record.HolderType == 0 && record.Cells != null && record.Cells.Count > 0)
-                {
-                    foreach (var cell in record.Cells)
-                    {
-                        Vector3 cPos = GridToWorldPosition(cell, 0f);
-                        minX = Mathf.Min(minX, cPos.x - 0.55f * cs);
-                        maxX = Mathf.Max(maxX, cPos.x + 0.55f * cs);
-                        minZ = Mathf.Min(minZ, cPos.z - 0.55f * cs);
-                        maxZ = Mathf.Max(maxZ, cPos.z + 0.55f * cs);
-                    }
-                }
-            }
-        }
-
-        // Tightly framed dimensions with small margins
-        float padX = 0.55f * cs;
-        float padBottom = 0.65f * cs;
-        float padTop = 1.75f * cs; // UI safe area for header/timer
-
-        float totalWidth = (maxX - minX) + (padX * 2f);
-        float totalHeight = (maxZ - minZ) + padTop + padBottom;
-
-        float aspect = cam.aspect > 0.01f ? cam.aspect : (Screen.width / (float)Mathf.Max(1, Screen.height));
-        float vFovRad = cam.fieldOfView * Mathf.Deg2Rad;
-        float tanHalfVFov = Mathf.Tan(vFovRad * 0.5f);
-        float tanHalfHFov = tanHalfVFov * aspect;
-
-        float requiredHeightForWidth = (totalWidth * 0.5f) / tanHalfHFov;
-        float requiredHeightForHeight = (totalHeight * 0.5f) / tanHalfVFov;
-
-        float targetY = Mathf.Max(requiredHeightForWidth, requiredHeightForHeight);
-        if (cam.orthographic)
-        {
-            float orthoForWidth = totalWidth / (2.0f * aspect);
-            float orthoForHeight = totalHeight * 0.5f;
-            cam.orthographicSize = Mathf.Max(orthoForWidth, orthoForHeight);
-            targetY = 15f;
-        }
-
-        // Center on the board with slight headroom offset for top UI
-        float centerX = (minX + maxX) * 0.5f;
-        float centerZ = ((minZ + maxZ) * 0.5f) - (padTop - padBottom) * 0.35f;
-
-        cam.transform.position = new Vector3(centerX, targetY, centerZ);
-        cam.transform.rotation = Quaternion.Euler(88f, 0f, 0f);
     }
 
     private void SpawnGridVisuals(Level level)
@@ -714,14 +659,31 @@ public class BoardManager : MonoBehaviour
     /// </summary>
     public bool TryStartMove(AntQueueController queue)
     {
-        if (queue == null || queue.IsMoving) return false;
+        if (queue == null || queue.IsMoving || movingQueues.Contains(queue)) return false;
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) return false;
+
+        // Concurrency check: Maximum 2 queues can move simultaneously.
+        // Third queue tap is temporarily ignored/soft-blocked WITHOUT deducting a life/heart!
+        if (movingQueues.Count >= MAX_CONCURRENT_MOVING_QUEUES)
+        {
+            Debug.Log($"[QueueMoveBlocked] Queue={queue.QueueId} Reason=ConcurrentMoveLimit MovingQueues={movingQueues.Count} HeartPenalty=False");
+            queue.PlayBlockedShake();
+            return false;
+        }
 
         var group = GetConnectedGroup(queue);
+
+        if (movingQueues.Count + group.Count > MAX_CONCURRENT_MOVING_QUEUES)
+        {
+            Debug.Log($"[QueueMoveBlocked] Queue={queue.QueueId} Reason=ConcurrentMoveLimit GroupSize={group.Count} MovingQueues={movingQueues.Count} HeartPenalty=False");
+            queue.PlayBlockedShake();
+            return false;
+        }
 
         // Check if any member in the group is already moving
         foreach (var member in group)
         {
-            if (member == null || member.IsMoving) return false;
+            if (member == null || member.IsMoving || movingQueues.Contains(member)) return false;
         }
 
         // Validate path for every member in the connected group
@@ -749,15 +711,54 @@ public class BoardManager : MonoBehaviour
                     member.TriggerBlockedFeedback();
                 }
             }
+
+            // Deduct exactly ONE life for this player move attempt (invalid move)
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.LoseLife(InvalidMoveReason.NoValidPath);
+            }
             return false;
         }
 
-        // All valid: atomically launch synchronized movement for all group members simultaneously
+        // Reserve destination slots to prevent oversubscription
+        var groupTargetHoles = new Dictionary<AntQueueController, HoleController>();
+        bool allReserved = true;
+
         foreach (var kvp in groupPaths)
         {
-            if (kvp.Key != null)
+            var path = kvp.Value;
+            Vector2Int goalCoord = path[path.Count - 1];
+            HoleController targetHole = GetHoleAt(goalCoord);
+            if (targetHole == null || !targetHole.TryReserveSlot())
             {
-                kvp.Key.StartMoveAlongPath(kvp.Value);
+                allReserved = false;
+                break;
+            }
+            groupTargetHoles[kvp.Key] = targetHole;
+        }
+
+        if (!allReserved)
+        {
+            // Rollback any reservations made in this attempt
+            foreach (var hole in groupTargetHoles.Values)
+            {
+                hole.ReleaseReservation();
+            }
+            Debug.Log($"[QueueMoveBlocked] Queue={queue.QueueId} Reason=HolderOversubscribed MovingQueues={movingQueues.Count} HeartPenalty=False");
+            queue.PlayBlockedShake();
+            return false;
+        }
+
+        // All valid and reserved: atomically launch synchronized movement
+        foreach (var kvp in groupPaths)
+        {
+            var member = kvp.Key;
+            if (member != null)
+            {
+                movingQueues.Add(member);
+                member.DestinationHole = groupTargetHoles[member];
+                Debug.Log($"[QueueMoveStarted] Queue={member.QueueId} MovingQueues={movingQueues.Count} Destination={groupTargetHoles[member].Color}");
+                member.StartMoveAlongPath(kvp.Value);
             }
         }
 
@@ -846,6 +847,9 @@ public class BoardManager : MonoBehaviour
     {
         if (queue != null)
         {
+            movingQueues.Remove(queue);
+            Debug.Log($"[QueueMoveCompleted] Queue={queue.QueueId} MovingQueues={movingQueues.Count}");
+
             bool wasActive = activeQueues.Contains(queue);
             if (wasActive)
             {
@@ -885,6 +889,15 @@ public class BoardManager : MonoBehaviour
         }
     }
 
+    public void OnQueueMoveStoppedEarly(AntQueueController queue)
+    {
+        if (queue != null)
+        {
+            movingQueues.Remove(queue);
+            Debug.Log($"[QueueMoveStoppedEarly] Queue={queue.QueueId} MovingQueues={movingQueues.Count}");
+        }
+    }
+
     public void UnregisterQueue(AntQueueController queue)
     {
         OnQueueCompleted(queue);
@@ -892,6 +905,8 @@ public class BoardManager : MonoBehaviour
 
     public void ClearBoard()
     {
+        movingQueues.Clear();
+
         Transform parentTransform = boardParent != null ? boardParent : transform;
 
         Transform tiles = parentTransform.Find("TilesHolder");

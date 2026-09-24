@@ -85,6 +85,13 @@ public static class AntPathfinder
                         blockedCells.Add(c);
                     }
                 }
+                if (otherQueue.IsMoving)
+                {
+                    foreach (var c in otherQueue.GetReservedPathCells())
+                    {
+                        blockedCells.Add(c);
+                    }
+                }
             }
         }
 
@@ -126,8 +133,12 @@ public static class AntPathfinder
             }
         }
 
-        // Own body segments behind the head (indices 1 to N-1)
-        for (int i = 1; i < queue.CurrentBodyCoordinates.Count; i++)
+        bool hasNeck = queue.CurrentBodyCoordinates.Count >= 2;
+        Vector2Int forbiddenFirstStep = hasNeck ? queue.CurrentBodyCoordinates[1] : new Vector2Int(-99999, -99999);
+
+        // Own body segments behind the neck (indices 2 to N-1).
+        // Index 1 (neck) is forbidden as the initial step from head, but not permanently blocked if vacated later.
+        for (int i = 2; i < queue.CurrentBodyCoordinates.Count; i++)
         {
             blockedCells.Add(queue.CurrentBodyCoordinates[i]);
         }
@@ -143,8 +154,8 @@ public static class AntPathfinder
         Vector2Int targetReached = new Vector2Int(-9999, -9999);
         bool reached = false;
 
-        int gridWidth = board.GridWidth;
-        int gridHeight = board.GridHeight;
+        int gridWidth = board != null ? board.GridWidth : 9;
+        int gridHeight = board != null ? board.GridHeight : 6;
 
         while (frontier.Count > 0)
         {
@@ -158,9 +169,17 @@ public static class AntPathfinder
                 break;
             }
 
+            bool isAtStart = (current == start);
+
             foreach (var dir in Directions)
             {
                 Vector2Int next = current + dir;
+
+                // Rule 1: Queue must always move forward from head and NEVER immediately reverse into its neck/body
+                if (isAtStart && hasNeck && next == forbiddenFirstStep)
+                {
+                    continue;
+                }
 
                 // Check grid boundaries (unless it is a valid goal cell)
                 if (!goalCells.Contains(next))
@@ -201,6 +220,18 @@ public static class AntPathfinder
         }
         path.Add(start);
         path.Reverse();
+
+        // Enforce Rule 1 assertion: First step after head must NEVER be neck
+        if (path.Count >= 2 && hasNeck)
+        {
+            if (path[1] == forbiddenFirstStep)
+            {
+                Debug.LogWarning($"[AntPathfinder] Path rejected for {queue.QueueId}: First step equals neck {forbiddenFirstStep}!");
+                return null;
+            }
+            Vector2Int forwardDir = start - forbiddenFirstStep;
+            Debug.Log($"[MoveAttempt] Queue={queue.QueueId} Head={start} Forward={forwardDir} FirstStep={path[1]} Result=VALID");
+        }
 
         return path;
     }

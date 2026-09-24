@@ -38,7 +38,7 @@ public class AntQueueController : MonoBehaviour
     public bool IsConnected => isConnected;
     public int ConnectedIndex => connectedIndex;
     public bool IsMoving => isMoving;
-    public HoleController DestinationHole => destinationHole;
+    public HoleController DestinationHole { get => destinationHole; set => destinationHole = value; }
     public IReadOnlyList<Vector2Int> CurrentBodyCoordinates => currentBodyCoordinates;
     public IReadOnlyList<Vector2Int> RemainingPath => remainingPath;
     public IReadOnlyList<AntUnit> Units => antUnits;
@@ -204,6 +204,16 @@ public class AntQueueController : MonoBehaviour
         return remainingPath;
     }
 
+    public IEnumerable<Vector2Int> GetReservedPathCells()
+    {
+        if (!isMoving || remainingPath == null) yield break;
+        // Remaining path cells ahead of the head, excluding the final hole entrance cell
+        for (int i = 1; i < remainingPath.Count - 1; i++)
+        {
+            yield return remainingPath[i];
+        }
+    }
+
     /// <summary>
     /// Attempts to trigger this queue (or its connected group) to move along its path to its matching hole.
     /// Returns true if movement started, false if blocked or unable to move.
@@ -211,6 +221,7 @@ public class AntQueueController : MonoBehaviour
     public bool TryStartMove()
     {
         if (isMoving) return false;
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) return false;
 
         if (BoardManager.Instance != null)
         {
@@ -222,6 +233,10 @@ public class AntQueueController : MonoBehaviour
         if (path == null || path.Count < 2)
         {
             TriggerBlockedFeedback();
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.LoseLife(InvalidMoveReason.NoValidPath);
+            }
             return false;
         }
 
@@ -254,6 +269,18 @@ public class AntQueueController : MonoBehaviour
     private void KillAllTweens()
     {
         StopAllCoroutines();
+        if (isMoving)
+        {
+            if (destinationHole != null)
+            {
+                destinationHole.ReleaseReservation();
+            }
+            if (BoardManager.Instance != null)
+            {
+                BoardManager.Instance.OnQueueMoveStoppedEarly(this);
+            }
+            isMoving = false;
+        }
         if (antUnits != null)
         {
             for (int i = 0; i < antUnits.Count; i++)
@@ -336,6 +363,53 @@ public class AntQueueController : MonoBehaviour
 
         for (int step = 0; step < totalSteps; step++)
         {
+            // Runtime collision check: Verify next target cells are not blocked by another active queue
+            bool collisionDetected = false;
+            Vector2Int collisionCoord = Vector2Int.zero;
+            if (BoardManager.Instance != null)
+            {
+                for (int a = 0; a < activeUnits.Count; a++)
+                {
+                    int origIndex = originalIndices[a];
+                    var track = antTracks[origIndex];
+                    if (step < track.Count)
+                    {
+                        Vector2Int targetCoord = track[step];
+                        if (targetCoord != holeCoord)
+                        {
+                            var otherQueue = BoardManager.Instance.GetQueueOccupying(targetCoord, this);
+                            if (otherQueue != null)
+                            {
+                                collisionDetected = true;
+                                collisionCoord = targetCoord;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (collisionDetected)
+            {
+                Debug.LogWarning($"[InvalidMove] Queue={queueId} Reason=BlockedCell BlockedCell={collisionCoord} LivesBefore={GameManager.Instance?.PlayerLives}");
+                if (destinationHole != null)
+                {
+                    destinationHole.ReleaseReservation();
+                }
+                if (BoardManager.Instance != null)
+                {
+                    BoardManager.Instance.OnQueueMoveStoppedEarly(this);
+                }
+                if (GameManager.Instance != null)
+                {
+                    GameManager.Instance.LoseLife(InvalidMoveReason.OccupancyCollision);
+                }
+                isMoving = false;
+                foreach (var u in antUnits) { if (u != null) u.IsMoving = false; }
+                TriggerBlockedFeedback();
+                yield break;
+            }
+
             Sequence stepSequence = DOTween.Sequence();
             List<int> toRemoveAtStepEnd = new List<int>();
 
@@ -357,6 +431,11 @@ public class AntQueueController : MonoBehaviour
                         Vector3 targetPit = holeWorldPos + new Vector3(0f, -0.2f, 0f);
                         stepSequence.Join(unit.transform.DOJump(targetPit, enterHoleJumpPower, 1, stepDuration * 1.2f).SetEase(Ease.InQuad));
                         stepSequence.Join(unit.transform.DOScale(Vector3.zero, stepDuration * 1.2f).SetEase(Ease.InBack));
+
+                        if (a == 0 && remainingPath != null)
+                        {
+                            remainingPath.Clear();
+                        }
 
                         // Decrement hole count immediately as soon as the ant enters the hole!
                         if (hole != null)
@@ -384,11 +463,30 @@ public class AntQueueController : MonoBehaviour
                         {
                             currentBodyCoordinates[a] = targetCoord;
                         }
+
+                        // Prune remaining path as head advances so vacated path reservations release immediately
+                        if (a == 0 && remainingPath != null && remainingPath.Count > 1 && remainingPath[1] == targetCoord)
+                        {
+                            remainingPath.RemoveAt(0);
+                        }
                     }
                 }
             }
 
-            yield return stepSequence.WaitForCompletion();
+            if (activeUnits.Count == 0)
+            {
+                stepSequence.Kill();
+                break;
+            }
+
+            if (stepSequence != null && stepSequence.IsActive() && !stepSequence.IsComplete())
+            {
+                yield return stepSequence.WaitForCompletion(true);
+            }
+            else
+            {
+                yield return new WaitForSeconds(stepDuration);
+            }
 
             // Clean up swallowed ant GameObjects
             for (int r = toRemoveAtStepEnd.Count - 1; r >= 0; r--)

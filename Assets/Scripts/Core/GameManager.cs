@@ -9,6 +9,15 @@ public enum GameState
     LevelLost
 }
 
+public enum InvalidMoveReason
+{
+    NoValidPath,
+    NoValidForwardPath,
+    BackwardMoveForbidden,
+    OccupancyCollision,
+    BlockedCell
+}
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
@@ -74,6 +83,7 @@ public class GameManager : MonoBehaviour
     {
         currentState = GameState.NotStarted;
         remainingTimer = level.TimeLimitInSeconds;
+        playerLives = 3;
 
         if (BoardManager.Instance != null)
         {
@@ -89,7 +99,29 @@ public class GameManager : MonoBehaviour
 
     private void HandleBlockedFeedback(AntQueueController queue)
     {
+        // Visual/audio feedback hook
+    }
+
+    /// <summary>
+    /// Deducts exactly one life per invalid move attempt or gameplay collision.
+    /// If lives reach 0, immediately triggers LevelLost.
+    /// </summary>
+    public void LoseLife(InvalidMoveReason reason = InvalidMoveReason.NoValidPath)
+    {
+        if (currentState != GameState.Playing) return;
+
+        int livesBefore = playerLives;
+        playerLives = Mathf.Max(0, playerLives - 1);
+        Debug.Log($"[InvalidMove] Reason={reason} LivesBefore={livesBefore} LivesAfter={playerLives}");
+
         OnLivesUpdated?.Invoke(playerLives);
+
+        if (playerLives <= 0)
+        {
+            playerLives = 0;
+            Debug.Log("[LevelFailed] Reason=LivesDepleted");
+            TriggerGameOver("Lives depleted!");
+        }
     }
 
     /// <summary>
@@ -107,6 +139,12 @@ public class GameManager : MonoBehaviour
         if (activeQueues.Count == 0)
         {
             TriggerWin();
+            return;
+        }
+
+        // If another queue is currently moving, board occupancy is still in flux; do not evaluate deadlock yet
+        if (BoardManager.Instance != null && BoardManager.Instance.MovingQueuesCount > 0)
+        {
             return;
         }
 

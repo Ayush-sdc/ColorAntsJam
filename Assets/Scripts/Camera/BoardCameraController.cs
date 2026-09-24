@@ -10,10 +10,10 @@ public enum CameraProjectionMode
 }
 
 /// <summary>
-/// Dual-mode camera controller for Slither Ants Jam with reference-accurate framing.
-/// Supports both Orthographic (reference-accurate top-down) and Perspective modes.
-/// Integrates with Cinemachine 3.x (CinemachineCamera & CinemachineBrain) and fallback direct Main Camera.
-/// Dynamically calculates content bounds from scratch for each level without inheriting zoom.
+/// Fixed-view camera controller for Slither Ants Jam with manual drag-panning.
+/// Maintains constant camera height/distance, rotation, and FOV across all levels (no dynamic zoom).
+/// Centers initial view on the board and allows horizontal/vertical drag-panning only when the level
+/// layout exceeds the visible Game View footprint. Clamps panning to playable board boundaries.
 /// </summary>
 [ExecuteAlways]
 public class BoardCameraController : MonoBehaviour
@@ -23,52 +23,49 @@ public class BoardCameraController : MonoBehaviour
 
     [Header("Camera Engine Switch")]
     [Tooltip("When true, Cinemachine controls board framing. When false, Main Camera is positioned directly.")]
-    [SerializeField] private bool useCinemachine = true;
+    [SerializeField] private bool useCinemachine = false;
 
-    [Header("Projection & Optics")]
-    [SerializeField] private CameraProjectionMode projectionMode = CameraProjectionMode.Orthographic;
+    [Header("Fixed Baseline Optics (Constant across levels)")]
+    [SerializeField] private CameraProjectionMode projectionMode = CameraProjectionMode.Perspective;
     [Range(60f, 90f)]
-    [SerializeField] private float cameraPitch = 89f;
+    [SerializeField] private float cameraPitch = 88f;
     [Range(30f, 90f)]
     [SerializeField] private float perspectiveFov = 78f;
+    [SerializeField] private float cameraHeight = 13.04f;
+    [SerializeField] private float baselineZOffset = -0.17f;
 
     [Header("Camera References")]
     [SerializeField] private Camera mainCamera;
     [SerializeField] private CinemachineBrain cinemachineBrain;
     [SerializeField] private CinemachineCamera gameplayCamera;
 
-    [Header("Content Framing & Viewport Settings")]
-    [Tooltip("Target screen width occupancy of the active content (0.78 to 0.86 in reference)")]
-    [Range(0.5f, 0.95f)]
-    [SerializeField] private float targetHorizontalOccupancy = 0.78f;
+    [Header("Content Framing & Visual Margins")]
+    [Tooltip("Small extra visual padding around outer geometry in world units")]
+    [SerializeField] private float visualPadding = 0.35f;
 
-    [Tooltip("Top viewport fraction reserved for HUD / level header (0.16 - 0.22)")]
-    [Range(0.05f, 0.35f)]
-    [SerializeField] private float topViewportMargin = 0.18f;
+    [Header("Runtime Pan Diagnostics")]
+    [SerializeField] private Bounds boardBounds;
+    [SerializeField] private float visibleWidth;
+    [SerializeField] private float visibleHeight;
+    [SerializeField] private bool canPanX;
+    [SerializeField] private bool canPanZ;
+    [SerializeField] private float minCamX;
+    [SerializeField] private float maxCamX;
+    [SerializeField] private float minCamZ;
+    [SerializeField] private float maxCamZ;
+    [SerializeField] private Vector3 initialCamPos;
+    [SerializeField] private Vector3 currentCamPos;
+    [SerializeField] private bool isDragging;
 
-    [Tooltip("Bottom viewport fraction margin (0.05 - 0.15)")]
-    [Range(0.02f, 0.25f)]
-    [SerializeField] private float bottomViewportMargin = 0.08f;
+    // Pointer drag tracking
+    private Vector2 dragStartPointerPos;
+    private Vector3 dragStartCamPos;
+    private Vector2 camToVisOffset;
+    private Level currentActiveLevel;
+    private int lastScreenWidth = -1;
+    private int lastScreenHeight = -1;
 
-    [Tooltip("Extra vertical world offset fine tuning")]
-    [SerializeField] private float boardVerticalOffset = 0.0f;
-
-    [Tooltip("Extra visual padding around outer holder geometry")]
-    [SerializeField] private float holderVisualMargin = 0.45f;
-
-    [Header("Distance Limits")]
-    [SerializeField] private float minimumDistance = 5f;
-    [SerializeField] private float maximumDistance = 60f;
-    [SerializeField] private float fixedOrthoHeight = 15f;
-
-    // Runtime state cache for inspection & diagnostics
-    [Header("Runtime Framing Diagnostics")]
-    [SerializeField] private Bounds lastCalculatedContentBounds;
-    [SerializeField] private float lastCalculatedOrthoSize;
-    [SerializeField] private Vector3 lastCalculatedCameraPosition;
-    [SerializeField] private float lastCalculatedHorizontalOccupancy;
-    [SerializeField] private float lastCalculatedVerticalOccupancy;
-
+    // Public properties
     public bool UseCinemachine
     {
         get => useCinemachine;
@@ -79,22 +76,18 @@ public class BoardCameraController : MonoBehaviour
         }
     }
 
-    public CameraProjectionMode ProjectionMode
-    {
-        get => projectionMode;
-        set => projectionMode = value;
-    }
-
+    public CameraProjectionMode ProjectionMode => projectionMode;
     public float CameraPitch => cameraPitch;
-    public float TargetHorizontalOccupancy => targetHorizontalOccupancy;
-    public float TopViewportMargin => topViewportMargin;
-    public float BottomViewportMargin => bottomViewportMargin;
-    public float BoardVerticalOffset => boardVerticalOffset;
-    public float HolderVisualMargin => holderVisualMargin;
-    public float LastCalculatedOrthoSize => lastCalculatedOrthoSize;
-    public Vector3 LastCalculatedCameraPosition => lastCalculatedCameraPosition;
-    public float LastCalculatedHorizontalOccupancy => lastCalculatedHorizontalOccupancy;
-    public float LastCalculatedVerticalOccupancy => lastCalculatedVerticalOccupancy;
+    public float PerspectiveFov => perspectiveFov;
+    public float CameraHeight => cameraHeight;
+    public bool CanPanX => canPanX;
+    public bool CanPanZ => canPanZ;
+    public Bounds BoardBounds => boardBounds;
+    public float VisibleWidth => visibleWidth;
+    public float VisibleHeight => visibleHeight;
+    public Vector3 InitialCamPos => initialCamPos;
+    public Vector3 CurrentCamPos => currentCamPos;
+    public bool IsDragging => isDragging;
 
     private void Awake()
     {
@@ -124,6 +117,22 @@ public class BoardCameraController : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        // Handle runtime Game View resize or aspect ratio changes
+        int curW = Screen.width;
+        int curH = Screen.height;
+        if (curW > 0 && curH > 0 && (curW != lastScreenWidth || curH != lastScreenHeight))
+        {
+            lastScreenWidth = curW;
+            lastScreenHeight = curH;
+            if (currentActiveLevel != null)
+            {
+                RecalculateFramingAndPanLimits();
+            }
+        }
+    }
+
     public void EnsureReferences()
     {
         if (mainCamera == null)
@@ -139,10 +148,6 @@ public class BoardCameraController : MonoBehaviour
         if (mainCamera != null && cinemachineBrain == null)
         {
             cinemachineBrain = mainCamera.GetComponent<CinemachineBrain>();
-            if (cinemachineBrain == null)
-            {
-                cinemachineBrain = mainCamera.gameObject.AddComponent<CinemachineBrain>();
-            }
         }
 
         if (gameplayCamera == null)
@@ -151,11 +156,6 @@ public class BoardCameraController : MonoBehaviour
             if (gpCamObj != null)
             {
                 gameplayCamera = gpCamObj.GetComponent<CinemachineCamera>();
-            }
-            else
-            {
-                gpCamObj = new GameObject("GameplayCamera");
-                gameplayCamera = gpCamObj.AddComponent<CinemachineCamera>();
             }
         }
     }
@@ -176,220 +176,335 @@ public class BoardCameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// Calculates visual framing from scratch for any Level data without inheriting zoom from previous levels.
-    /// Uses tight content bounds (ant coordinates, holder footprints, visual geometry) and aspect ratio.
+    /// Alias for SetupCameraForLevel to preserve backwards compatibility.
     /// </summary>
     public void FrameLevel(Level level)
+    {
+        SetupCameraForLevel(level);
+    }
+
+    /// <summary>
+    /// Configures the fixed-view camera for the given level.
+    /// Calculates board bounds, visible camera footprint, overflow, and clamps camera to centered starting position.
+    /// </summary>
+    public void SetupCameraForLevel(Level level)
     {
         if (level == null) return;
         EnsureReferences();
         ApplyEngineState();
 
+        currentActiveLevel = level;
+        lastScreenWidth = Screen.width;
+        lastScreenHeight = Screen.height;
+
+        ApplyFixedCameraOptics();
+        RecalculateFramingAndPanLimits();
+
+        // Place camera at centered starting position
+        currentCamPos = initialCamPos;
+        ApplyCameraPosition(currentCamPos);
+
+        // Required diagnostic logs
+        if (!canPanX && !canPanZ)
+        {
+            Debug.Log($"[CameraPan] Level={level.LevelNumber} FitsViewport=True CanPanX=False CanPanY=False");
+        }
+        else
+        {
+            Debug.Log($"[CameraPan] Level={level.LevelNumber} BoardBounds={boardBounds.size.x:F2}x{boardBounds.size.z:F2} " +
+                      $"VisibleBounds={visibleWidth:F2}x{visibleHeight:F2} CanPanX={canPanX} CanPanY={canPanZ} " +
+                      $"PanX=[{minCamX:F2},{maxCamX:F2}] PanY=[{minCamZ:F2},{maxCamZ:F2}] FOV={perspectiveFov:F0}");
+        }
+    }
+
+    private void ApplyFixedCameraOptics()
+    {
+        if (mainCamera == null) return;
+
+        mainCamera.orthographic = (projectionMode == CameraProjectionMode.Orthographic);
+        if (!mainCamera.orthographic)
+        {
+            mainCamera.fieldOfView = perspectiveFov;
+        }
+        mainCamera.nearClipPlane = 0.1f;
+        mainCamera.farClipPlane = 200f;
+
+        Quaternion fixedRot = Quaternion.Euler(cameraPitch, 0f, 0f);
+        mainCamera.transform.rotation = fixedRot;
+
+        if (useCinemachine && gameplayCamera != null)
+        {
+            gameplayCamera.transform.rotation = fixedRot;
+            gameplayCamera.Lens.ModeOverride = (projectionMode == CameraProjectionMode.Orthographic)
+                ? LensSettings.OverrideModes.Orthographic
+                : LensSettings.OverrideModes.Perspective;
+            gameplayCamera.Lens.FieldOfView = perspectiveFov;
+            gameplayCamera.Lens.NearClipPlane = 0.1f;
+            gameplayCamera.Lens.FarClipPlane = 200f;
+        }
+    }
+
+    private void RecalculateFramingAndPanLimits()
+    {
+        if (currentActiveLevel == null) return;
+
+        // 1. Calculate complete playable level footprint
+        CalculateBoardBounds(currentActiveLevel);
+
+        // 2. Calculate visible camera world footprint on board plane (Y = 0)
+        CalculateVisibleFootprint();
+
+        // 3. Calculate initial center position and pan clamps
+        CalculatePanLimits();
+    }
+
+    private void CalculateBoardBounds(Level level)
+    {
         int w = level.GridWidth > 0 ? level.GridWidth : 9;
         int h = level.GridHeight > 0 ? level.GridHeight : 6;
         float cs = level.CellSize > 0f ? level.CellSize : 1.0f;
 
-        Vector3 GridToWorld(Vector2Int gridPos)
+        float minX = -(w - 1) * 0.5f * cs - 0.5f * cs;
+        float maxX = (w - 1) * 0.5f * cs + 0.5f * cs;
+        float minZ = -(h - 1) * 0.5f * cs - 0.5f * cs;
+        float maxZ = (h - 1) * 0.5f * cs + 0.5f * cs;
+
+        Vector3 GridToWorld(int gx, int gy)
         {
-            float x = (gridPos.x - (w - 1) * 0.5f) * cs;
-            float z = (gridPos.y - (h - 1) * 0.5f) * cs;
+            float x = (gx - (w - 1) * 0.5f) * cs;
+            float z = (gy - (h - 1) * 0.5f) * cs;
             return new Vector3(x, 0f, z);
         }
 
-        float minX = float.MaxValue;
-        float maxX = float.MinValue;
-        float minZ = float.MaxValue;
-        float maxZ = float.MinValue;
-
-        void EncapsulatePoint(float x, float z, float radiusX = 0f, float radiusZ = 0f)
+        void Encapsulate(float x, float z, float radX, float radZ)
         {
-            minX = Mathf.Min(minX, x - radiusX);
-            maxX = Mathf.Max(maxX, x + radiusX);
-            minZ = Mathf.Min(minZ, z - radiusZ);
-            maxZ = Mathf.Max(maxZ, z + radiusZ);
+            minX = Mathf.Min(minX, x - radX);
+            maxX = Mathf.Max(maxX, x + radX);
+            minZ = Mathf.Min(minZ, z - radZ);
+            maxZ = Mathf.Max(maxZ, z + radZ);
         }
 
-        // 1. Calculate Content Bounds from Active Ants
         if (level.AntQueues != null)
         {
             foreach (var q in level.AntQueues)
             {
-                // Handmade ant queue coordinates
+                if (q.Cells != null && q.Cells.Count > 0)
+                {
+                    foreach (var cell in q.Cells)
+                    {
+                        Vector3 pos = GridToWorld(cell.x, cell.y);
+                        Encapsulate(pos.x, pos.z, 0.5f * cs, 0.5f * cs);
+                    }
+                }
                 if (q.InitialBodyCoordinates != null && q.InitialBodyCoordinates.Count > 0)
                 {
                     foreach (var cell in q.InitialBodyCoordinates)
                     {
-                        Vector3 wPos = GridToWorld(cell);
-                        EncapsulatePoint(wPos.x, wPos.z, 0.5f * cs, 0.5f * cs);
-                    }
-                }
-
-                // Reference level ant queue coordinates (HolderType == 1)
-                if (q.HolderType == 1 && q.Cells != null && q.Cells.Count > 0)
-                {
-                    foreach (var cell in q.Cells)
-                    {
-                        Vector3 wPos = GridToWorld(cell);
-                        EncapsulatePoint(wPos.x, wPos.z, 0.5f * cs, 0.5f * cs);
+                        Vector3 pos = GridToWorld(cell.x, cell.y);
+                        Encapsulate(pos.x, pos.z, 0.5f * cs, 0.5f * cs);
                     }
                 }
             }
         }
 
-        // 2. Calculate Content Bounds from Holders / Holes
-        if (level.Holes != null && level.Holes.Count > 0)
+        if (level.Holes != null)
         {
             foreach (var hole in level.Holes)
             {
-                int rowCount = hole.ParallelRows;
-                bool isRight = (rowCount >= 2) ? (hole.GridCoordinate.x >= w / 2) : (hole.GridCoordinate.x >= 4);
-                Vector3 hCenter;
-                float hw = 1.15f * cs;
-                float hh = (rowCount >= 2) ? 1.15f * cs : 0.55f * cs;
-
-                if (rowCount >= 2)
-                {
-                    hCenter = GridToWorld(hole.GridCoordinate) + new Vector3(0.5f * cs, 0f, 0.5f * cs);
-                }
-                else
-                {
-                    float xOff = isRight ? 0.5f : -0.5f;
-                    hCenter = GridToWorld(hole.GridCoordinate) + new Vector3(xOff * cs, 0f, 0f);
-                }
-
-                EncapsulatePoint(hCenter.x, hCenter.z, hw + holderVisualMargin * cs, hh + holderVisualMargin * cs);
-            }
-        }
-        else if (level.AntQueues != null)
-        {
-            // Reference Level Holes (HolderType == 0)
-            foreach (var record in level.AntQueues)
-            {
-                if (record.HolderType == 0 && record.Cells != null && record.Cells.Count > 0)
-                {
-                    foreach (var cell in record.Cells)
-                    {
-                        Vector3 cPos = GridToWorld(cell);
-                        EncapsulatePoint(cPos.x, cPos.z, 0.5f * cs + holderVisualMargin * cs, 0.5f * cs + holderVisualMargin * cs);
-                    }
-                }
+                Vector3 pos = GridToWorld(hole.GridCoordinate.x, hole.GridCoordinate.y);
+                Encapsulate(pos.x, pos.z, 1.0f * cs, 1.0f * cs);
             }
         }
 
-        // Fallback if level had no content records
-        if (minX > maxX || minZ > maxZ)
+        // Apply intentional visual padding for outer holder geometries
+        minX -= visualPadding * cs;
+        maxX += visualPadding * cs;
+        minZ -= visualPadding * cs;
+        maxZ += visualPadding * cs;
+
+        float boundsWidth = maxX - minX;
+        float boundsHeight = maxZ - minZ;
+        Vector3 center = new Vector3((minX + maxX) * 0.5f, 0f, (minZ + maxZ) * 0.5f);
+
+        boardBounds = new Bounds(center, new Vector3(boundsWidth, 1f, boundsHeight));
+    }
+
+    private void CalculateVisibleFootprint()
+    {
+        if (mainCamera == null) return;
+
+        Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+
+        // Evaluate visible footprint with camera at reference position
+        Vector3 refCamPos = new Vector3(boardBounds.center.x, cameraHeight, boardBounds.center.z + baselineZOffset);
+        Quaternion refRot = Quaternion.Euler(cameraPitch, 0f, 0f);
+
+        // Temporarily position camera for raycasting
+        Vector3 prevPos = mainCamera.transform.position;
+        Quaternion prevRot = mainCamera.transform.rotation;
+        mainCamera.transform.position = refCamPos;
+        mainCamera.transform.rotation = refRot;
+
+        Vector2[] viewports = new Vector2[]
         {
-            minX = -(w - 1) * 0.5f * cs - 0.5f * cs;
-            maxX = (w - 1) * 0.5f * cs + 0.5f * cs;
-            minZ = -(h - 1) * 0.5f * cs - 0.5f * cs;
-            maxZ = (h - 1) * 0.5f * cs + 0.5f * cs;
+            new Vector2(0f, 0f),
+            new Vector2(1f, 0f),
+            new Vector2(0f, 1f),
+            new Vector2(1f, 1f)
+        };
+
+        float minX = float.MaxValue, maxX = float.MinValue;
+        float minZ = float.MaxValue, maxZ = float.MinValue;
+
+        for (int i = 0; i < 4; i++)
+        {
+            Ray ray = mainCamera.ViewportPointToRay(new Vector3(viewports[i].x, viewports[i].y, 0f));
+            if (groundPlane.Raycast(ray, out float enter))
+            {
+                Vector3 hit = ray.GetPoint(enter);
+                minX = Mathf.Min(minX, hit.x);
+                maxX = Mathf.Max(maxX, hit.x);
+                minZ = Mathf.Min(minZ, hit.z);
+                maxZ = Mathf.Max(maxZ, hit.z);
+            }
         }
 
-        float contentWidth = maxX - minX;
-        float contentHeight = maxZ - minZ;
-        float contentCenterX = (minX + maxX) * 0.5f;
-        float contentCenterZ = (minZ + maxZ) * 0.5f;
+        mainCamera.transform.position = prevPos;
+        mainCamera.transform.rotation = prevRot;
 
-        lastCalculatedContentBounds = new Bounds(new Vector3(contentCenterX, 0f, contentCenterZ), new Vector3(contentWidth, 1f, contentHeight));
+        visibleWidth = maxX - minX;
+        visibleHeight = maxZ - minZ;
 
-        // 3. Aspect Ratio & Screen Dimensions
-        Camera activeCam = (mainCamera != null) ? mainCamera : Camera.main;
-        float aspect = (activeCam != null && activeCam.aspect > 0.01f)
-            ? activeCam.aspect
-            : (Screen.width / (float)Mathf.Max(1, Screen.height));
+        // Relative offset between reference camera position and visible footprint center
+        float visCenterX = (minX + maxX) * 0.5f;
+        float visCenterZ = (minZ + maxZ) * 0.5f;
+        camToVisOffset = new Vector2(visCenterX - refCamPos.x, visCenterZ - refCamPos.z);
+    }
 
-        // 4. Viewport & Orthographic Size Calculations
-        float targetHUsage = Mathf.Clamp(targetHorizontalOccupancy, 0.50f, 0.95f);
-        float orthoForWidth = contentWidth / (2.0f * aspect * targetHUsage);
+    private void CalculatePanLimits()
+    {
+        float boardWidth = boardBounds.size.x;
+        float boardHeight = boardBounds.size.z;
+        Vector3 boardCenter = boardBounds.center;
 
-        float availVFraction = Mathf.Clamp(1.0f - topViewportMargin - bottomViewportMargin, 0.30f, 0.95f);
-        float orthoForHeight = contentHeight / (2.0f * availVFraction);
+        // Initial camera position centers the visible footprint on the board
+        initialCamPos = new Vector3(
+            boardCenter.x,
+            cameraHeight,
+            boardCenter.z + baselineZOffset
+        );
 
-        float orthoSize = Mathf.Max(orthoForWidth, orthoForHeight);
-        lastCalculatedOrthoSize = orthoSize;
+        // Overflow detection
+        canPanX = boardWidth > visibleWidth;
+        canPanZ = boardHeight > visibleHeight;
 
-        float visibleWorldHeight = 2.0f * orthoSize;
-        float visibleWorldWidth = visibleWorldHeight * aspect;
+        // When camera is at initialCamPos:
+        float visMinX = initialCamPos.x + camToVisOffset.x - visibleWidth * 0.5f;
+        float visMaxX = initialCamPos.x + camToVisOffset.x + visibleWidth * 0.5f;
+        float visMinZ = initialCamPos.z + camToVisOffset.y - visibleHeight * 0.5f;
+        float visMaxZ = initialCamPos.z + camToVisOffset.y + visibleHeight * 0.5f;
 
-        lastCalculatedHorizontalOccupancy = (contentWidth / visibleWorldWidth) * 100.0f;
-        lastCalculatedVerticalOccupancy = (contentHeight / visibleWorldHeight) * 100.0f;
-
-        // Camera Z positioning centered in available gameplay vertical band
-        float targetZ = (contentCenterZ + boardVerticalOffset * cs) - orthoSize * (bottomViewportMargin - topViewportMargin);
-        float targetX = contentCenterX;
-
-        Quaternion targetRot = Quaternion.Euler(cameraPitch, 0f, 0f);
-
-        if (projectionMode == CameraProjectionMode.Orthographic)
+        if (canPanX)
         {
-            float targetY = Mathf.Clamp(fixedOrthoHeight, minimumDistance, maximumDistance);
-            Vector3 targetPos = new Vector3(targetX, targetY, targetZ);
-            lastCalculatedCameraPosition = targetPos;
-
-            if (mainCamera != null)
+            // Clamping bounds: screen left edge cannot go past board min.x, screen right edge cannot go past board max.x
+            minCamX = initialCamPos.x + (boardBounds.min.x - visMinX);
+            maxCamX = initialCamPos.x + (boardBounds.max.x - visMaxX);
+            if (minCamX > maxCamX)
             {
-                mainCamera.orthographic = true;
-                mainCamera.orthographicSize = orthoSize;
-                mainCamera.nearClipPlane = 0.1f;
-                mainCamera.farClipPlane = 200f;
-            }
-
-            if (useCinemachine && gameplayCamera != null)
-            {
-                gameplayCamera.transform.position = targetPos;
-                gameplayCamera.transform.rotation = targetRot;
-                gameplayCamera.Lens.ModeOverride = LensSettings.OverrideModes.Orthographic;
-                gameplayCamera.Lens.OrthographicSize = orthoSize;
-                gameplayCamera.Lens.NearClipPlane = 0.1f;
-                gameplayCamera.Lens.FarClipPlane = 200f;
-
-                if (cinemachineBrain != null && cinemachineBrain.isActiveAndEnabled)
-                {
-                    cinemachineBrain.ManualUpdate();
-                }
-            }
-            else if (mainCamera != null)
-            {
-                mainCamera.transform.position = targetPos;
-                mainCamera.transform.rotation = targetRot;
+                minCamX = maxCamX = initialCamPos.x;
+                canPanX = false;
             }
         }
-        else // Perspective Mode
+        else
         {
-            float vFovRad = perspectiveFov * Mathf.Deg2Rad;
-            float tanHalfVFov = Mathf.Tan(vFovRad * 0.5f);
-            float targetDistance = orthoSize / tanHalfVFov;
-            float targetY = Mathf.Clamp(targetDistance, minimumDistance, maximumDistance);
-            Vector3 targetPos = new Vector3(targetX, targetY, targetZ);
-            lastCalculatedCameraPosition = targetPos;
+            minCamX = maxCamX = initialCamPos.x;
+        }
 
-            if (mainCamera != null)
+        if (canPanZ)
+        {
+            minCamZ = initialCamPos.z + (boardBounds.min.z - visMinZ);
+            maxCamZ = initialCamPos.z + (boardBounds.max.z - visMaxZ);
+            if (minCamZ > maxCamZ)
             {
-                mainCamera.orthographic = false;
-                mainCamera.fieldOfView = perspectiveFov;
-                mainCamera.nearClipPlane = 0.1f;
-                mainCamera.farClipPlane = 200f;
+                minCamZ = maxCamZ = initialCamPos.z;
+                canPanZ = false;
             }
+        }
+        else
+        {
+            minCamZ = maxCamZ = initialCamPos.z;
+        }
+    }
 
-            if (useCinemachine && gameplayCamera != null)
-            {
-                gameplayCamera.transform.position = targetPos;
-                gameplayCamera.transform.rotation = targetRot;
-                gameplayCamera.Lens.ModeOverride = LensSettings.OverrideModes.Perspective;
-                gameplayCamera.Lens.FieldOfView = perspectiveFov;
-                gameplayCamera.Lens.NearClipPlane = 0.1f;
-                gameplayCamera.Lens.FarClipPlane = 200f;
+    public void OnDragStart(Vector2 screenPos)
+    {
+        isDragging = true;
+        dragStartPointerPos = screenPos;
+        dragStartCamPos = (mainCamera != null) ? mainCamera.transform.position : currentCamPos;
+    }
 
-                if (cinemachineBrain != null && cinemachineBrain.isActiveAndEnabled)
-                {
-                    cinemachineBrain.ManualUpdate();
-                }
-            }
-            else if (mainCamera != null)
-            {
-                mainCamera.transform.position = targetPos;
-                mainCamera.transform.rotation = targetRot;
-            }
+    public void OnDrag(Vector2 currentScreenPos)
+    {
+        if (!isDragging) return;
+        if (!canPanX && !canPanZ) return;
+        if (mainCamera == null) return;
+
+        Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+
+        Vector3 oldCamPos = mainCamera.transform.position;
+        mainCamera.transform.position = dragStartCamPos;
+
+        Ray startRay = mainCamera.ScreenPointToRay(dragStartPointerPos);
+        Ray currRay = mainCamera.ScreenPointToRay(currentScreenPos);
+
+        mainCamera.transform.position = oldCamPos;
+
+        if (groundPlane.Raycast(startRay, out float d1) && groundPlane.Raycast(currRay, out float d2))
+        {
+            Vector3 pStart = startRay.GetPoint(d1);
+            Vector3 pCurr = currRay.GetPoint(d2);
+
+            Vector3 delta = pCurr - pStart;
+
+            float targetX = canPanX
+                ? Mathf.Clamp(dragStartCamPos.x - delta.x, minCamX, maxCamX)
+                : initialCamPos.x;
+
+            float targetZ = canPanZ
+                ? Mathf.Clamp(dragStartCamPos.z - delta.z, minCamZ, maxCamZ)
+                : initialCamPos.z;
+
+            currentCamPos = new Vector3(targetX, cameraHeight, targetZ);
+            ApplyCameraPosition(currentCamPos);
+        }
+    }
+
+    public void OnDragEnd()
+    {
+        isDragging = false;
+    }
+
+    public void ResetToCenter()
+    {
+        isDragging = false;
+        currentCamPos = initialCamPos;
+        ApplyCameraPosition(currentCamPos);
+    }
+
+    private void ApplyCameraPosition(Vector3 pos)
+    {
+        Quaternion rot = Quaternion.Euler(cameraPitch, 0f, 0f);
+
+        if (mainCamera != null)
+        {
+            mainCamera.transform.position = pos;
+            mainCamera.transform.rotation = rot;
+        }
+
+        if (useCinemachine && gameplayCamera != null)
+        {
+            gameplayCamera.transform.position = pos;
+            gameplayCamera.transform.rotation = rot;
         }
     }
 }
