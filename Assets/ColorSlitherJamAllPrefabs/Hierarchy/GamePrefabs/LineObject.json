@@ -1,0 +1,115 @@
+{
+  "sourceFile": "sharedassets2.assets",
+  "sourceGameObjectPathID": 373,
+  "sourceTransformPathID": 435,
+  "name": "LineObject",
+  "active": true,
+  "isRectTransform": false,
+  "localPosition": [
+    -1.3799999952316284,
+    0.0,
+    -2.069999933242798
+  ],
+  "localRotationQuaternion": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "localScale": [
+    0.5909374952316284,
+    0.2750000059604645,
+    0.9039844274520874
+  ],
+  "components": [
+    {
+      "pathID": 435,
+      "classID": 4
+    },
+    {
+      "pathID": 560,
+      "classID": 33,
+      "meshPathID": 10202,
+      "meshFileID": 3
+    },
+    {
+      "pathID": 499,
+      "classID": 23,
+      "materialPathIDs": [
+        57
+      ]
+    },
+    {
+      "pathID": 594,
+      "classID": 65
+    },
+    {
+      "pathID": 665,
+      "classID": 114
+    }
+  ],
+  "children": [
+    {
+      "sourceFile": "sharedassets2.assets",
+      "sourceGameObjectPathID": 336,
+      "sourceTransformPathID": 633,
+      "name": "CoutText",
+      "active": true,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        0.7071068286895752,
+        -0.0,
+        -0.0,
+        0.7071068286895752
+      ],
+      "localScale": [
+        1.6922264099121094,
+        1.1062136888504028,
+        3.6363637447357178
+      ],
+      "components": [
+        {
+          "pathID": 633,
+          "classID": 224
+        },
+        {
+          "pathID": 530,
+          "classID": 23,
+          "materialPathIDs": [
+            61
+          ]
+        },
+        {
+          "pathID": 647,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        0.5,
+        0.5
+      ],
+      "anchorMax": [
+        0.5,
+        0.5
+      ],
+      "anchoredPosition": [
+        0.0,
+        0.550000011920929
+      ],
+      "sizeDelta": [
+        4.0,
+        1.0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "children": []
+    }
+  ]
+}

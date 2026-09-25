@@ -1,0 +1,67 @@
+{
+  "sourceFile": "resources.assets",
+  "sourceGameObjectPathID": 338,
+  "sourceTransformPathID": 1471,
+  "name": "DebugUIHBox",
+  "active": true,
+  "isRectTransform": true,
+  "localPosition": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    -0.0,
+    -0.0,
+    -0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 1471,
+      "classID": 224
+    },
+    {
+      "pathID": 2266,
+      "classID": 114
+    },
+    {
+      "pathID": 2113,
+      "classID": 114
+    },
+    {
+      "pathID": 2164,
+      "classID": 114
+    },
+    {
+      "pathID": 2051,
+      "classID": 114
+    }
+  ],
+  "anchorMin": [
+    0.0,
+    0.0
+  ],
+  "anchorMax": [
+    0.0,
+    0.0
+  ],
+  "anchoredPosition": [
+    0.0,
+    0.0
+  ],
+  "sizeDelta": [
+    0.0,
+    26.0
+  ],
+  "pivot": [
+    0.5,
+    1.0
+  ],
+  "children": []
+}

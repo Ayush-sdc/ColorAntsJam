@@ -1,0 +1,478 @@
+{
+  "sourceFile": "resources.assets",
+  "sourceGameObjectPathID": 280,
+  "sourceTransformPathID": 1355,
+  "name": "AchievementDisplay",
+  "active": true,
+  "isRectTransform": true,
+  "localPosition": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    -0.0,
+    -0.0,
+    -0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 1355,
+      "classID": 224
+    },
+    {
+      "pathID": 2034,
+      "classID": 114
+    },
+    {
+      "pathID": 1959,
+      "classID": 225
+    }
+  ],
+  "anchorMin": [
+    0.0,
+    0.0
+  ],
+  "anchorMax": [
+    0.0,
+    0.0
+  ],
+  "anchoredPosition": [
+    -29.421096801757812,
+    -15.58761215209961
+  ],
+  "sizeDelta": [
+    0.0,
+    0.0
+  ],
+  "pivot": [
+    0.5,
+    0.5
+  ],
+  "children": [
+    {
+      "sourceFile": "resources.assets",
+      "sourceGameObjectPathID": 282,
+      "sourceTransformPathID": 1353,
+      "name": "AchievementBackground",
+      "active": true,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "localRotationQuaternion": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 1353,
+          "classID": 224
+        },
+        {
+          "pathID": 906,
+          "classID": 222
+        },
+        {
+          "pathID": 2040,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        1.0,
+        0.0
+      ],
+      "anchorMax": [
+        1.0,
+        0.0
+      ],
+      "anchoredPosition": [
+        -256.0,
+        64.0
+      ],
+      "sizeDelta": [
+        512.0,
+        128.0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "children": []
+    },
+    {
+      "sourceFile": "resources.assets",
+      "sourceGameObjectPathID": 278,
+      "sourceTransformPathID": 1350,
+      "name": "AchievementBackgroundUnlocked",
+      "active": false,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "localRotationQuaternion": [
+        -0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 1350,
+          "classID": 224
+        },
+        {
+          "pathID": 908,
+          "classID": 222
+        },
+        {
+          "pathID": 2041,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        0.5,
+        0.5
+      ],
+      "anchorMax": [
+        0.5,
+        0.5
+      ],
+      "anchoredPosition": [
+        -256.0,
+        64.0
+      ],
+      "sizeDelta": [
+        512.0,
+        128.0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "children": []
+    },
+    {
+      "sourceFile": "resources.assets",
+      "sourceGameObjectPathID": 281,
+      "sourceTransformPathID": 1351,
+      "name": "AchievementIcon",
+      "active": true,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        -0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 1351,
+          "classID": 224
+        },
+        {
+          "pathID": 910,
+          "classID": 222
+        },
+        {
+          "pathID": 2037,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        0.0,
+        0.5
+      ],
+      "anchorMax": [
+        0.0,
+        0.5
+      ],
+      "anchoredPosition": [
+        -448.0,
+        64.0
+      ],
+      "sizeDelta": [
+        128.0,
+        128.0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "children": []
+    },
+    {
+      "sourceFile": "resources.assets",
+      "sourceGameObjectPathID": 277,
+      "sourceTransformPathID": 1348,
+      "name": "AchievementTitle",
+      "active": true,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        -0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 1348,
+          "classID": 224
+        },
+        {
+          "pathID": 905,
+          "classID": 222
+        },
+        {
+          "pathID": 2036,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        0.5,
+        0.5
+      ],
+      "anchorMax": [
+        0.5,
+        0.5
+      ],
+      "anchoredPosition": [
+        -201.0,
+        100.0
+      ],
+      "sizeDelta": [
+        354.1090087890625,
+        50.07500076293945
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "children": []
+    },
+    {
+      "sourceFile": "resources.assets",
+      "sourceGameObjectPathID": 276,
+      "sourceTransformPathID": 1354,
+      "name": "AchievementDescription",
+      "active": true,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        -0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 1354,
+          "classID": 224
+        },
+        {
+          "pathID": 907,
+          "classID": 222
+        },
+        {
+          "pathID": 2038,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        0.5,
+        0.5
+      ],
+      "anchorMax": [
+        0.5,
+        0.5
+      ],
+      "anchoredPosition": [
+        -201.0,
+        55.0
+      ],
+      "sizeDelta": [
+        353.8940124511719,
+        79.90799713134766
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "children": []
+    },
+    {
+      "sourceFile": "resources.assets",
+      "sourceGameObjectPathID": 279,
+      "sourceTransformPathID": 1352,
+      "name": "ProgressBar",
+      "active": true,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        -0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 1352,
+          "classID": 224
+        },
+        {
+          "pathID": 909,
+          "classID": 222
+        },
+        {
+          "pathID": 2042,
+          "classID": 114
+        },
+        {
+          "pathID": 2039,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        0.0,
+        0.5
+      ],
+      "anchorMax": [
+        0.0,
+        0.5
+      ],
+      "anchoredPosition": [
+        -209.39999389648438,
+        13.899999618530273
+      ],
+      "sizeDelta": [
+        335.0,
+        5.0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "children": [
+        {
+          "sourceFile": "resources.assets",
+          "sourceGameObjectPathID": 283,
+          "sourceTransformPathID": 1349,
+          "name": "ProgressBarFront",
+          "active": true,
+          "isRectTransform": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "components": [
+            {
+              "pathID": 1349,
+              "classID": 224
+            },
+            {
+              "pathID": 904,
+              "classID": 222
+            },
+            {
+              "pathID": 2035,
+              "classID": 114
+            }
+          ],
+          "anchorMin": [
+            0.0,
+            0.5
+          ],
+          "anchorMax": [
+            0.0,
+            0.5
+          ],
+          "anchoredPosition": [
+            0.0,
+            0.0
+          ],
+          "sizeDelta": [
+            335.0,
+            5.0
+          ],
+          "pivot": [
+            0.0,
+            0.5
+          ],
+          "children": []
+        }
+      ]
+    }
+  ]
+}

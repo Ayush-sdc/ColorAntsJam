@@ -1,0 +1,317 @@
+{
+  "source": "User-supplied Color Slither Jam iOS Unity player build",
+  "unityVersion": "2022.3.37f1",
+  "reconstructedPrefabRoots": 73,
+  "gamePrefabRoots": 21,
+  "resourcePrefabRoots": 52,
+  "excludedSlitherPrefabRoots": [
+    "Tail Snake",
+    "Head Snake",
+    "Mid Snake"
+  ],
+  "gamePrefabs": [
+    {
+      "name": "ArrowHolder",
+      "pathID": 318
+    },
+    {
+      "name": "Cell",
+      "pathID": 352
+    },
+    {
+      "name": "CFXR2 Debris Hit (Lit) 1",
+      "pathID": 315
+    },
+    {
+      "name": "Chain Explode",
+      "pathID": 333
+    },
+    {
+      "name": "Connector",
+      "pathID": 342
+    },
+    {
+      "name": "hole_01",
+      "pathID": 383
+    },
+    {
+      "name": "hole_02",
+      "pathID": 393
+    },
+    {
+      "name": "hole_03",
+      "pathID": 380
+    },
+    {
+      "name": "hole_04",
+      "pathID": 396
+    },
+    {
+      "name": "hole_05",
+      "pathID": 316
+    },
+    {
+      "name": "hole_06",
+      "pathID": 321
+    },
+    {
+      "name": "hole_06",
+      "pathID": 398
+    },
+    {
+      "name": "HoleHolder",
+      "pathID": 375
+    },
+    {
+      "name": "LineObject",
+      "pathID": 373
+    },
+    {
+      "name": "Marble",
+      "pathID": 353
+    },
+    {
+      "name": "NoSpaceWarning",
+      "pathID": 314
+    },
+    {
+      "name": "Pipe Cap",
+      "pathID": 310
+    },
+    {
+      "name": "pipe_02",
+      "pathID": 346
+    },
+    {
+      "name": "pipe_03",
+      "pathID": 394
+    },
+    {
+      "name": "PipeHolder",
+      "pathID": 312
+    },
+    {
+      "name": "SoulMuzzleOrange",
+      "pathID": 338
+    }
+  ],
+  "resourcePrefabs": [
+    {
+      "name": "AchievementDisplay",
+      "pathID": 280
+    },
+    {
+      "name": "ActionButton",
+      "pathID": 572
+    },
+    {
+      "name": "Adjust",
+      "pathID": 745
+    },
+    {
+      "name": "AgeBlockedPopup",
+      "pathID": 742
+    },
+    {
+      "name": "AlertPopup",
+      "pathID": 466
+    },
+    {
+      "name": "BlockedPopup",
+      "pathID": 797
+    },
+    {
+      "name": "CcpaPopup",
+      "pathID": 478
+    },
+    {
+      "name": "CollectiblesPopup",
+      "pathID": 456
+    },
+    {
+      "name": "DebugUIBitField",
+      "pathID": 739
+    },
+    {
+      "name": "DebugUIButton",
+      "pathID": 344
+    },
+    {
+      "name": "DebugUICanvas",
+      "pathID": 314
+    },
+    {
+      "name": "DebugUIColor",
+      "pathID": 332
+    },
+    {
+      "name": "DebugUIEnumField",
+      "pathID": 339
+    },
+    {
+      "name": "DebugUIEnumHistory",
+      "pathID": 626
+    },
+    {
+      "name": "DebugUIFloatField",
+      "pathID": 301
+    },
+    {
+      "name": "DebugUIFoldout",
+      "pathID": 424
+    },
+    {
+      "name": "DebugUIGroup",
+      "pathID": 392
+    },
+    {
+      "name": "DebugUIHBox",
+      "pathID": 338
+    },
+    {
+      "name": "DebugUIIntField",
+      "pathID": 299
+    },
+    {
+      "name": "DebugUIMessageBox",
+      "pathID": 423
+    },
+    {
+      "name": "DebugUIObject",
+      "pathID": 298
+    },
+    {
+      "name": "DebugUIObjectList",
+      "pathID": 340
+    },
+    {
+      "name": "DebugUIObjectPopupField",
+      "pathID": 650
+    },
+    {
+      "name": "DebugUIPanel",
+      "pathID": 360
+    },
+    {
+      "name": "DebugUIPersistentCanvas",
+      "pathID": 417
+    },
+    {
+      "name": "DebugUIProgressBar",
+      "pathID": 300
+    },
+    {
+      "name": "DebugUIRow",
+      "pathID": 425
+    },
+    {
+      "name": "DebugUIToggle",
+      "pathID": 352
+    },
+    {
+      "name": "DebugUIToggleHistory",
+      "pathID": 823
+    },
+    {
+      "name": "DebugUIUIntField",
+      "pathID": 303
+    },
+    {
+      "name": "DebugUIValue",
+      "pathID": 302
+    },
+    {
+      "name": "DebugUIValuePersistent",
+      "pathID": 296
+    },
+    {
+      "name": "DebugUIValueTuple",
+      "pathID": 297
+    },
+    {
+      "name": "DebugUIVBox",
+      "pathID": 435
+    },
+    {
+      "name": "DebugUIVector2",
+      "pathID": 419
+    },
+    {
+      "name": "DebugUIVector3",
+      "pathID": 359
+    },
+    {
+      "name": "DebugUIVector4",
+      "pathID": 415
+    },
+    {
+      "name": "ErrorPopup",
+      "pathID": 460
+    },
+    {
+      "name": "ForceUpdatePopup",
+      "pathID": 767
+    },
+    {
+      "name": "GdprPopup",
+      "pathID": 719
+    },
+    {
+      "name": "InGameSettingsPopup",
+      "pathID": 839
+    },
+    {
+      "name": "LevelLeftMenuItemPrefab",
+      "pathID": 351
+    },
+    {
+      "name": "LoadingPopup",
+      "pathID": 819
+    },
+    {
+      "name": "MMDebugOnScreenConsole",
+      "pathID": 843
+    },
+    {
+      "name": "NetworkOfflinePopup",
+      "pathID": 782
+    },
+    {
+      "name": "PINPopup",
+      "pathID": 845
+    },
+    {
+      "name": "SettingsPopup",
+      "pathID": 630
+    },
+    {
+      "name": "SocialMediaButton",
+      "pathID": 680
+    },
+    {
+      "name": "SocialPopup",
+      "pathID": 474
+    },
+    {
+      "name": "TOSPopup",
+      "pathID": 892
+    },
+    {
+      "name": "TutorialStepEditorView",
+      "pathID": 367
+    },
+    {
+      "name": "VPPAPopup",
+      "pathID": 678
+    }
+  ],
+  "meshDependencies": 22,
+  "materialDependencies": 12,
+  "spriteDependencies": 2,
+  "notes": [
+    "Compiled player builds do not contain original loose .prefab YAML files. These are reconstructed from serialized GameObject roots.",
+    "Head Snake, Mid Snake and Tail Snake prefab roots are excluded.",
+    "Stripped MonoBehaviour TypeTrees prevent lossless restoration of original scripts/UI bindings/particle behaviours. Raw serialized component payloads are included for forensic use.",
+    "A source dependency named FeelSnakeBodyPart is retained because non-slither hole prefabs reference it as a SpriteRenderer shadow; the slither prefab roots themselves are not included."
+  ]
+}

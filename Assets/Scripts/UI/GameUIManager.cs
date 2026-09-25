@@ -9,6 +9,11 @@ public class GameUIManager : MonoBehaviour
     [SerializeField] private Text levelNumberText;
     [SerializeField] private Image[] heartImages;
 
+    [Header("Tutorial Elements")]
+    [SerializeField] private GameObject tutorialContainer;
+    [SerializeField] private Text tutorialText;
+    [SerializeField] private GameObject tutorialHand;
+
     [Header("Panels")]
     [SerializeField] private GameObject winPanel;
     [SerializeField] private GameObject losePanel;
@@ -44,6 +49,7 @@ public class GameUIManager : MonoBehaviour
         GameManager.OnTimerUpdated += UpdateTimerUI;
         GameManager.OnLivesUpdated += UpdateLivesUI;
         LevelManager.OnLevelLoaded += HandleLevelLoaded;
+        AntQueueController.OnQueueMoveStarted += HandleQueueMoveStarted;
 
         // Top bar buttons
         if (restartButton != null) restartButton.onClick.AddListener(() => GameManager.Instance.RestartLevel());
@@ -78,6 +84,15 @@ public class GameUIManager : MonoBehaviour
         GameManager.OnTimerUpdated -= UpdateTimerUI;
         GameManager.OnLivesUpdated -= UpdateLivesUI;
         LevelManager.OnLevelLoaded -= HandleLevelLoaded;
+        AntQueueController.OnQueueMoveStarted -= HandleQueueMoveStarted;
+    }
+
+    private void HandleQueueMoveStarted(AntQueueController queue)
+    {
+        if (tutorialContainer != null && tutorialContainer.activeSelf)
+        {
+            tutorialContainer.SetActive(false);
+        }
     }
 
     public void OpenSettingsModal()
@@ -170,7 +185,12 @@ public class GameUIManager : MonoBehaviour
 
     private void HandleLevelLoaded(Level level)
     {
-        if (levelNumberText != null) levelNumberText.text = level.LevelNumber.ToString();
+        if (levelNumberText != null) levelNumberText.text = level != null ? level.LevelNumber.ToString() : "1";
+
+        if (tutorialContainer != null)
+        {
+            tutorialContainer.SetActive(level != null && level.LevelNumber == 1);
+        }
 
         if (winPanel != null) winPanel.SetActive(false);
         if (losePanel != null) losePanel.SetActive(false);

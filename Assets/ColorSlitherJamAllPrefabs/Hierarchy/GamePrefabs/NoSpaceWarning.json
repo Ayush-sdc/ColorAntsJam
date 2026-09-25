@@ -1,0 +1,179 @@
+{
+  "sourceFile": "sharedassets2.assets",
+  "sourceGameObjectPathID": 314,
+  "sourceTransformPathID": 628,
+  "name": "NoSpaceWarning",
+  "active": true,
+  "isRectTransform": true,
+  "localPosition": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 628,
+      "classID": 224
+    },
+    {
+      "pathID": 637,
+      "classID": 225
+    }
+  ],
+  "anchorMin": [
+    0.5,
+    0.5
+  ],
+  "anchorMax": [
+    0.5,
+    0.5
+  ],
+  "anchoredPosition": [
+    0.0,
+    0.0
+  ],
+  "sizeDelta": [
+    100.0,
+    100.0
+  ],
+  "pivot": [
+    0.5,
+    0.5
+  ],
+  "children": [
+    {
+      "sourceFile": "sharedassets2.assets",
+      "sourceGameObjectPathID": 334,
+      "sourceTransformPathID": 630,
+      "name": "Procedural Image",
+      "active": true,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 630,
+          "classID": 224
+        },
+        {
+          "pathID": 624,
+          "classID": 222
+        },
+        {
+          "pathID": 657,
+          "classID": 114
+        },
+        {
+          "pathID": 663,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        0.5,
+        0.5
+      ],
+      "anchorMax": [
+        0.5,
+        0.5
+      ],
+      "anchoredPosition": [
+        0.0,
+        0.0
+      ],
+      "sizeDelta": [
+        707.1817016601562,
+        153.5749053955078
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "children": [
+        {
+          "sourceFile": "sharedassets2.assets",
+          "sourceGameObjectPathID": 392,
+          "sourceTransformPathID": 634,
+          "name": "Text (TMP)",
+          "active": true,
+          "isRectTransform": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "components": [
+            {
+              "pathID": 634,
+              "classID": 224
+            },
+            {
+              "pathID": 625,
+              "classID": 222
+            },
+            {
+              "pathID": 664,
+              "classID": 114
+            }
+          ],
+          "anchorMin": [
+            0.5,
+            0.5
+          ],
+          "anchorMax": [
+            0.5,
+            0.5
+          ],
+          "anchoredPosition": [
+            0.0,
+            0.0
+          ],
+          "sizeDelta": [
+            200.0,
+            50.0
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "children": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "pathID": 41,
+    "name": "Connector Variant",
+    "sourceJSON": "Materials/SourceJSON/Material_41_Connector_Variant.json",
+    "status": "parsed"
+  },
+  {
+    "pathID": 44,
+    "name": "Plane 14",
+    "sourceJSON": "Materials/SourceJSON/Material_44_Plane_14.json",
+    "status": "parsed"
+  },
+  {
+    "pathID": 45,
+    "name": "Plane 15",
+    "sourceJSON": "Materials/SourceJSON/Material_45_Plane_15.json",
+    "status": "parsed"
+  },
+  {
+    "pathID": 46,
+    "name": "Plane 1",
+    "sourceJSON": "Materials/SourceJSON/Material_46_Plane_1.json",
+    "status": "parsed"
+  },
+  {
+    "pathID": 47,
+    "name": "Plane 10",
+    "sourceJSON": "Materials/SourceJSON/Material_47_Plane_10.json",
+    "status": "parsed"
+  },
+  {
+    "pathID": 52,
+    "name": "Plane 2",
+    "sourceJSON": "Materials/SourceJSON/Material_52_Plane_2.json",
+    "status": "parsed"
+  },
+  {
+    "pathID": 54,
+    "name": "Plane 6",
+    "sourceJSON": "Materials/SourceJSON/Material_54_Plane_6.json",
+    "status": "parsed"
+  },
+  {
+    "pathID": 55,
+    "name": "Plane 7",
+    "sourceJSON": "Materials/SourceJSON/Material_55_Plane_7.json",
+    "status": "parsed"
+  },
+  {
+    "pathID": 56,
+    "name": "Plane 9",
+    "sourceJSON": "Materials/SourceJSON/Material_56_Plane_9.json",
+    "status": "parsed"
+  },
+  {
+    "pathID": 57,
+    "name": "Lit",
+    "sourceJSON": "Materials/SourceJSON/Material_57_Lit.json",
+    "status": "parsed"
+  },
+  {
+    "pathID": 58,
+    "name": "LilitaOne-Regular SDF Material",
+    "sourceJSON": "Materials/SourceJSON/Material_58_LilitaOne-Regular_SDF_Material.json",
+    "status": "parsed"
+  },
+  {
+    "pathID": 61,
+    "name": "LilitaOne-Regular Outline_Extended ASCII_120 SDF Material",
+    "sourceJSON": "Materials/SourceJSON/Material_61_LilitaOne-Regular_Outline_Extended_ASCII_120_SDF_Material.json",
+    "status": "parsed"
+  }
+]

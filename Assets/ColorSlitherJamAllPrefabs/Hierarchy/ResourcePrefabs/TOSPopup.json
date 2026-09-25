@@ -1,0 +1,746 @@
+{
+  "sourceFile": "resources.assets",
+  "sourceGameObjectPathID": 892,
+  "sourceTransformPathID": 1528,
+  "name": "TOSPopup",
+  "active": true,
+  "isRectTransform": true,
+  "localPosition": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 1528,
+      "classID": 224
+    },
+    {
+      "pathID": 2394,
+      "classID": 114
+    },
+    {
+      "pathID": 2317,
+      "classID": 114
+    }
+  ],
+  "anchorMin": [
+    0.0,
+    0.0
+  ],
+  "anchorMax": [
+    1.0,
+    1.0
+  ],
+  "anchoredPosition": [
+    0.0,
+    0.0
+  ],
+  "sizeDelta": [
+    0.0,
+    0.0
+  ],
+  "pivot": [
+    0.5,
+    0.5
+  ],
+  "children": [
+    {
+      "sourceFile": "resources.assets",
+      "sourceGameObjectPathID": 549,
+      "sourceTransformPathID": 1932,
+      "name": "GameImage",
+      "active": false,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        -0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 1932,
+          "classID": 224
+        },
+        {
+          "pathID": 1138,
+          "classID": 222
+        },
+        {
+          "pathID": 2846,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        0.0,
+        1.0
+      ],
+      "anchorMax": [
+        0.0,
+        1.0
+      ],
+      "anchoredPosition": [
+        820.0,
+        -677.7550048828125
+      ],
+      "sizeDelta": [
+        480.0,
+        480.0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "children": []
+    },
+    {
+      "sourceFile": "resources.assets",
+      "sourceGameObjectPathID": 755,
+      "sourceTransformPathID": 1804,
+      "name": "PopupBg",
+      "active": true,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        -0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 1804,
+          "classID": 224
+        },
+        {
+          "pathID": 1065,
+          "classID": 222
+        },
+        {
+          "pathID": 2694,
+          "classID": 114
+        },
+        {
+          "pathID": 2644,
+          "classID": 114
+        },
+        {
+          "pathID": 2555,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        0.0,
+        1.0
+      ],
+      "anchorMax": [
+        0.0,
+        1.0
+      ],
+      "anchoredPosition": [
+        642.0,
+        -1389.0
+      ],
+      "sizeDelta": [
+        960.0,
+        0.0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "children": [
+        {
+          "sourceFile": "resources.assets",
+          "sourceGameObjectPathID": 853,
+          "sourceTransformPathID": 1728,
+          "name": "TitleArea",
+          "active": true,
+          "isRectTransform": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "components": [
+            {
+              "pathID": 1728,
+              "classID": 224
+            },
+            {
+              "pathID": 1024,
+              "classID": 222
+            },
+            {
+              "pathID": 2480,
+              "classID": 114
+            },
+            {
+              "pathID": 2335,
+              "classID": 114
+            },
+            {
+              "pathID": 2364,
+              "classID": 114
+            }
+          ],
+          "anchorMin": [
+            0.5,
+            1.0
+          ],
+          "anchorMax": [
+            0.5,
+            1.0
+          ],
+          "anchoredPosition": [
+            0.0,
+            74.0
+          ],
+          "sizeDelta": [
+            601.0,
+            193.0
+          ],
+          "pivot": [
+            0.5,
+            1.0
+          ],
+          "children": [
+            {
+              "sourceFile": "resources.assets",
+              "sourceGameObjectPathID": 692,
+              "sourceTransformPathID": 1642,
+              "name": "Text (TMP)",
+              "active": true,
+              "isRectTransform": true,
+              "localPosition": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "localRotationQuaternion": [
+                0.0,
+                0.0,
+                0.02984069101512432,
+                0.9995546936988831
+              ],
+              "localScale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "components": [
+                {
+                  "pathID": 1642,
+                  "classID": 224
+                },
+                {
+                  "pathID": 1099,
+                  "classID": 222
+                },
+                {
+                  "pathID": 2834,
+                  "classID": 114
+                }
+              ],
+              "anchorMin": [
+                0.0,
+                0.0
+              ],
+              "anchorMax": [
+                0.0,
+                0.0
+              ],
+              "anchoredPosition": [
+                0.0,
+                0.0
+              ],
+              "sizeDelta": [
+                0.0,
+                0.0
+              ],
+              "pivot": [
+                0.5,
+                0.5
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "sourceFile": "resources.assets",
+          "sourceGameObjectPathID": 848,
+          "sourceTransformPathID": 1858,
+          "name": "Divider (1)",
+          "active": true,
+          "isRectTransform": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "components": [
+            {
+              "pathID": 1858,
+              "classID": 224
+            },
+            {
+              "pathID": 1028,
+              "classID": 222
+            },
+            {
+              "pathID": 2382,
+              "classID": 114
+            },
+            {
+              "pathID": 2855,
+              "classID": 114
+            }
+          ],
+          "anchorMin": [
+            0.0,
+            1.0
+          ],
+          "anchorMax": [
+            0.0,
+            1.0
+          ],
+          "anchoredPosition": [
+            80.0,
+            -79.0
+          ],
+          "sizeDelta": [
+            120.0,
+            2.0
+          ],
+          "pivot": [
+            0.0,
+            1.0
+          ],
+          "children": []
+        },
+        {
+          "sourceFile": "resources.assets",
+          "sourceGameObjectPathID": 638,
+          "sourceTransformPathID": 1732,
+          "name": "Divider (2)",
+          "active": true,
+          "isRectTransform": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "components": [
+            {
+              "pathID": 1732,
+              "classID": 224
+            },
+            {
+              "pathID": 1331,
+              "classID": 222
+            },
+            {
+              "pathID": 2688,
+              "classID": 114
+            },
+            {
+              "pathID": 2671,
+              "classID": 114
+            }
+          ],
+          "anchorMin": [
+            1.0,
+            1.0
+          ],
+          "anchorMax": [
+            1.0,
+            1.0
+          ],
+          "anchoredPosition": [
+            -80.0,
+            -79.0
+          ],
+          "sizeDelta": [
+            120.0,
+            2.0
+          ],
+          "pivot": [
+            1.0,
+            1.0
+          ],
+          "children": []
+        },
+        {
+          "sourceFile": "resources.assets",
+          "sourceGameObjectPathID": 798,
+          "sourceTransformPathID": 1824,
+          "name": "ContentArea",
+          "active": true,
+          "isRectTransform": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "components": [
+            {
+              "pathID": 1824,
+              "classID": 224
+            },
+            {
+              "pathID": 2691,
+              "classID": 114
+            },
+            {
+              "pathID": 2477,
+              "classID": 114
+            }
+          ],
+          "anchorMin": [
+            0.0,
+            1.0
+          ],
+          "anchorMax": [
+            0.0,
+            1.0
+          ],
+          "anchoredPosition": [
+            480.0,
+            -32.0
+          ],
+          "sizeDelta": [
+            938.0,
+            0.0
+          ],
+          "pivot": [
+            0.5,
+            1.0
+          ],
+          "children": [
+            {
+              "sourceFile": "resources.assets",
+              "sourceGameObjectPathID": 779,
+              "sourceTransformPathID": 1847,
+              "name": "ContentText",
+              "active": true,
+              "isRectTransform": true,
+              "localPosition": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "localRotationQuaternion": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "localScale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "components": [
+                {
+                  "pathID": 1847,
+                  "classID": 224
+                },
+                {
+                  "pathID": 1293,
+                  "classID": 222
+                },
+                {
+                  "pathID": 2601,
+                  "classID": 114
+                }
+              ],
+              "anchorMin": [
+                0.0,
+                0.0
+              ],
+              "anchorMax": [
+                0.0,
+                0.0
+              ],
+              "anchoredPosition": [
+                0.0,
+                0.0
+              ],
+              "sizeDelta": [
+                0.0,
+                0.0
+              ],
+              "pivot": [
+                0.5,
+                0.5
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "sourceFile": "resources.assets",
+          "sourceGameObjectPathID": 721,
+          "sourceTransformPathID": 1533,
+          "name": "ButtonArea",
+          "active": true,
+          "isRectTransform": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "components": [
+            {
+              "pathID": 1533,
+              "classID": 224
+            },
+            {
+              "pathID": 1208,
+              "classID": 222
+            },
+            {
+              "pathID": 2285,
+              "classID": 114
+            },
+            {
+              "pathID": 2295,
+              "classID": 114
+            }
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "anchoredPosition": [
+            0.0,
+            0.0
+          ],
+          "sizeDelta": [
+            0.0,
+            0.0
+          ],
+          "pivot": [
+            0.5,
+            0.0
+          ],
+          "children": [
+            {
+              "sourceFile": "resources.assets",
+              "sourceGameObjectPathID": 443,
+              "sourceTransformPathID": 1862,
+              "name": "AcceptButton",
+              "active": true,
+              "isRectTransform": true,
+              "localPosition": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "localRotationQuaternion": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "localScale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "components": [
+                {
+                  "pathID": 1862,
+                  "classID": 224
+                },
+                {
+                  "pathID": 1146,
+                  "classID": 222
+                },
+                {
+                  "pathID": 2374,
+                  "classID": 114
+                },
+                {
+                  "pathID": 2533,
+                  "classID": 114
+                }
+              ],
+              "anchorMin": [
+                0.5,
+                0.5
+              ],
+              "anchorMax": [
+                0.5,
+                0.5
+              ],
+              "anchoredPosition": [
+                0.0,
+                0.0
+              ],
+              "sizeDelta": [
+                339.0,
+                164.0
+              ],
+              "pivot": [
+                0.5,
+                0.5
+              ],
+              "children": [
+                {
+                  "sourceFile": "resources.assets",
+                  "sourceGameObjectPathID": 875,
+                  "sourceTransformPathID": 1676,
+                  "name": "AcceptText (TMP)",
+                  "active": true,
+                  "isRectTransform": true,
+                  "localPosition": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "localRotationQuaternion": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "localScale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "components": [
+                    {
+                      "pathID": 1676,
+                      "classID": 224
+                    },
+                    {
+                      "pathID": 1042,
+                      "classID": 222
+                    },
+                    {
+                      "pathID": 2613,
+                      "classID": 114
+                    }
+                  ],
+                  "anchorMin": [
+                    0.0,
+                    0.5
+                  ],
+                  "anchorMax": [
+                    1.0,
+                    0.5
+                  ],
+                  "anchoredPosition": [
+                    0.0,
+                    0.0
+                  ],
+                  "sizeDelta": [
+                    0.0,
+                    50.0
+                  ],
+                  "pivot": [
+                    0.5,
+                    0.5
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

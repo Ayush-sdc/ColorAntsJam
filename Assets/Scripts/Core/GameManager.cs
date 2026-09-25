@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using DG.Tweening;
 
 public enum GameState
 {
@@ -26,10 +27,12 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameState currentState = GameState.NotStarted;
     [SerializeField] private float remainingTimer;
     [SerializeField] private int playerLives = 3;
+    [SerializeField] private bool timerStarted = false;
 
     public GameState CurrentState => currentState;
     public float RemainingTimer => remainingTimer;
     public int PlayerLives => playerLives;
+    public bool IsTimerStarted => timerStarted;
 
     public static event Action<GameState> OnGameStateChanged;
     public static event Action<float> OnTimerUpdated;
@@ -43,10 +46,12 @@ public class GameManager : MonoBehaviour
             return;
         }
         Instance = this;
+        DOTween.SetTweensCapacity(750, 150);
 
         LevelManager.OnLevelLoaded += HandleLevelLoaded;
         BoardManager.OnBoardStateChanged += CheckGameWinLossConditions;
         AntQueueController.OnQueueBlockedFeedback += HandleBlockedFeedback;
+        AntQueueController.OnQueueMoveStarted += HandleQueueMoveStarted;
     }
 
     private void OnDestroy()
@@ -59,11 +64,12 @@ public class GameManager : MonoBehaviour
         LevelManager.OnLevelLoaded -= HandleLevelLoaded;
         BoardManager.OnBoardStateChanged -= CheckGameWinLossConditions;
         AntQueueController.OnQueueBlockedFeedback -= HandleBlockedFeedback;
+        AntQueueController.OnQueueMoveStarted -= HandleQueueMoveStarted;
     }
 
     private void Update()
     {
-        if (currentState == GameState.Playing)
+        if (currentState == GameState.Playing && timerStarted)
         {
             if (remainingTimer > 0f)
             {
@@ -82,6 +88,7 @@ public class GameManager : MonoBehaviour
     private void HandleLevelLoaded(Level level)
     {
         currentState = GameState.NotStarted;
+        timerStarted = false;
         remainingTimer = level.TimeLimitInSeconds;
         playerLives = 3;
 
@@ -95,6 +102,24 @@ public class GameManager : MonoBehaviour
         OnGameStateChanged?.Invoke(currentState);
         OnTimerUpdated?.Invoke(remainingTimer);
         OnLivesUpdated?.Invoke(playerLives);
+    }
+
+    private void HandleQueueMoveStarted(AntQueueController queue)
+    {
+        StartTimerOnFirstValidMove(queue);
+    }
+
+    /// <summary>
+    /// Starts the level countdown timer when the first valid ant queue move is successfully accepted.
+    /// Subsequent calls do nothing.
+    /// </summary>
+    public void StartTimerOnFirstValidMove(AntQueueController queue = null)
+    {
+        if (currentState == GameState.Playing && !timerStarted)
+        {
+            timerStarted = true;
+            Debug.Log($"[Timer] First valid ant queue move accepted (Queue={(queue != null ? queue.QueueId : "Manual")}). Level timer started!");
+        }
     }
 
     private void HandleBlockedFeedback(AntQueueController queue)
@@ -197,6 +222,7 @@ public class GameManager : MonoBehaviour
 
     public void RestartLevel()
     {
+        timerStarted = false;
         if (LevelManager.Instance != null)
         {
             LevelManager.Instance.RestartCurrentLevel();

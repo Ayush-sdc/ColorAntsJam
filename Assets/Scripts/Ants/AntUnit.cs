@@ -9,11 +9,16 @@ public class AntUnit : MonoBehaviour
     [SerializeField] private bool isTail = false;
 
     [Header("Components")]
+    [SerializeField] private Transform visualRoot;
     [SerializeField] private Transform headPivot;
     [SerializeField] private Transform modelRoot;
     [SerializeField] private MeshRenderer bodyRenderer;
     [SerializeField] private Transform leftPupil;
     [SerializeField] private Transform rightPupil;
+
+    [Header("Walk Animation")]
+    [SerializeField] private float bobHeight = 0.035f;
+    [SerializeField] private float tiltAngle = 3.5f;
 
     private static readonly Vector3 DefaultPupilLocalPos = new Vector3(0f, 0.12f, 0.24f);
 
@@ -21,11 +26,17 @@ public class AntUnit : MonoBehaviour
     public bool IsHead => isHead;
     public bool IsTail => isTail;
     public bool IsMoving { get; set; } = false;
+    public Transform VisualRoot => visualRoot;
+    public float BobHeight => bobHeight;
+    public float TiltAngle => tiltAngle;
+    public bool IsWalkTweenActive => walkSequence != null && walkSequence.IsActive();
 
+    private Sequence walkSequence;
     private bool isInitialized = false;
 
     private void Awake()
     {
+        EnsureVisualRoot();
         if (!isInitialized && transform.childCount == 0 && modelRoot == null)
         {
             BuildVisuals();
@@ -34,9 +45,32 @@ public class AntUnit : MonoBehaviour
 
     private void Start()
     {
+        EnsureVisualRoot();
         if (!isInitialized && transform.childCount == 0 && modelRoot == null)
         {
             BuildVisuals();
+        }
+    }
+
+    private void OnDisable()
+    {
+        StopWalkAnimation();
+    }
+
+    private void OnDestroy()
+    {
+        KillWalkTween();
+    }
+
+    private void EnsureVisualRoot()
+    {
+        if (visualRoot == null)
+        {
+            Transform existing = transform.Find("VisualRoot");
+            if (existing != null)
+            {
+                visualRoot = existing;
+            }
         }
     }
 
@@ -50,10 +84,92 @@ public class AntUnit : MonoBehaviour
         BuildVisuals();
     }
 
+    public void StartWalkAnimation(int queueIndex = 0, float moveSpeed = 6.8f)
+    {
+        KillWalkTween();
+        ResetWalkVisual();
+
+        if (visualRoot == null)
+        {
+            EnsureVisualRoot();
+            if (visualRoot == null) return;
+        }
+
+        // Half-step duration inversely scaled by move speed
+        float halfStepDuration = Mathf.Clamp(0.50f / Mathf.Max(1f, moveSpeed), 0.07f, 0.16f);
+        float fullCycle = halfStepDuration * 4f;
+
+        walkSequence = DOTween.Sequence();
+        walkSequence.SetTarget(visualRoot);
+
+        // Step 1: Left Step (Bob up & down on local Y, tilt left on local Z)
+        walkSequence.Append(visualRoot.DOLocalMoveY(bobHeight, halfStepDuration).SetEase(Ease.OutSine));
+        walkSequence.Join(visualRoot.DOLocalRotate(new Vector3(0f, 0f, tiltAngle), halfStepDuration).SetEase(Ease.OutSine));
+
+        walkSequence.Append(visualRoot.DOLocalMoveY(0f, halfStepDuration).SetEase(Ease.InSine));
+        walkSequence.Join(visualRoot.DOLocalRotate(Vector3.zero, halfStepDuration).SetEase(Ease.InSine));
+
+        // Step 2: Right Step (Bob up & down on local Y, tilt right on local Z)
+        walkSequence.Append(visualRoot.DOLocalMoveY(bobHeight, halfStepDuration).SetEase(Ease.OutSine));
+        walkSequence.Join(visualRoot.DOLocalRotate(new Vector3(0f, 0f, -tiltAngle), halfStepDuration).SetEase(Ease.OutSine));
+
+        walkSequence.Append(visualRoot.DOLocalMoveY(0f, halfStepDuration).SetEase(Ease.InSine));
+        walkSequence.Join(visualRoot.DOLocalRotate(Vector3.zero, halfStepDuration).SetEase(Ease.InSine));
+
+        walkSequence.SetLoops(-1, LoopType.Restart);
+
+        // Deterministic staggering based on queue index
+        float phaseOffset = (queueIndex * 0.04f) % fullCycle;
+        if (phaseOffset > 0.001f)
+        {
+            walkSequence.Goto(phaseOffset, true);
+        }
+    }
+
+    public void StopWalkAnimation()
+    {
+        KillWalkTween();
+        ResetWalkVisual();
+    }
+
+    public void KillWalkTween()
+    {
+        if (walkSequence != null)
+        {
+            if (walkSequence.IsActive())
+            {
+                walkSequence.Kill();
+            }
+            walkSequence = null;
+        }
+        else if (visualRoot != null)
+        {
+            visualRoot.DOKill();
+        }
+    }
+
+    public void ResetWalkVisual()
+    {
+        if (visualRoot != null)
+        {
+            visualRoot.localPosition = Vector3.zero;
+            visualRoot.localRotation = Quaternion.identity;
+            visualRoot.localScale = Vector3.one;
+        }
+    }
+
     [ContextMenu("Rebuild Ant Visuals")]
     public void BuildVisuals()
     {
+        KillWalkTween();
         ClearVisuals();
+
+        GameObject vRootObj = new GameObject("VisualRoot");
+        vRootObj.transform.SetParent(transform, false);
+        vRootObj.transform.localPosition = Vector3.zero;
+        vRootObj.transform.localRotation = Quaternion.identity;
+        vRootObj.transform.localScale = Vector3.one;
+        visualRoot = vRootObj.transform;
 
         // Native 3D Ant Visuals: Worker Ant Mesh or Procedural Fallback Composite Ant
         Material antMat = AntColorPalette.GetMaterial(antColor);
@@ -63,7 +179,7 @@ public class AntUnit : MonoBehaviour
         {
             // 1. Compact 3D Worker Ant Mesh (Length scaled to maintain readability and separation)
             GameObject modelObj = new GameObject("AntModel_3D");
-            modelObj.transform.SetParent(transform, false);
+            modelObj.transform.SetParent(visualRoot, false);
             modelObj.transform.localPosition = new Vector3(0f, 0.05f, 0f);
             modelObj.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
             modelObj.transform.localScale = new Vector3(0.95f, 0.95f, 0.82f);
@@ -79,7 +195,7 @@ public class AntUnit : MonoBehaviour
 
             // 2. Head Pivot
             GameObject headPivotObj = new GameObject("HeadPivot");
-            headPivotObj.transform.SetParent(transform, false);
+            headPivotObj.transform.SetParent(visualRoot, false);
             headPivotObj.transform.localPosition = new Vector3(0f, 0.25f, 0.20f);
             headPivot = headPivotObj.transform;
 
@@ -96,7 +212,7 @@ public class AntUnit : MonoBehaviour
             // Procedural Fallback Composite Ant
             GameObject abdomen = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             abdomen.name = "Abdomen";
-            abdomen.transform.SetParent(transform, false);
+            abdomen.transform.SetParent(visualRoot, false);
             abdomen.transform.localPosition = new Vector3(0f, 0.24f, -0.14f);
             abdomen.transform.localScale = new Vector3(0.58f, 0.50f, 0.60f);
             SafeDestroy(abdomen.GetComponent<Collider>());
@@ -105,20 +221,20 @@ public class AntUnit : MonoBehaviour
 
             GameObject thorax = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             thorax.name = "Thorax";
-            thorax.transform.SetParent(transform, false);
+            thorax.transform.SetParent(visualRoot, false);
             thorax.transform.localPosition = new Vector3(0f, 0.20f, 0.04f);
             thorax.transform.localScale = new Vector3(0.46f, 0.40f, 0.42f);
             SafeDestroy(thorax.GetComponent<Collider>());
             var thRen = thorax.GetComponent<MeshRenderer>();
             if (thRen != null) thRen.sharedMaterial = antMat;
 
-            CreateLeg(new Vector3(-0.30f, 0.10f, 0.10f));
-            CreateLeg(new Vector3(0.30f, 0.10f, 0.10f));
-            CreateLeg(new Vector3(-0.30f, 0.10f, -0.12f));
-            CreateLeg(new Vector3(0.30f, 0.10f, -0.12f));
+            CreateLeg(visualRoot, new Vector3(-0.30f, 0.10f, 0.10f));
+            CreateLeg(visualRoot, new Vector3(0.30f, 0.10f, 0.10f));
+            CreateLeg(visualRoot, new Vector3(-0.30f, 0.10f, -0.12f));
+            CreateLeg(visualRoot, new Vector3(0.30f, 0.10f, -0.12f));
 
             GameObject headPivotObj = new GameObject("HeadPivot");
-            headPivotObj.transform.SetParent(transform, false);
+            headPivotObj.transform.SetParent(visualRoot, false);
             headPivotObj.transform.localPosition = new Vector3(0f, 0.22f, 0.18f);
             headPivot = headPivotObj.transform;
 
@@ -217,11 +333,14 @@ public class AntUnit : MonoBehaviour
 
     private void ClearVisuals()
     {
+        KillWalkTween();
+
         leftPupil = null;
         rightPupil = null;
         headPivot = null;
         modelRoot = null;
         bodyRenderer = null;
+        visualRoot = null;
 
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
@@ -240,11 +359,11 @@ public class AntUnit : MonoBehaviour
         }
     }
 
-    private void CreateLeg(Vector3 localPos)
+    private void CreateLeg(Transform parent, Vector3 localPos)
     {
         GameObject leg = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         leg.name = "FootBead";
-        leg.transform.SetParent(transform, false);
+        leg.transform.SetParent(parent, false);
         leg.transform.localPosition = localPos;
         leg.transform.localScale = new Vector3(0.16f, 0.12f, 0.16f);
 

@@ -1,0 +1,35 @@
+{
+  "sourceFile": "sharedassets2.assets",
+  "sourceGameObjectPathID": 318,
+  "sourceTransformPathID": 488,
+  "name": "ArrowHolder",
+  "active": true,
+  "isRectTransform": false,
+  "localPosition": [
+    -0.07457678765058517,
+    6.386707305908203,
+    -3.5614066123962402
+  ],
+  "localRotationQuaternion": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 488,
+      "classID": 4
+    },
+    {
+      "pathID": 662,
+      "classID": 114
+    }
+  ],
+  "children": []
+}

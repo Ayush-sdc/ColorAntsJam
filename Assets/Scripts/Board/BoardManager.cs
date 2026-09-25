@@ -19,6 +19,10 @@ public class BoardManager : MonoBehaviour
     [Tooltip("When false, routine board diagnostics are suppressed to keep Console clean.")]
     [SerializeField] private bool enableDiagnostics = false;
     private bool isTestInstance = false;
+    [Header("Movement & Pathfinding Configuration")]
+    [Tooltip("Global authoritative rule: When false, AntPathfinder / BFS / grid waypoint routing is completely disabled for all levels.")]
+    [SerializeField] private bool useAutomaticPathfinding = false;
+    public bool UseAutomaticPathfinding { get => useAutomaticPathfinding; set => useAutomaticPathfinding = value; }
 
     [Header("Runtime Grid State")]
     [SerializeField] private int width = 9;
@@ -652,9 +656,246 @@ public class BoardManager : MonoBehaviour
         return coord.x >= 0 && coord.x < width && coord.y >= 0 && coord.y < height;
     }
 
+    // =========================================================================
+    // WALKABLE BOARD BOUNDARY & FREE OPEN-FLOOR MOVEMENT SYSTEM
+    // =========================================================================
+
+    /// <summary>
+    /// Returns the authoritative walkable world bounds of the board floor.
+    /// Ants may navigate freely anywhere inside this boundary.
+    /// </summary>
+    public Bounds GetWalkableBounds(float margin = 0.15f)
+    {
+        int w = width > 0 ? width : 9;
+        int h = height > 0 ? height : 6;
+        float cs = cellSize > 0 ? cellSize : 1.0f;
+        float totalWidth = w * cs;
+        float totalHeight = h * cs;
+        Vector3 size = new Vector3(Mathf.Max(0.1f, totalWidth - margin * 2f), 2f, Mathf.Max(0.1f, totalHeight - margin * 2f));
+        return new Bounds(Vector3.zero, size);
+    }
+
+    /// <summary>
+    /// Checks whether a continuous 3D world position is inside the playable board floor boundary.
+    /// </summary>
+    public bool IsWorldPosInsideBoard(Vector3 worldPos, float margin = 0.15f)
+    {
+        Bounds b = GetWalkableBounds(margin);
+        return worldPos.x >= b.min.x && worldPos.x <= b.max.x &&
+               worldPos.z >= b.min.z && worldPos.z <= b.max.z;
+    }
+
+    /// <summary>
+    /// Authoritative blocker filter: ONLY Holes and other Ant Queues can block ant path.
+    /// Everything else (dots, props, environment, decorations, floor, VFX, UI) returns false.
+    /// </summary>
+    public bool IsBlockingForAntQueue(GameObject obj, AntQueueController currentQueue, HoleController targetHole)
+    {
+        if (obj == null) return false;
+
+        var hole = obj.GetComponentInParent<HoleController>();
+        if (hole != null)
+        {
+            return hole != targetHole; // Non-target holes block; target hole allows approach/entry
+        }
+
+        var queue = obj.GetComponentInParent<AntQueueController>();
+        if (queue != null)
+        {
+            return queue != currentQueue; // Other queues block; own queue does not block
+        }
+
+        var unit = obj.GetComponentInParent<AntUnit>();
+        if (unit != null)
+        {
+            var parentQueue = unit.GetComponentInParent<AntQueueController>();
+            return parentQueue != null && parentQueue != currentQueue;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Evaluates if a continuous 3D world position on the floor is traversable.
+    /// Core Rule: ONLY Holes/Holders and other Ant Queues can block ant movement.
+    /// Floor dots, grid markers, decorative objects, and environment meshes are 100% ignored.
+    /// </summary>
+    public bool IsWorldPosWalkable(Vector3 worldPos, AntQueueController currentQueue, HoleController targetHole, float antRadius = 0.28f)
+    {
+        // 1. Playable Board Boundary (containment on playable floor)
+        if (!IsWorldPosInsideBoard(worldPos, antRadius))
+        {
+            return false;
+        }
+
+        float cs = cellSize > 0 ? cellSize : 1.0f;
+        float blockDistSqr = (antRadius + cs * 0.38f) * (antRadius + cs * 0.38f);
+
+        // 2. Only Holes/Holders block (non-target or wrong color holders)
+        if (holesMap != null)
+        {
+            foreach (var kvp in holesMap)
+            {
+                var h = kvp.Value;
+                if (h != null && h != targetHole)
+                {
+                    Vector3 cellPos = GridToWorldPosition(kvp.Key);
+                    cellPos.y = worldPos.y;
+                    if ((worldPos - cellPos).sqrMagnitude < blockDistSqr)
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        // 3. Only Other Ant Queues block (stationary and moving units of other queues)
+        if (activeQueues != null)
+        {
+            float antDistSqr = (antRadius + antRadius) * (antRadius + antRadius);
+            foreach (var q in activeQueues)
+            {
+                if (q == null || q == currentQueue) continue;
+                if (q.Units != null)
+                {
+                    foreach (var u in q.Units)
+                    {
+                        if (u != null)
+                        {
+                            Vector3 uPos = u.transform.position;
+                            uPos.y = worldPos.y;
+                            if ((worldPos - uPos).sqrMagnitude < antDistSqr)
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Everything else (dots, props, environment, decorations, floor, VFX, UI) is WALKABLE
+        return true;
+    }
+
+    /// <summary>
+    /// Checks whether a straight line segment across open floor between two world positions is free of genuine blockers (holes and other queues).
+    /// </summary>
+    public bool IsLineOfSightClear(Vector3 from, Vector3 to, AntQueueController currentQueue, HoleController targetHole, float antRadius = 0.28f)
+    {
+        float dist = Vector3.Distance(from, to);
+        if (dist < 0.01f) return true;
+
+        float step = 0.20f;
+        int checks = Mathf.Max(2, Mathf.CeilToInt(dist / step));
+        for (int i = 1; i < checks; i++)
+        {
+            float t = (float)i / checks;
+            Vector3 pt = Vector3.Lerp(from, to, t);
+            if (!IsWorldPosWalkable(pt, currentQueue, targetHole, antRadius))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Converts a topological cell path into a smooth, continuous world-space trajectory across open floor.
+    /// Strictly guarantees that the first segment travels directly along headForwardWorld before any turning.
+    /// </summary>
+    public List<Vector3> GenerateSmoothFreeWorldPath(List<Vector2Int> cellPath, AntQueueController queue, HoleController targetHole)
+    {
+        if (cellPath == null || cellPath.Count == 0) return new List<Vector3>();
+
+        Vector3 headWorldPos = queue.Units != null && queue.Units.Count > 0 && queue.Units[0] != null 
+            ? queue.Units[0].transform.position 
+            : GridToWorldPosition(cellPath[0]);
+
+        // 1. Authoritative world-space forward vector derived from gameplay root / head unit
+        Vector3 headForward = queue.GetHeadForwardWorld();
+        headForward.y = 0f;
+        if (headForward.sqrMagnitude < 0.001f)
+        {
+            headForward = Vector3.forward;
+        }
+        else
+        {
+            headForward.Normalize();
+        }
+
+        // 2. Minimum straight forward distance before beginning any turns (0.75 cell width)
+        float cs = cellSize > 0 ? cellSize : 1.0f;
+        float minForwardDistance = cs * 0.75f;
+        Vector3 initialForwardPoint = headWorldPos + headForward * minForwardDistance;
+        initialForwardPoint.y = headWorldPos.y;
+
+        List<Vector3> waypoints = new List<Vector3>();
+        waypoints.Add(headWorldPos);          // Point 0: Head origin
+        waypoints.Add(initialForwardPoint);   // Point 1: Guaranteed straight-forward progression
+
+        for (int i = 1; i < cellPath.Count; i++)
+        {
+            waypoints.Add(GridToWorldPosition(cellPath[i]));
+        }
+
+        if (targetHole != null)
+        {
+            Vector3 pitPos = targetHole.transform.position;
+            pitPos.y = headWorldPos.y;
+            Vector3 entrancePos = GridToWorldPosition(cellPath[cellPath.Count - 1]);
+            waypoints[waypoints.Count - 1] = entrancePos;
+            waypoints.Add(pitPos);
+        }
+
+        // 3. String pulling: Keep Point 0 and Point 1 fixed (straight-forward launch).
+        // Line-of-sight shortcutting operates strictly from Point 1 onwards across open floor.
+        List<Vector3> pulledWaypoints = new List<Vector3>();
+        pulledWaypoints.Add(waypoints[0]);
+        pulledWaypoints.Add(waypoints[1]);
+
+        int currIdx = 1;
+        while (currIdx < waypoints.Count - 1)
+        {
+            int nextIdx = waypoints.Count - 1;
+            for (; nextIdx > currIdx + 1; nextIdx--)
+            {
+                if (IsLineOfSightClear(pulledWaypoints[pulledWaypoints.Count - 1], waypoints[nextIdx], queue, targetHole))
+                {
+                    break;
+                }
+            }
+            pulledWaypoints.Add(waypoints[nextIdx]);
+            currIdx = nextIdx;
+        }
+
+        // 4. Subdivide into dense continuous world positions (step size ~ 0.05 units)
+        List<Vector3> denseRoute = new List<Vector3>();
+        float stepSize = 0.05f;
+
+        for (int i = 0; i < pulledWaypoints.Count - 1; i++)
+        {
+            Vector3 p0 = pulledWaypoints[i];
+            Vector3 p1 = pulledWaypoints[i + 1];
+            float dist = Vector3.Distance(p0, p1);
+            int steps = Mathf.Max(1, Mathf.RoundToInt(dist / stepSize));
+
+            for (int s = 0; s < steps; s++)
+            {
+                float t = (float)s / steps;
+                Vector3 pt = Vector3.Lerp(p0, p1, t);
+                denseRoute.Add(pt);
+            }
+        }
+        denseRoute.Add(pulledWaypoints[pulledWaypoints.Count - 1]);
+
+        return denseRoute;
+    }
+
     /// <summary>
     /// Checks whether the given queue can legally move straight forward into its matching holder.
     /// Does NOT use BFS, A*, or any pathfinding.
+    /// Only holes/holders and other ant queues may block movement.
     /// </summary>
     public bool ValidateForwardMove(
         AntQueueController queue, 
@@ -676,21 +917,31 @@ public class BoardManager : MonoBehaviour
             return false;
         }
 
-        if (queue.CurrentBodyCoordinates.Count < 2)
+        Vector2Int head = queue.CurrentBodyCoordinates[0];
+
+        // Derive forward direction: head - neck or forwardDirection property
+        if (queue.CurrentBodyCoordinates.Count >= 2)
         {
-            Debug.LogError($"[ForwardMove] Single-ant queue {queue.QueueId} has no neck to derive direction and no explicit forward-direction data.");
-            blockedReason = "SingleAntNoDirection";
-            return false;
+            Vector2Int neck = queue.CurrentBodyCoordinates[1];
+            forwardDir = head - neck;
+        }
+        else if (queue.ForwardDirection != Vector2Int.zero)
+        {
+            forwardDir = queue.ForwardDirection;
+        }
+        else
+        {
+            Vector3 fwdWorld = queue.GetHeadForwardWorld();
+            if (Mathf.Abs(fwdWorld.x) > Mathf.Abs(fwdWorld.z))
+                forwardDir = fwdWorld.x > 0 ? Vector2Int.right : Vector2Int.left;
+            else
+                forwardDir = fwdWorld.z > 0 ? Vector2Int.up : Vector2Int.down;
         }
 
-        Vector2Int head = queue.CurrentBodyCoordinates[0];
-        Vector2Int neck = queue.CurrentBodyCoordinates[1];
-        forwardDir = head - neck;
-
-        // Authoritative Rule: Must be one of the four cardinal directions
+        // Must be one of the four cardinal directions
         if (!((forwardDir.x == 0 && Mathf.Abs(forwardDir.y) == 1) || (forwardDir.y == 0 && Mathf.Abs(forwardDir.x) == 1)))
         {
-            Debug.LogError($"[ForwardMove] Non-cardinal forward direction {forwardDir} for Queue={queue.QueueId} (Head={head}, Neck={neck})");
+            Debug.LogError($"[ForwardMove] Non-cardinal forward direction {forwardDir} for Queue={queue.QueueId}");
             blockedReason = "NonCardinalDirection";
             return false;
         }
@@ -699,14 +950,7 @@ public class BoardManager : MonoBehaviour
         Vector2Int curr = head + forwardDir;
         while (IsInBounds(curr))
         {
-            // 1. Check disabled cells from level data
-            if (currentLevel != null && currentLevel.GetCombinedDisabledCells().Contains(curr))
-            {
-                blockedReason = "DisabledCell";
-                return false;
-            }
-
-            // 2. Check stationary queues (ignore queues in the same connected moving group)
+            // 1. Check stationary queues (ignore queues in the same connected moving group)
             var otherQueue = GetQueueOccupying(curr, queue);
             if (otherQueue != null && (group == null || !group.Contains(otherQueue)))
             {
@@ -714,7 +958,7 @@ public class BoardManager : MonoBehaviour
                 return false;
             }
 
-            // 3. Check moving queues and their path reservations
+            // 2. Check moving queues and their path reservations
             if (movingQueues != null)
             {
                 foreach (var mq in movingQueues)
@@ -741,7 +985,7 @@ public class BoardManager : MonoBehaviour
                 }
             }
 
-            // 4. Check if cell has a holder
+            // 3. Check if cell has a holder
             HoleController hole = GetHoleAt(curr);
             if (hole != null)
             {
@@ -785,9 +1029,47 @@ public class BoardManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Validates forward movement for a queue or its entire connected group atomically.
-    /// If all members have clear straight paths to matching holders, starts forward movement for all members together.
-    /// If any member is blocked, all members remain stationary, play blocked shake, and lose 1 life.
+    /// Generates a straight continuous world-space trajectory across open floor from the queue's head to the destination hole.
+    /// Strictly moves in forwardDir without any waypoint navigation or A* route generation.
+    /// </summary>
+    public List<Vector3> GenerateStraightFreeWorldPath(AntQueueController queue, Vector2Int forwardDir, HoleController targetHole, Vector2Int entranceCell)
+    {
+        Vector3 headWorldPos = queue.Units != null && queue.Units.Count > 0 && queue.Units[0] != null 
+            ? queue.Units[0].transform.position 
+            : GridToWorldPosition(queue.CurrentBodyCoordinates[0]);
+
+        Vector3 entrancePos = GridToWorldPosition(entranceCell);
+        entrancePos.y = headWorldPos.y;
+
+        Vector3 pitPos = targetHole != null ? targetHole.transform.position : entrancePos;
+        pitPos.y = headWorldPos.y;
+
+        List<Vector3> denseRoute = new List<Vector3>();
+        float stepSize = 0.05f;
+
+        // March straight from headWorldPos to entrancePos
+        float dist1 = Vector3.Distance(headWorldPos, entrancePos);
+        int steps1 = Mathf.Max(1, Mathf.RoundToInt(dist1 / stepSize));
+        for (int s = 0; s < steps1; s++)
+        {
+            denseRoute.Add(Vector3.Lerp(headWorldPos, entrancePos, (float)s / steps1));
+        }
+
+        // March from entrancePos into hole pitPos
+        float dist2 = Vector3.Distance(entrancePos, pitPos);
+        int steps2 = Mathf.Max(1, Mathf.RoundToInt(dist2 / stepSize));
+        for (int s = 0; s <= steps2; s++)
+        {
+            denseRoute.Add(Vector3.Lerp(entrancePos, pitPos, (float)s / steps2));
+        }
+
+        return denseRoute;
+    }
+
+    /// <summary>
+    /// Attempts to launch an ant queue (or all members of its connected group) along a straight free-floor world route to its matching holder.
+    /// If valid, reserves destination capacity, launches movement, and starts the timer.
+    /// If invalid, plays blocked feedback and deducts 1 life.
     /// </summary>
     public bool TryStartMove(AntQueueController queue)
     {
@@ -818,54 +1100,154 @@ public class BoardManager : MonoBehaviour
             if (member == null || member.IsMoving || movingQueues.Contains(member)) return false;
         }
 
-        // Validate straight forward movement for every member in the connected group
-        var groupDirections = new Dictionary<AntQueueController, Vector2Int>();
-        var groupTargetHoles = new Dictionary<AntQueueController, HoleController>();
-        var groupEntranceCells = new Dictionary<AntQueueController, Vector2Int>();
-        var pendingReservations = new Dictionary<HoleController, int>();
-        bool allValid = true;
-        AntQueueController firstBlockedMember = null;
-        string failureReason = "";
-        Vector2Int failureHead = Vector2Int.zero;
-        Vector2Int failureDir = Vector2Int.zero;
+        // Central global rule: AUTOMATIC PATHFINDING = OFF
+        if (!useAutomaticPathfinding)
+        {
+            var groupDirections = new Dictionary<AntQueueController, Vector2Int>();
+            var groupTargetHoles = new Dictionary<AntQueueController, HoleController>();
+            var groupEntranceCells = new Dictionary<AntQueueController, Vector2Int>();
+            var pendingReservations = new Dictionary<HoleController, int>();
+            bool allValid = true;
+            AntQueueController firstBlockedMember = null;
+            string failureReason = "";
+
+            foreach (var member in group)
+            {
+                if (ValidateForwardMove(member, group, pendingReservations, out var dir, out var hole, out var entrance, out var blockedReason))
+                {
+                    groupDirections[member] = dir;
+                    groupTargetHoles[member] = hole;
+                    groupEntranceCells[member] = entrance;
+
+                    if (!pendingReservations.ContainsKey(hole))
+                    {
+                        pendingReservations[hole] = 0;
+                    }
+                    pendingReservations[hole]++;
+                }
+                else
+                {
+                    allValid = false;
+                    firstBlockedMember = member;
+                    failureReason = blockedReason;
+                    break;
+                }
+            }
+
+            if (!allValid)
+            {
+                if (firstBlockedMember != null)
+                {
+                    Debug.Log($"[ForwardMoveBlocked] Queue={firstBlockedMember.QueueId} Reason={failureReason} PathfindingFallback=False");
+                }
+
+                foreach (var member in group)
+                {
+                    if (member != null) member.TriggerBlockedFeedback();
+                }
+
+                // Deduct exactly ONE life for this player move attempt (invalid move)
+                if (GameManager.Instance != null)
+                {
+                    GameManager.Instance.LoseLife(InvalidMoveReason.NoValidPath);
+                }
+                return false;
+            }
+
+            // Reserve destination slots
+            bool allReserved = true;
+            List<HoleController> reservedHoles = new List<HoleController>();
+            foreach (var kvp in groupTargetHoles)
+            {
+                HoleController targetHole = kvp.Value;
+                if (targetHole == null || !targetHole.TryReserveSlot())
+                {
+                    allReserved = false;
+                    break;
+                }
+                reservedHoles.Add(targetHole);
+            }
+
+            if (!allReserved)
+            {
+                foreach (var hole in reservedHoles)
+                {
+                    hole.ReleaseReservation();
+                }
+                queue.PlayBlockedShake();
+                return false;
+            }
+
+            // Launch straight continuous movement for all members
+            foreach (var member in group)
+            {
+                if (member != null)
+                {
+                    movingQueues.Add(member);
+                    var dir = groupDirections[member];
+                    var hole = groupTargetHoles[member];
+                    var entrance = groupEntranceCells[member];
+                    member.DestinationHole = hole;
+                    member.ForwardDirection = dir;
+                    member.HoleEntranceCoordinate = entrance;
+
+                    var straightRoute = GenerateStraightFreeWorldPath(member, dir, hole, entrance);
+                    member.StartSmoothMovement(straightRoute, hole, entrance);
+                }
+            }
+
+            GameManager.Instance?.StartTimerOnFirstValidMove(queue);
+            return true;
+        }
+
+        // Validate path for every member in the connected group (pathfinding fallback if enabled)
+        var groupPaths = new Dictionary<AntQueueController, List<Vector2Int>>();
+        var legacyTargetHoles = new Dictionary<AntQueueController, HoleController>();
+        var legacyEntranceCells = new Dictionary<AntQueueController, Vector2Int>();
+        var legacyReservations = new Dictionary<HoleController, int>();
+        bool legacyAllValid = true;
+        AntQueueController legacyBlockedMember = null;
 
         foreach (var member in group)
         {
-            if (ValidateForwardMove(member, group, pendingReservations, out var dir, out var hole, out var entrance, out var blockedReason))
+            var path = AntPathfinder.FindPath(this, member, out HoleController hole, out Vector2Int entrance);
+            if (path != null && path.Count >= 2 && hole != null && !hole.IsFull)
             {
-                groupDirections[member] = dir;
-                groupTargetHoles[member] = hole;
-                groupEntranceCells[member] = entrance;
-
-                if (!pendingReservations.ContainsKey(hole))
+                int alreadyReserved = 0;
+                if (legacyReservations.TryGetValue(hole, out int count))
                 {
-                    pendingReservations[hole] = 0;
+                    alreadyReserved = count;
                 }
-                pendingReservations[hole]++;
+
+                if (hole.AvailableCapacity - alreadyReserved > 0)
+                {
+                    groupPaths[member] = path;
+                    legacyTargetHoles[member] = hole;
+                    legacyEntranceCells[member] = entrance;
+                    legacyReservations[hole] = alreadyReserved + 1;
+                }
+                else
+                {
+                    legacyAllValid = false;
+                    legacyBlockedMember = member;
+                    break;
+                }
             }
             else
             {
-                allValid = false;
-                firstBlockedMember = member;
-                failureReason = blockedReason;
-                if (member.CurrentBodyCoordinates != null && member.CurrentBodyCoordinates.Count > 0)
-                {
-                    failureHead = member.CurrentBodyCoordinates[0];
-                }
-                failureDir = dir;
+                legacyAllValid = false;
+                legacyBlockedMember = member;
                 break;
             }
         }
 
-        if (!allValid)
+        if (!legacyAllValid)
         {
-            // Blocked debug log as required
-            if (firstBlockedMember != null)
+            if (legacyBlockedMember != null)
             {
-                Debug.Log($"[ForwardMoveBlocked] Queue={firstBlockedMember.QueueId} Head={failureHead} Direction={failureDir} Next={failureHead + failureDir} Reason={failureReason} PathfindingFallback=False");
+                Debug.Log($"[MoveBlocked] Queue={legacyBlockedMember.QueueId} Reason=NoPathOrHolderFull");
             }
 
-            // Atomic rejection: all group members stay stationary and play blocked feedback
             foreach (var member in group)
             {
                 if (member != null)
@@ -874,7 +1256,6 @@ public class BoardManager : MonoBehaviour
                 }
             }
 
-            // Deduct exactly ONE life for this player move attempt (invalid move)
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.LoseLife(InvalidMoveReason.NoValidPath);
@@ -882,84 +1263,81 @@ public class BoardManager : MonoBehaviour
             return false;
         }
 
-        // Reserve destination slots to prevent oversubscription
-        bool allReserved = true;
-        List<HoleController> reservedHoles = new List<HoleController>();
-
-        foreach (var kvp in groupTargetHoles)
+        // Reserve destination slots
+        bool legacyAllReserved = true;
+        List<HoleController> legacyReservedList = new List<HoleController>();
+        foreach (var kvp in legacyTargetHoles)
         {
             HoleController targetHole = kvp.Value;
             if (targetHole == null || !targetHole.TryReserveSlot())
             {
-                allReserved = false;
+                legacyAllReserved = false;
                 break;
             }
-            reservedHoles.Add(targetHole);
+            legacyReservedList.Add(targetHole);
         }
 
-        if (!allReserved)
+        if (!legacyAllReserved)
         {
-            // Rollback any reservations made in this attempt
-            foreach (var hole in reservedHoles)
+            foreach (var hole in legacyReservedList)
             {
                 hole.ReleaseReservation();
             }
-            Debug.Log($"[QueueMoveBlocked] Queue={queue.QueueId} Reason=HolderOversubscribed MovingQueues={movingQueues.Count} HeartPenalty=False");
             queue.PlayBlockedShake();
             return false;
         }
 
-        // All valid and reserved: atomically launch synchronized forward movement
+        // Launch smooth free-floor world movement for all members
         foreach (var member in group)
         {
             if (member != null)
             {
                 movingQueues.Add(member);
-                var dir = groupDirections[member];
-                var hole = groupTargetHoles[member];
-                var entrance = groupEntranceCells[member];
-                member.DestinationHole = hole;
+                var cellPath = groupPaths[member];
+                var hole = legacyTargetHoles[member];
+                var entrance = legacyEntranceCells[member];
 
-                Vector2Int head = member.CurrentBodyCoordinates[0];
-                Vector2Int neck = member.CurrentBodyCoordinates.Count > 1 ? member.CurrentBodyCoordinates[1] : head - dir;
-                Debug.Log($"[ForwardMove] Queue={member.QueueId} Head={head} Neck={neck} Direction={dir} Next={head + dir} PathfindingUsed=False");
-
-                member.StartForwardMovement(dir, hole, entrance);
+                var smoothWorldRoute = GenerateSmoothFreeWorldPath(cellPath, member, hole);
+                member.StartSmoothMovement(smoothWorldRoute, hole, entrance);
             }
         }
 
+        GameManager.Instance?.StartTimerOnFirstValidMove(queue);
         return true;
     }
 
     /// <summary>
-    /// Checks whether an ant queue (or all members of its connected group) has a valid unblocked straight forward path to its holder.
-    /// Does NOT use BFS, A*, or any pathfinding.
+    /// Checks whether an ant queue has a valid unblocked path across open floor to a matching non-full holder.
+    /// When automatic pathfinding is OFF, evaluates straight forward movement without calling AntPathfinder.
     /// </summary>
     public bool IsPathClearForQueue(AntQueueController queue)
     {
         if (queue == null) return false;
 
-        var group = GetConnectedGroup(queue);
-        var pendingReservations = new Dictionary<HoleController, int>();
-        foreach (var member in group)
+        if (!useAutomaticPathfinding)
         {
-            if (member == null) return false;
-            if (!ValidateForwardMove(member, group, pendingReservations, out _, out var targetHole, out _, out _))
+            var group = GetConnectedGroup(queue);
+            var pendingReservations = new Dictionary<HoleController, int>();
+            foreach (var member in group)
             {
-                return false;
+                if (member == null) return false;
+                if (!ValidateForwardMove(member, group, pendingReservations, out _, out var targetHole, out _, out _))
+                {
+                    return false;
+                }
+                if (targetHole == null) return false;
+
+                if (!pendingReservations.ContainsKey(targetHole))
+                {
+                    pendingReservations[targetHole] = 0;
+                }
+                pendingReservations[targetHole]++;
             }
-            if (targetHole == null)
-            {
-                return false;
-            }
-            if (!pendingReservations.ContainsKey(targetHole))
-            {
-                pendingReservations[targetHole] = 0;
-            }
-            pendingReservations[targetHole]++;
+            return true;
         }
 
-        return true;
+        var path = AntPathfinder.FindPath(this, queue, out HoleController legacyTarget, out _);
+        return path != null && path.Count >= 2 && legacyTarget != null && !legacyTarget.IsFull;
     }
 
     public void RemoveCompletedHole(HoleController hole)
@@ -1031,27 +1409,31 @@ public class BoardManager : MonoBehaviour
             {
                 activeQueues.Remove(queue);
 
-                // Find matching hole to notify queue swallow (badge decrement)
-                HoleController targetHole = queue.DestinationHole;
-                if (targetHole == null && queue.CurrentBodyCoordinates != null && queue.CurrentBodyCoordinates.Count > 0)
+                // Destination hole is notified by AntQueueController.OnEntireQueueEnteredHole()
+                // when the tail finishes its swallow animation. Fallback here only if queue.DestinationHole was null:
+                if (queue.DestinationHole == null)
                 {
-                    targetHole = GetHoleAt(queue.CurrentBodyCoordinates[0]);
-                }
-                if (targetHole == null)
-                {
-                    foreach (var h in activeHoles)
+                    HoleController targetHole = null;
+                    if (queue.CurrentBodyCoordinates != null && queue.CurrentBodyCoordinates.Count > 0)
                     {
-                        if (h != null && !h.IsCompleted && h.ColorID == queue.ColorID)
+                        targetHole = GetHoleAt(queue.CurrentBodyCoordinates[0]);
+                    }
+                    if (targetHole == null)
+                    {
+                        foreach (var h in activeHoles)
                         {
-                            targetHole = h;
-                            break;
+                            if (h != null && !h.IsCompleted && h.ColorID == queue.ColorID)
+                            {
+                                targetHole = h;
+                                break;
+                            }
                         }
                     }
-                }
 
-                if (targetHole != null)
-                {
-                    targetHole.OnQueueSwallowed();
+                    if (targetHole != null)
+                    {
+                        targetHole.OnEntireQueueEnteredHole();
+                    }
                 }
 
                 queue.transform.DOKill();

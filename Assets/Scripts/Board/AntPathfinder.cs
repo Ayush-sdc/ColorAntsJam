@@ -22,6 +22,12 @@ public static class AntPathfinder
     /// </summary>
     public static List<Vector2Int> FindPath(BoardManager board, AntQueueController queue)
     {
+        if (board != null && !board.UseAutomaticPathfinding)
+        {
+            Debug.LogError("[ERROR] AntPathfinder invoked while automatic pathfinding disabled.");
+            return null;
+        }
+
         if (board == null || queue == null) return null;
         if (queue.CurrentBodyCoordinates == null || queue.CurrentBodyCoordinates.Count == 0) return null;
 
@@ -108,31 +114,6 @@ public static class AntPathfinder
             }
         }
 
-        // Disabled grid cells
-        Level level = board.CurrentLevel;
-        if (level != null)
-        {
-            foreach (var c in level.GetCombinedDisabledCells())
-            {
-                blockedCells.Add(c);
-            }
-
-            // HolderType 2 blockers
-            if (level.AntQueues != null)
-            {
-                foreach (var qData in level.AntQueues)
-                {
-                    if (qData.HolderType == 2 && qData.Cells != null)
-                    {
-                        foreach (var c in qData.Cells)
-                        {
-                            blockedCells.Add(c);
-                        }
-                    }
-                }
-            }
-        }
-
         bool hasNeck = queue.CurrentBodyCoordinates.Count >= 2;
         Vector2Int forbiddenFirstStep = hasNeck ? queue.CurrentBodyCoordinates[1] : new Vector2Int(-99999, -99999);
 
@@ -157,6 +138,15 @@ public static class AntPathfinder
         int gridWidth = board != null ? board.GridWidth : 9;
         int gridHeight = board != null ? board.GridHeight : 6;
 
+        Vector2Int forwardDir = hasNeck ? (start - forbiddenFirstStep) : Directions[0];
+        Vector2Int[] orderedDirections = new Vector2Int[]
+        {
+            forwardDir,
+            new Vector2Int(-forwardDir.y, forwardDir.x),
+            new Vector2Int(forwardDir.y, -forwardDir.x),
+            -forwardDir
+        };
+
         while (frontier.Count > 0)
         {
             Vector2Int current = frontier.Dequeue();
@@ -171,8 +161,14 @@ public static class AntPathfinder
 
             bool isAtStart = (current == start);
 
-            foreach (var dir in Directions)
+            foreach (var dir in orderedDirections)
             {
+                // Initial step from head MUST be strictly forward along queue forward direction
+                if (isAtStart && hasNeck && dir != forwardDir)
+                {
+                    continue;
+                }
+
                 Vector2Int next = current + dir;
 
                 // Rule 1: Queue must always move forward from head and NEVER immediately reverse into its neck/body
@@ -229,10 +225,46 @@ public static class AntPathfinder
                 Debug.LogWarning($"[AntPathfinder] Path rejected for {queue.QueueId}: First step equals neck {forbiddenFirstStep}!");
                 return null;
             }
-            Vector2Int forwardDir = start - forbiddenFirstStep;
+            forwardDir = start - forbiddenFirstStep;
             Debug.Log($"[MoveAttempt] Queue={queue.QueueId} Head={start} Forward={forwardDir} FirstStep={path[1]} Result=VALID");
         }
 
+        return path;
+    }
+
+    /// <summary>
+    /// Finds path to matching holder and outputs the targeted HoleController and its entrance coordinate.
+    /// </summary>
+    public static List<Vector2Int> FindPath(BoardManager board, AntQueueController queue, out HoleController targetHole, out Vector2Int entranceCell)
+    {
+        targetHole = null;
+        entranceCell = Vector2Int.zero;
+        var path = FindPath(board, queue);
+        if (path == null || path.Count < 2) return null;
+
+        entranceCell = path[path.Count - 1];
+        if (board != null)
+        {
+            targetHole = board.GetHoleAt(entranceCell);
+            if (targetHole == null && board.HolesMap != null)
+            {
+                foreach (var h in board.HolesMap.Values)
+                {
+                    if (h != null && h.OccupiedCells != null)
+                    {
+                        for (int i = 0; i < h.OccupiedCells.Count; i++)
+                        {
+                            if (h.OccupiedCells[i] == entranceCell)
+                            {
+                                targetHole = h;
+                                break;
+                            }
+                        }
+                        if (targetHole != null) break;
+                    }
+                }
+            }
+        }
         return path;
     }
 }

@@ -26,10 +26,10 @@ public enum AntColor
 public static class AntColorPalette
 {
     public static Color LegColor => new Color(0.20f, 0.22f, 0.26f);           // Dark graphite bead feet #333842
-    public static Color HolePitColor => new Color(0.122f, 0.145f, 0.169f);     // Deep dark blue/charcoal slot interior #1F252B (sampled from L4/L5)
-    public static Color StudioBackground => new Color(0.87f, 0.86f, 0.84f);   // Clean light grey-beige studio backdrop #DEDCD6
-    public static Color StudioBackgroundTop => new Color(0.91f, 0.90f, 0.88f);
-    public static Color StudioBackgroundBottom => new Color(0.83f, 0.82f, 0.80f);
+    public static Color HolePitColor => new Color(0.155f, 0.198f, 0.235f);     // Recessed hole interior #27323C (sampled from Level_01.png)
+    public static Color StudioBackground => new Color(0.843f, 0.835f, 0.816f); // Warm neutral gray #D7D5D0 (sampled from Level_01.png)
+    public static Color StudioBackgroundTop => new Color(0.875f, 0.867f, 0.847f);
+    public static Color StudioBackgroundBottom => new Color(0.815f, 0.807f, 0.788f);
 
     private static readonly Dictionary<AntColor, Material> materialCache = new Dictionary<AntColor, Material>();
     private static readonly Dictionary<AntColor, Material> holeRimMaterialCache = new Dictionary<AntColor, Material>();

@@ -1,0 +1,80 @@
+{
+  "sourceFile": "sharedassets2.assets",
+  "sourceGameObjectPathID": 353,
+  "sourceTransformPathID": 415,
+  "name": "Marble",
+  "active": true,
+  "isRectTransform": false,
+  "localPosition": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 415,
+      "classID": 4
+    },
+    {
+      "pathID": 668,
+      "classID": 114
+    }
+  ],
+  "children": [
+    {
+      "sourceFile": "sharedassets2.assets",
+      "sourceGameObjectPathID": 359,
+      "sourceTransformPathID": 474,
+      "name": "Mesh",
+      "active": true,
+      "isRectTransform": false,
+      "localPosition": [
+        0.0,
+        0.30000001192092896,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        -0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ],
+      "localScale": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "components": [
+        {
+          "pathID": 474,
+          "classID": 4
+        },
+        {
+          "pathID": 582,
+          "classID": 33,
+          "meshPathID": 10207,
+          "meshFileID": 3
+        },
+        {
+          "pathID": 540,
+          "classID": 23,
+          "materialPathIDs": [
+            52
+          ]
+        }
+      ],
+      "children": []
+    }
+  ]
+}

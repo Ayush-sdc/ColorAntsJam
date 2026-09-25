@@ -1,0 +1,203 @@
+{
+  "sourceFile": "sharedassets2.assets",
+  "sourceGameObjectPathID": 383,
+  "sourceTransformPathID": 455,
+  "name": "hole_01",
+  "active": true,
+  "isRectTransform": false,
+  "localPosition": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 455,
+      "classID": 4
+    }
+  ],
+  "children": [
+    {
+      "sourceFile": "sharedassets2.assets",
+      "sourceGameObjectPathID": 329,
+      "sourceTransformPathID": 437,
+      "name": "platform_02.003",
+      "active": true,
+      "isRectTransform": false,
+      "localPosition": [
+        -0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 437,
+          "classID": 4
+        },
+        {
+          "pathID": 555,
+          "classID": 33,
+          "meshPathID": 177,
+          "meshFileID": 0
+        },
+        {
+          "pathID": 520,
+          "classID": 23,
+          "materialPathIDs": [
+            55
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "sourceFile": "sharedassets2.assets",
+      "sourceGameObjectPathID": 365,
+      "sourceTransformPathID": 464,
+      "name": "Shadow",
+      "active": true,
+      "isRectTransform": false,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        0.5,
+        0.5,
+        -0.5,
+        0.5
+      ],
+      "localScale": [
+        0.8100000023841858,
+        0.8100000023841858,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 464,
+          "classID": 4
+        },
+        {
+          "pathID": 614,
+          "classID": 212,
+          "materialPathIDs": [
+            47
+          ],
+          "spritePathID": 295
+        }
+      ],
+      "children": []
+    },
+    {
+      "sourceFile": "sharedassets2.assets",
+      "sourceGameObjectPathID": 339,
+      "sourceTransformPathID": 421,
+      "name": "platform_02.004",
+      "active": true,
+      "isRectTransform": false,
+      "localPosition": [
+        -0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 421,
+          "classID": 4
+        },
+        {
+          "pathID": 546,
+          "classID": 33,
+          "meshPathID": 159,
+          "meshFileID": 0
+        },
+        {
+          "pathID": 544,
+          "classID": 23,
+          "materialPathIDs": [
+            54
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "sourceFile": "sharedassets2.assets",
+      "sourceGameObjectPathID": 354,
+      "sourceTransformPathID": 441,
+      "name": "platform_02.005",
+      "active": true,
+      "isRectTransform": false,
+      "localPosition": [
+        -0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        3.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 441,
+          "classID": 4
+        },
+        {
+          "pathID": 551,
+          "classID": 33,
+          "meshPathID": 184,
+          "meshFileID": 0
+        },
+        {
+          "pathID": 504,
+          "classID": 23,
+          "materialPathIDs": [
+            56
+          ]
+        }
+      ],
+      "children": []
+    }
+  ]
+}

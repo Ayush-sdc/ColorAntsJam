@@ -1,0 +1,161 @@
+{
+  "sourceFile": "sharedassets2.assets",
+  "sourceGameObjectPathID": 338,
+  "sourceTransformPathID": 422,
+  "name": "SoulMuzzleOrange",
+  "active": true,
+  "isRectTransform": false,
+  "localPosition": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    -0.7071068286895752,
+    0.0,
+    0.0,
+    0.7071068286895752
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 422,
+      "classID": 4
+    },
+    {
+      "pathID": 600,
+      "classID": 198
+    },
+    {
+      "pathID": 603,
+      "classID": 199
+    },
+    {
+      "pathID": 650,
+      "classID": 114
+    }
+  ],
+  "children": [
+    {
+      "sourceFile": "sharedassets2.assets",
+      "sourceGameObjectPathID": 313,
+      "sourceTransformPathID": 476,
+      "name": "Stars",
+      "active": true,
+      "isRectTransform": false,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 476,
+          "classID": 4
+        },
+        {
+          "pathID": 598,
+          "classID": 198
+        },
+        {
+          "pathID": 605,
+          "classID": 199
+        }
+      ],
+      "children": []
+    },
+    {
+      "sourceFile": "sharedassets2.assets",
+      "sourceGameObjectPathID": 326,
+      "sourceTransformPathID": 470,
+      "name": "Stars_1",
+      "active": false,
+      "isRectTransform": false,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 470,
+          "classID": 4
+        },
+        {
+          "pathID": 597,
+          "classID": 198
+        },
+        {
+          "pathID": 604,
+          "classID": 199
+        }
+      ],
+      "children": []
+    },
+    {
+      "sourceFile": "sharedassets2.assets",
+      "sourceGameObjectPathID": 391,
+      "sourceTransformPathID": 427,
+      "name": "Cloud",
+      "active": true,
+      "isRectTransform": false,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "localScale": [
+        0.7692307829856873,
+        0.7692306637763977,
+        0.7692306637763977
+      ],
+      "components": [
+        {
+          "pathID": 427,
+          "classID": 4
+        },
+        {
+          "pathID": 601,
+          "classID": 198
+        },
+        {
+          "pathID": 608,
+          "classID": 199
+        }
+      ],
+      "children": []
+    }
+  ]
+}

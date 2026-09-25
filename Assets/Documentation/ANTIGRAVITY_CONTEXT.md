@@ -1,7 +1,7 @@
 # Slither Ants Jam — Antigravity Project Context
 
 Last Updated:
-2026-09-24 20:15 (UTC+05:30)
+2026-09-25 19:42 (UTC+05:30)
 
 ## 1. Project Goal
 
@@ -25,7 +25,7 @@ LevelManager
   - If true, calls `SetupReferenceBoard(level)` -> `SpawnReferenceHole()` and `SpawnReferenceAntQueue()`.
   - If false, calls `SetupHandmadeBoard(level)`.
 - **Current Holder System:** `HoleController.cs` procedural stadium slot geometry (`SlotRim`, `SlotInnerBevel`, `SlotPit`, `SlotCounterBadge`). Dynamically sizes to multi-cell footprints, caches entrance cell, counts matching queues, and applies single-queue visual overrides when initial count == 1.
-- **Current Queue System:** `AntQueueController.cs` and `AntUnit.cs`. Moves strictly straight forward step-by-step along `forwardDirection` derived from `head - neck`. Followers strictly inherit previous position of the ant immediately ahead (`newBody[i] = oldBody[i - 1]`). Caches `DestinationHole` on movement start and enters hole sequentially. NO pathfinding, BFS, A*, or automatic turns are used.
+- **Current Queue System:** `AntQueueController.cs` and `AntUnit.cs`. Operates on Free-Floor continuous world-space movement. Leader (A0) steers freely across valid open floor toward its matching holder pit. Followers (A1, A2, ...) trace the head's exact continuous world-space trail at constant distances ($D, 2D, ...$), preventing corner-cutting. Head continuously rotates to face its motion vector. Sequential dive into holder pit upon arrival. Up to 4 queues move concurrently.
 - **Current Color Mapping System:** `ReferenceColorMapper.cs` maps raw ColorIDs (0..11) to `AntColor` enum and `AntColorPalette` materials/colors. 100% RGB parity between ant units and holder rims.
 - **Current Completion/Removal System:** When a holder's remaining queue count reaches 0, `isCompleted = true`. `BoardManager.RemoveCompletedHole()` immediately unregisters its entire multi-cell footprint from `holesMap` before visual shrinkage (`0.20s`, `Ease.InBack`) and destruction.
 
@@ -75,19 +75,76 @@ Do not flip coordinates.
 Do not swap X/Y.
 Cells[0] is the leader / head.
 
-### CORE MOVEMENT MECHANIC — DO NOT CHANGE
+### AUTOMATIC PATHFINDING: DISABLED GLOBALLY
 
-- **Slither Ants Jam does NOT use pathfinding for normal queue movement.**
-- Queue head is index 0 (`body[0]`), second ant is neck (`body[1]`).
-- Forward direction is derived from Head - Neck (`forwardDirection = head - neck`). Must be a valid cardinal direction: `(1,0)`, `(-1,0)`, `(0,1)`, or `(0,-1)`.
-- Leading ant moves continuously in that SAME forward direction step-by-step.
-- Head does NOT automatically turn, reroute, BFS, or A* toward its holder.
-- Reference levels are designed so correct straight forward movement reaches the corresponding holder.
-- Followers only inherit the previous position of the ant immediately in front (`newBody[i] = oldBody[i - 1]` for `i = 1 to bodyCount - 1`).
-- Followers never pathfind.
-- If direct forward movement is invalid (blocked by another queue, wrong-color holder, boundary, disabled cell, or full holder), no alternate route is searched.
-- Invalid player move attempt = maximum one heart penalty (3 -> 2 -> 1 -> 0 -> LevelLost).
-- Maximum 4 queues may move simultaneously.
+> **CORE MECHANIC — DO NOT ENABLE WITHOUT EXPLICIT USER REQUEST**
+>
+> **AUTOMATIC PATHFINDING:**
+> DISABLED GLOBALLY
+>
+> **Applies to:**
+> ALL LEVELS (Level 1 through Level 45 and future levels)
+>
+> **Central Switch:**
+> Managed centrally in runtime code via `BoardManager.UseAutomaticPathfinding = false`. Level assets are not individually modified.
+>
+> **AntPathfinder:**
+> Retained in source for reference/tooling, but not used by normal runtime queue movement (runtime calls = 0).
+>
+> **Grid:**
+> Used for level/layout data only, not automatic queue routing.
+>
+> **Followers:**
+> Follow continuous leader trail and never pathfind.
+
+### FREE-FLOOR MOVEMENT — CORE MECHANIC
+
+CORE MECHANIC — DO NOT CHANGE WITHOUT EXPLICIT USER REQUEST
+
+- **Floor dots are visual only:** Zero collision authority. No dot is required underneath an ant. Ants can move and stand freely in spaces between and beside dots.
+- **Grid cells are not mandatory movement nodes:** Logical grid data defines level layout, initial ant positions, holder positions, obstacles, and serialization, but does NOT act as movement rails.
+- **Predefined path waypoints are not movement rails:** The actual world-space route may travel anywhere through the valid open floor connecting them.
+- **Leading ant may move anywhere inside valid open board floor:** Queue index 0 is the leading ant. Only the leading ant chooses/routes movement. The head may navigate freely in continuous world space anywhere on valid open floor.
+- **Head may move outside the original waypoint/path line:** The route is allowed to expand beyond narrow waypoint corridors as long as it stays within valid open floor.
+- **Ants may occupy positions with no dot underneath:** Pause/inspect during movement verifies continuous float coordinates between dot centers are 100% legal.
+- **Followers trace the actual continuous path of the ant directly ahead:** A0 = leader, A1 follows A0, A2 follows A1, A3 follows A2. Followers trace the head's actual recorded continuous world-space trail at constant distances ($D, 2D, 3D$). No independent pathfinding, no simple `Vector3.Lerp` between ants, zero corner-cutting.
+- **Holes are destinations, not movement corridors:** Ants may approach matching holes from any valid surrounding open floor, diving in sequentially upon arrival at the pit.
+- **Max moving queues remains 4:** Concurrency limit of 4 moving queues is preserved. A fifth queue tap is ignored without heart penalty.
+- **Timer starts on first valid move:** Level timer is visible at full duration on load and does NOT count down until the player triggers the first valid queue move.
+
+### HEAD INITIAL DIRECTION — CORE MECHANIC
+
+CORE MECHANIC — DO NOT CHANGE WITHOUT EXPLICIT USER REQUEST
+
+- **Leading ant must begin movement exactly along its visual/gameplay forward direction (`headForwardWorld`).**
+- **No automatic forward-right / diagonal launch:** Initial movement angle error is 0.000°.
+- **Forward distance before turn:** Head travels straight forward for a minimum distance (`minForwardDistance = 0.75 * cellSize`) before beginning any route turn.
+- **Turning may occur only after initial forward progression:** After the head has progressed forward, it may then turn smoothly left or right across valid open floor to reach the matching hole.
+- **Head orientation:** Derived authoritatively from the gameplay root / ant transform, not camera orientation. Head continuously rotates to face the actual path tangent with zero sideways sliding.
+
+### ANT QUEUE BLOCKERS & WALKABLE FLOOR — CORE MECHANIC
+
+CORE MECHANIC — DO NOT CHANGE WITHOUT EXPLICIT USER REQUEST
+
+- **ANT QUEUE MOVEMENT MAY ONLY BE BLOCKED BY:**
+  1. **Holes / Holders:** Non-target holes block; matching destination hole allows the intended approach/entry route.
+  2. **Other Ant Queues:** Both stationary and moving units of other queues block. Own queue's ants do not block self forward progression.
+- **IGNORED FOR ANT PATH BLOCKING (MUST NEVER BLOCK AN ANT QUEUE):**
+  - Floor dots
+  - Grid markers
+  - Cell visuals
+  - Board decoration
+  - Background meshes
+  - Decorative colliders
+  - Environmental meshes
+  - Props, pipes, connectors
+  - VFX, particles, shadows
+  - Floor / StudioFloor
+  - Level disabled cells / Level obstacles
+  - Imported visual prefabs
+  - UI & buttons
+- **BOARD BOUNDARY:**
+  - Playable board boundary containment remains enforced (`GetWalkableBounds()` & `IsWorldPosInsideBoard()`). Ants may use all open floor inside the boundary, but cannot leave the board.
 
 ### Queue Concurrency Rule (Max 4 Concurrent Moving Queues)
 
@@ -103,9 +160,25 @@ Cells[0] is the leader / head.
   - Inbound reservations prevent holder oversubscription (`IsFull => isCompleted || AvailableCapacity <= 0`).
   - If a holder's available capacity is 0, subsequent matching queues cannot reserve or target it.
   - If movement is cancelled or interrupted early, `ReleaseReservation()` frees the slot without decrementing `remainingCount`.
-- **Holder Counter Timing:**
-  - Holder counter does NOT decrement when movement starts or when a reservation is placed.
-  - Counter decrements ONLY when an entire queue has completed entering the holder (`remainingCount--` in `OnQueueSwallowed()`).
+- **Holder Counter Timing & Hole Completion:**
+  - Individual ants do not decrement holder queue count (`OnAntEnteredHole` / `OnAntSwallowed` performs visual dive/swallow only).
+  - Holder count decrements only after the entire queue has entered (`remainingCount--` in `OnEntireQueueEnteredHole` / `OnQueueSwallowed`).
+  - Tail / final ant must complete swallow before queue is considered delivered (`swallowedAntCount == totalAntCount`).
+  - Hole remains visible while any required ant is still entering.
+  - Hole disappears only after `remainingCount` reaches 0 and final inbound queue has fully entered (`remainingCount <= 0 && inboundReservations <= 0`).
+  - Hole must not disappear while another valid reserved queue still needs it.
+
+### HOLE COMPLETION RULE — CORE MECHANIC
+
+> **CORE MECHANIC — DO NOT CHANGE WITHOUT EXPLICIT USER REQUEST**
+>
+> - Individual ants do not decrement holder queue count.
+> - Holder count decrements only after the entire queue has entered.
+> - Tail/final ant must complete swallow before queue is considered delivered.
+> - Hole remains visible while any required ant is still entering.
+> - Hole disappears only after remainingCount reaches 0 and final inbound queue has fully entered.
+> - Hole must not disappear while another valid reserved queue still needs it.
+
 - **Holder Removal Safety:**
   - A holder may only be removed when `remainingCount <= 0 && inboundReservations <= 0`.
   - Ensures multi-capacity holders remain active until ALL in-flight reserved queues have entered.
@@ -118,6 +191,21 @@ Cells[0] is the leader / head.
   - Late queue completion during loss cannot trigger `LevelWon`.
   - Deadlock detection in `GameManager.CheckGameWinLossConditions()` is bypassed while `BoardManager.Instance.MovingQueuesCount > 0`.
 - **Camera Drag Independence:** Camera dragging does not consume a movement slot and operates independently.
+
+### Extracted Color Slither Prefabs & Asset Status
+
+- **EXTRACTED COLOR SLITHER PREFABS:** Imported all reconstructed non-slither prefabs (`Assets/ColorSlitherJamAllPrefabs/Prefabs/Reconstructed/`).
+- **SNAKE/SLITHER PREFABS:** NOT USED / EXCLUDED. Reconstructed prefab roots `Head Snake`, `Mid Snake`, `Tail Snake`, and any snake/slither gameplay prefabs are strictly excluded.
+- **CURRENT QUEUE VISUAL:** ANTS (`AntQueueController` -> `AntUnit` -> native worker ant / 3D procedural ant visuals).
+- **MAX CONCURRENT MOVING QUEUES:** 4 (`MAX_CONCURRENT_MOVING_QUEUES = 4`).
+
+### Timer Start Rule
+
+- **TIMER START RULE:**
+  - Timer is initialized and displayed on level load (e.g. `02:00`), but countdown begins ONLY after the first successfully accepted ant-queue move.
+  - Non-gameplay input (e.g. waiting, touching empty floor, camera panning, settings modal / UI buttons) and invalid/blocked moves do NOT start the timer.
+  - Restarting a level (`RestartLevel`) or loading a new level resets `timerStarted = false` and restores the full level duration.
+  - Timer and lives remain independent failure conditions. When remaining timer reaches `00:00`, state transitions to `LevelLost` and `LosePanel` is shown.
 
 ### Invalid Move Rule
 An invalid player move or gameplay collision deducts exactly one life per move attempt.
@@ -958,4 +1046,56 @@ Changes:
   - Loaded Levels 6, 7, 8, 9, 10 sequentially in Play Mode.
   - Verified active database (`LevelDatabase.asset`), grid sizes, queue counts, holder counts, and holder capacities match the screenshots 100%.
   - Verified forward ant queue movement on Level 6 with 0 compile/runtime errors.
+
+## ANT WALK VISUAL
+
+- DOTween used only for secondary ant visual walking animation
+- gameplay/root movement remains authoritative
+- each moving ant receives subtle bob/tilt walking loop
+- follower walk animation does not affect trail/path logic
+- staggered phase between ants
+- tweens stop/reset when ant stops
+- walking tween is killed before swallow/destruction
+- no DOTween movement of logical AntUnit root
+
+## REFERENCE VISUAL & HUD POLISH (2026-09-25)
+
+REFERENCE VISUAL:
+Level_01.png
+
+HUD:
+matched to Color Slither Jam reference style.
+
+HUD ORDER:
+Reset -> Timer -> 3 Hearts -> Level Number
+
+SETTINGS:
+separate top-left.
+
+ANT MOVE SPEED:
+6.8f (increased from 4.2f, multiplier 1.62x)
+
+TIMER:
+starts on first valid queue movement.
+
+ANTS:
+remain current queue visuals.
+
+SLITHER VISUALS:
+NOT USED.
+
+DETAILS:
+- Background: Warm light neutral gray `#D7D5D0` matching Level_01.png.
+- Hole Pit Interior: `#27323C` dark recessed navy/charcoal.
+- Main HUD: Centered rounded panel `#F6F5F2` with thin gold outline `#F3A600` and soft drop shadow.
+- Settings: Standalone white/gray gear button in top-left corner `(55, -95)`.
+- Reset: Compact light-gray square button with circular arrow icon at left of HUD bar.
+- Timer: Stopwatch icon + digital time formatted as `2:00` (bold, white text with dark outline); starts only when first valid queue moves.
+- Hearts: 3 glossy rounded red hearts in a clean row without individual boxes.
+- Level Badge: Compact light-gray square at far right showing level number only (`1`).
+- Tutorial Text: Centered uppercase 2-line instruction `"TAP THE ANTS\nTO SEND THEM HOME"` with white fill and thick dark outline, pointing hand positioned near yellow queue head. Dismisses on first valid move.
+- DOTween Walk Cadence: Synchronized with 6.8f moveSpeed (`halfStepDuration = 0.0735s`), providing crisp, snappy leg/body cadence without excessive bob height.
+- Queue Movement: Visually immediate response (0ms delay), leader moves along forward axis, followers strictly replicate trail at accurate segment spacing, full tail enters hole before holder disappears.
+
+
 

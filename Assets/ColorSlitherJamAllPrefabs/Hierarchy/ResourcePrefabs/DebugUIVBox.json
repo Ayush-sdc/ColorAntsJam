@@ -1,0 +1,67 @@
+{
+  "sourceFile": "resources.assets",
+  "sourceGameObjectPathID": 435,
+  "sourceTransformPathID": 1435,
+  "name": "DebugUIVBox",
+  "active": true,
+  "isRectTransform": true,
+  "localPosition": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    -0.0,
+    -0.0,
+    -0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 1435,
+      "classID": 224
+    },
+    {
+      "pathID": 2260,
+      "classID": 114
+    },
+    {
+      "pathID": 2079,
+      "classID": 114
+    },
+    {
+      "pathID": 2124,
+      "classID": 114
+    },
+    {
+      "pathID": 2205,
+      "classID": 114
+    }
+  ],
+  "anchorMin": [
+    0.0,
+    0.0
+  ],
+  "anchorMax": [
+    0.0,
+    0.0
+  ],
+  "anchoredPosition": [
+    297.5,
+    0.0
+  ],
+  "sizeDelta": [
+    585.0,
+    0.0
+  ],
+  "pivot": [
+    0.5,
+    0.5
+  ],
+  "children": []
+}

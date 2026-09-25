@@ -1,0 +1,52 @@
+{
+  "sourceFile": "sharedassets2.assets",
+  "sourceGameObjectPathID": 342,
+  "sourceTransformPathID": 456,
+  "name": "Connector",
+  "active": true,
+  "isRectTransform": false,
+  "localPosition": [
+    -0.6800000071525574,
+    -0.019999999552965164,
+    -2.065000057220459
+  ],
+  "localRotationQuaternion": [
+    0.0,
+    0.0,
+    0.7071068286895752,
+    0.7071068286895752
+  ],
+  "localScale": [
+    0.14437012374401093,
+    0.4204779863357544,
+    0.14437012374401093
+  ],
+  "components": [
+    {
+      "pathID": 456,
+      "classID": 4
+    },
+    {
+      "pathID": 568,
+      "classID": 33,
+      "meshPathID": 10206,
+      "meshFileID": 3
+    },
+    {
+      "pathID": 543,
+      "classID": 23,
+      "materialPathIDs": [
+        41
+      ]
+    },
+    {
+      "pathID": 596,
+      "classID": 136
+    },
+    {
+      "pathID": 659,
+      "classID": 114
+    }
+  ],
+  "children": []
+}

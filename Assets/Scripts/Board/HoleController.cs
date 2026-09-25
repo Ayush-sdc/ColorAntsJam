@@ -76,6 +76,19 @@ public class HoleController : MonoBehaviour
             inboundReservations--;
             Debug.Log($"[HolderReservationReleased] Color={holeColor} Remaining={remainingCount} Reservations={inboundReservations} Available={AvailableCapacity}");
         }
+
+        if (remainingCount <= 0 && inboundReservations <= 0 && !isCompleted)
+        {
+            isCompleted = true;
+            if (BoardManager.Instance != null)
+            {
+                BoardManager.Instance.RemoveCompletedHole(this);
+            }
+            else
+            {
+                PlayCompletedEffectAndDisappear();
+            }
+        }
     }
     public int ParallelRows => parallelRows;
     public int WidthCells => widthCells;
@@ -763,14 +776,14 @@ public class HoleController : MonoBehaviour
         countTextMesh.color = remainingCount > 0 ? UnityEngine.Color.white : new UnityEngine.Color(1f, 1f, 1f, 0.85f);
     }
 
+    public void OnAntEnteredHole()
+    {
+        OnAntSwallowed();
+    }
+
     public void OnAntSwallowed()
     {
-        if (!isQueueBasedCount)
-        {
-            remainingCount = Mathf.Max(0, remainingCount - 1);
-            UpdateBadgeDisplay();
-        }
-
+        // Visual swallow only. DO NOT decrement queue count per ant.
         PlaySwallowEffect();
         SpawnSwallowVFX();
 
@@ -778,6 +791,11 @@ public class HoleController : MonoBehaviour
         {
             SoundManager.Instance.PlaySwallow();
         }
+    }
+
+    public void OnEntireQueueEnteredHole()
+    {
+        OnQueueSwallowed();
     }
 
     public void OnQueueSwallowed()
@@ -789,11 +807,7 @@ public class HoleController : MonoBehaviour
             inboundReservations--;
         }
 
-        if (isQueueBasedCount)
-        {
-            remainingCount--;
-        }
-
+        remainingCount = Mathf.Max(0, remainingCount - 1);
         UpdateBadgeDisplay();
 
         if (remainingCount <= 0 && inboundReservations <= 0)

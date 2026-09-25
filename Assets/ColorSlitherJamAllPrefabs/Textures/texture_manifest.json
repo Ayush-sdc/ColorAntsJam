@@ -1,0 +1,22 @@
+[
+  {
+    "pathID": 90,
+    "name": "Frame_ItemFrame01_Color_Blue",
+    "width": 177,
+    "height": 188,
+    "streamOffset": 2383744,
+    "dataSize": 15360,
+    "rawFile": "Textures/Raw/sharedassets2_90_Frame_ItemFrame01_Color_Blue.bin",
+    "astcFile": "Textures/ASTC/sharedassets2_90_Frame_ItemFrame01_Color_Blue.astc"
+  },
+  {
+    "pathID": 133,
+    "name": "FeelSnakeBodyPart",
+    "width": 128,
+    "height": 128,
+    "streamOffset": 9381344,
+    "dataSize": 7744,
+    "rawFile": "Textures/Raw/sharedassets2_133_FeelSnakeBodyPart.bin",
+    "astcFile": "Textures/ASTC/sharedassets2_133_FeelSnakeBodyPart.astc"
+  }
+]

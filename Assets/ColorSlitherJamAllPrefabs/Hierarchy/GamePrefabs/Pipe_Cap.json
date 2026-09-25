@@ -1,0 +1,76 @@
+{
+  "sourceFile": "sharedassets2.assets",
+  "sourceGameObjectPathID": 310,
+  "sourceTransformPathID": 463,
+  "name": "Pipe Cap",
+  "active": true,
+  "isRectTransform": false,
+  "localPosition": [
+    0.0,
+    -0.33000001311302185,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    -0.0,
+    -0.0,
+    -0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 463,
+      "classID": 4
+    }
+  ],
+  "children": [
+    {
+      "sourceFile": "sharedassets2.assets",
+      "sourceGameObjectPathID": 366,
+      "sourceTransformPathID": 454,
+      "name": "pipe_01",
+      "active": true,
+      "isRectTransform": false,
+      "localPosition": [
+        0.0,
+        0.23600000143051147,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        -0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 454,
+          "classID": 4
+        },
+        {
+          "pathID": 591,
+          "classID": 33,
+          "meshPathID": 188,
+          "meshFileID": 0
+        },
+        {
+          "pathID": 536,
+          "classID": 23,
+          "materialPathIDs": [
+            45
+          ]
+        }
+      ],
+      "children": []
+    }
+  ]
+}

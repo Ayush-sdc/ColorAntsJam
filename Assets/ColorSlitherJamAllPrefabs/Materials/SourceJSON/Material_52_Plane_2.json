@@ -1,0 +1,324 @@
+{
+  "name": "Plane 2",
+  "shader": [
+    0,
+    192
+  ],
+  "validKeywords": [
+    "TCP2_REFLECTIONS_FRESNEL",
+    "TCP2_RIM_LIGHTING_LIGHTMASK",
+    "TCP2_SHADOW_LIGHT_COLOR",
+    "TCP2_SPECULAR"
+  ],
+  "invalidKeywords": [
+    "TCP2_UV_NORMALS_FULL"
+  ],
+  "lightmapFlags": 4,
+  "enableInstancing": false,
+  "doubleSidedGI": false,
+  "customRenderQueue": -1,
+  "stringTagMap": {},
+  "disabledShaderPasses": [],
+  "lockedProperties": "",
+  "texEnvs": {
+    "_BaseMap": {
+      "texture": [
+        0,
+        0
+      ],
+      "scale": [
+        1.0,
+        1.0
+      ],
+      "offset": [
+        0.0,
+        0.0
+      ]
+    },
+    "_BumpMap": {
+      "texture": [
+        0,
+        0
+      ],
+      "scale": [
+        1.0,
+        1.0
+      ],
+      "offset": [
+        0.0,
+        0.0
+      ]
+    },
+    "_EmissionMap": {
+      "texture": [
+        0,
+        0
+      ],
+      "scale": [
+        1.0,
+        1.0
+      ],
+      "offset": [
+        0.0,
+        0.0
+      ]
+    },
+    "_MatCapMask": {
+      "texture": [
+        0,
+        0
+      ],
+      "scale": [
+        1.0,
+        1.0
+      ],
+      "offset": [
+        0.0,
+        0.0
+      ]
+    },
+    "_MatCapTex": {
+      "texture": [
+        0,
+        0
+      ],
+      "scale": [
+        1.0,
+        1.0
+      ],
+      "offset": [
+        0.0,
+        0.0
+      ]
+    },
+    "_OcclusionMap": {
+      "texture": [
+        0,
+        0
+      ],
+      "scale": [
+        1.0,
+        1.0
+      ],
+      "offset": [
+        0.0,
+        0.0
+      ]
+    },
+    "_Ramp": {
+      "texture": [
+        0,
+        0
+      ],
+      "scale": [
+        1.0,
+        1.0
+      ],
+      "offset": [
+        0.0,
+        0.0
+      ]
+    },
+    "_ReflectionTex": {
+      "texture": [
+        0,
+        0
+      ],
+      "scale": [
+        1.0,
+        1.0
+      ],
+      "offset": [
+        0.0,
+        0.0
+      ]
+    },
+    "_ShadowBaseMap": {
+      "texture": [
+        0,
+        0
+      ],
+      "scale": [
+        1.0,
+        1.0
+      ],
+      "offset": [
+        0.0,
+        0.0
+      ]
+    },
+    "_SpecGlossMap": {
+      "texture": [
+        0,
+        0
+      ],
+      "scale": [
+        1.0,
+        1.0
+      ],
+      "offset": [
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "ints": {},
+  "floats": {
+    "_AlphaClip": 0.0,
+    "_AlphaToMask": 0.0,
+    "_Blend": 0.0,
+    "_BlendModePreserveSpecular": 1.0,
+    "_BumpScale": 1.0,
+    "_ClearCoatMask": 0.0,
+    "_ClearCoatSmoothness": 0.0,
+    "_Cull": 2.0,
+    "_Cutoff": 0.0,
+    "_DetailAlbedoMapScale": 1.0,
+    "_DetailNormalMapScale": 1.0,
+    "_DirectIntensityOutline": 1.0,
+    "_DstBlend": 0.0,
+    "_DstBlendAlpha": 0.0,
+    "_EmissionChannel": 4.0,
+    "_EnvironmentReflections": 1.0,
+    "_FresnelMax": 1.5,
+    "_FresnelMin": 0.0,
+    "_GlossMapScale": 1.0,
+    "_Glossiness": 0.5,
+    "_GlossyReflections": 1.0,
+    "_IndirectIntensity": 1.0,
+    "_IndirectIntensityOutline": 0.0,
+    "_MatCapMaskChannel": 0.0,
+    "_MatCapType": 0.0,
+    "_Metallic": 0.5410000085830688,
+    "_Mode": 0.0,
+    "_NormalsSource": 0.0,
+    "_NormalsUVType": 0.0,
+    "_OcclusionChannel": 0.0,
+    "_OcclusionStrength": 1.0,
+    "_OutlineLightingType": 0.0,
+    "_OutlineLightingTypeURP": 0.0,
+    "_OutlineMaxWidth": 1.0,
+    "_OutlineMinWidth": 1.0,
+    "_OutlinePixelSizeType": 0.0,
+    "_OutlineTextureLOD": 5.0,
+    "_OutlineTextureType": 0.0,
+    "_OutlineWidth": 1.0,
+    "_Parallax": 0.019999999552965164,
+    "_QueueOffset": 0.0,
+    "_RampBands": 4.0,
+    "_RampBandsSmoothing": 0.10000000149011612,
+    "_RampOffset": 0.0,
+    "_RampScale": 1.0,
+    "_RampSmoothing": 1.0,
+    "_RampThreshold": 0.7570000290870667,
+    "_RampType": 0.0,
+    "_ReceiveShadows": 1.0,
+    "_ReceiveShadowsOff": 1.0,
+    "_ReflectionMapType": 0.0,
+    "_ReflectionSmoothness": 0.5,
+    "_RenderingMode": 0.0,
+    "_RimMax": 1.059999942779541,
+    "_RimMin": 0.4099999964237213,
+    "_ShadowColorLightAtten": 1.0,
+    "_SingleIndirectColor": 0.0,
+    "_Smoothness": 0.257999986410141,
+    "_SmoothnessTextureChannel": 0.0,
+    "_SpecularHighlights": 1.0,
+    "_SpecularMapType": 0.0,
+    "_SpecularRoughness": 0.7789999842643738,
+    "_SpecularToonSize": 0.25,
+    "_SpecularToonSmoothness": 0.05000000074505806,
+    "_SpecularType": 0.0,
+    "_SrcBlend": 1.0,
+    "_SrcBlendAlpha": 1.0,
+    "_Surface": 0.0,
+    "_UVSec": 0.0,
+    "_UseAlphaTest": 0.0,
+    "_UseEmission": 0.0,
+    "_UseFresnelReflections": 1.0,
+    "_UseMatCap": 0.0,
+    "_UseMatCapMask": 0.0,
+    "_UseMobileMode": 0.0,
+    "_UseNormalMap": 0.0,
+    "_UseOcclusion": 0.0,
+    "_UseOutline": 0.0,
+    "_UseReflections": 0.0,
+    "_UseRim": 0.0,
+    "_UseRimLightMask": 1.0,
+    "_UseShadowTexture": 0.0,
+    "_UseSpecular": 1.0,
+    "_WorkflowMode": 1.0,
+    "_ZWrite": 1.0
+  },
+  "colors": {
+    "_BaseColor": [
+      0.29090288281440735,
+      0.33997082710266113,
+      0.3609999716281891,
+      1.0
+    ],
+    "_Color": [
+      0.09905660152435303,
+      0.46429330110549927,
+      1.0,
+      1.0
+    ],
+    "_EmissionColor": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "_HColor": [
+      0.698113203048706,
+      0.698113203048706,
+      0.698113203048706,
+      1.0
+    ],
+    "_MatCapColor": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "_OutlineColor": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "_ReflectionColor": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "_RimColor": [
+      0.800000011920929,
+      0.800000011920929,
+      0.800000011920929,
+      0.5
+    ],
+    "_SColor": [
+      0.25471699237823486,
+      0.25471699237823486,
+      0.25471699237823486,
+      1.0
+    ],
+    "_SpecColor": [
+      0.20000000298023224,
+      0.20000000298023224,
+      0.20000000298023224,
+      1.0
+    ],
+    "_SpecularColor": [
+      0.33018869161605835,
+      0.33018869161605835,
+      0.33018869161605835,
+      1.0
+    ]
+  },
+  "parsedEnd": 3060,
+  "objectLength": 3064,
+  "pathID": 52
+}

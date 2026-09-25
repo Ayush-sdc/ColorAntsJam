@@ -1,0 +1,135 @@
+{
+  "sourceFile": "resources.assets",
+  "sourceGameObjectPathID": 417,
+  "sourceTransformPathID": 1447,
+  "name": "DebugUIPersistentCanvas",
+  "active": true,
+  "isRectTransform": true,
+  "localPosition": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "localScale": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "components": [
+    {
+      "pathID": 1447,
+      "classID": 224
+    },
+    {
+      "pathID": 1336,
+      "classID": 223
+    },
+    {
+      "pathID": 2234,
+      "classID": 114
+    },
+    {
+      "pathID": 2082,
+      "classID": 114
+    },
+    {
+      "pathID": 2182,
+      "classID": 114
+    }
+  ],
+  "anchorMin": [
+    0.0,
+    0.0
+  ],
+  "anchorMax": [
+    0.0,
+    0.0
+  ],
+  "anchoredPosition": [
+    0.0,
+    0.0
+  ],
+  "sizeDelta": [
+    0.0,
+    0.0
+  ],
+  "pivot": [
+    0.0,
+    0.0
+  ],
+  "children": [
+    {
+      "sourceFile": "resources.assets",
+      "sourceGameObjectPathID": 348,
+      "sourceTransformPathID": 1437,
+      "name": "DebugUI Persistent Panel",
+      "active": true,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 1437,
+          "classID": 224
+        },
+        {
+          "pathID": 933,
+          "classID": 222
+        },
+        {
+          "pathID": 2160,
+          "classID": 114
+        },
+        {
+          "pathID": 2121,
+          "classID": 114
+        },
+        {
+          "pathID": 2102,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        1.0,
+        1.0
+      ],
+      "anchorMax": [
+        1.0,
+        1.0
+      ],
+      "anchoredPosition": [
+        -5.0,
+        -5.0
+      ],
+      "sizeDelta": [
+        400.0,
+        0.0
+      ],
+      "pivot": [
+        1.0,
+        1.0
+      ],
+      "children": []
+    }
+  ]
+}

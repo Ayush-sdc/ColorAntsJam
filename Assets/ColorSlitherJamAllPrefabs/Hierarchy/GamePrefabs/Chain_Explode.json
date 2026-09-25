@@ -1,0 +1,43 @@
+{
+  "sourceFile": "sharedassets2.assets",
+  "sourceGameObjectPathID": 333,
+  "sourceTransformPathID": 461,
+  "name": "Chain Explode",
+  "active": true,
+  "isRectTransform": false,
+  "localPosition": [
+    0.6830000281333923,
+    0.5,
+    0.3499999940395355
+  ],
+  "localRotationQuaternion": [
+    -0.7071068286895752,
+    0.0,
+    0.0,
+    0.7071068286895752
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 461,
+      "classID": 4
+    },
+    {
+      "pathID": 599,
+      "classID": 198
+    },
+    {
+      "pathID": 606,
+      "classID": 199
+    },
+    {
+      "pathID": 656,
+      "classID": 114
+    }
+  ],
+  "children": []
+}

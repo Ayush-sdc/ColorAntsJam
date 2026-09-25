@@ -33,7 +33,7 @@ public static class SceneSetupUtility
         }
 
         mainCam.clearFlags = CameraClearFlags.SolidColor;
-        mainCam.backgroundColor = new Color(0.92f, 0.94f, 0.96f);
+        mainCam.backgroundColor = new Color(0.843f, 0.835f, 0.816f); // Warm neutral gray #D7D5D0 (Level_01.png)
         mainCam.fieldOfView = 78f;
         mainCam.transform.position = new Vector3(0f, 15f, -0.5f);
         mainCam.transform.rotation = Quaternion.Euler(88f, 0f, 0f);

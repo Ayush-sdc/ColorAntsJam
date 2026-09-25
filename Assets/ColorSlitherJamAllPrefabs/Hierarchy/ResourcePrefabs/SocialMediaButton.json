@@ -1,0 +1,381 @@
+{
+  "sourceFile": "resources.assets",
+  "sourceGameObjectPathID": 680,
+  "sourceTransformPathID": 1910,
+  "name": "SocialMediaButton",
+  "active": true,
+  "isRectTransform": true,
+  "localPosition": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 1910,
+      "classID": 224
+    },
+    {
+      "pathID": 1311,
+      "classID": 222
+    },
+    {
+      "pathID": 2717,
+      "classID": 114
+    },
+    {
+      "pathID": 2903,
+      "classID": 114
+    },
+    {
+      "pathID": 2030,
+      "classID": 114
+    },
+    {
+      "pathID": 2675,
+      "classID": 114
+    }
+  ],
+  "anchorMin": [
+    0.0,
+    0.0
+  ],
+  "anchorMax": [
+    0.0,
+    0.0
+  ],
+  "anchoredPosition": [
+    0.0,
+    0.0
+  ],
+  "sizeDelta": [
+    457.0,
+    143.0
+  ],
+  "pivot": [
+    0.5,
+    0.5
+  ],
+  "children": [
+    {
+      "sourceFile": "resources.assets",
+      "sourceGameObjectPathID": 663,
+      "sourceTransformPathID": 1617,
+      "name": "Content",
+      "active": true,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 1617,
+          "classID": 224
+        },
+        {
+          "pathID": 2723,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        0.0,
+        0.0
+      ],
+      "anchorMax": [
+        1.0,
+        1.0
+      ],
+      "anchoredPosition": [
+        0.0,
+        0.0
+      ],
+      "sizeDelta": [
+        0.0,
+        0.0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "children": [
+        {
+          "sourceFile": "resources.assets",
+          "sourceGameObjectPathID": 864,
+          "sourceTransformPathID": 1767,
+          "name": "Logo",
+          "active": true,
+          "isRectTransform": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "components": [
+            {
+              "pathID": 1767,
+              "classID": 224
+            },
+            {
+              "pathID": 1235,
+              "classID": 222
+            },
+            {
+              "pathID": 2692,
+              "classID": 114
+            },
+            {
+              "pathID": 2377,
+              "classID": 114
+            },
+            {
+              "pathID": 2886,
+              "classID": 114
+            },
+            {
+              "pathID": 2522,
+              "classID": 114
+            }
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "anchoredPosition": [
+            0.0,
+            0.0
+          ],
+          "sizeDelta": [
+            0.0,
+            0.0
+          ],
+          "pivot": [
+            0.0,
+            0.5
+          ],
+          "children": []
+        },
+        {
+          "sourceFile": "resources.assets",
+          "sourceGameObjectPathID": 452,
+          "sourceTransformPathID": 1940,
+          "name": "FollowText",
+          "active": true,
+          "isRectTransform": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "components": [
+            {
+              "pathID": 1940,
+              "classID": 224
+            },
+            {
+              "pathID": 1166,
+              "classID": 222
+            },
+            {
+              "pathID": 2824,
+              "classID": 114
+            }
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "anchoredPosition": [
+            0.0,
+            0.0
+          ],
+          "sizeDelta": [
+            0.0,
+            0.0
+          ],
+          "pivot": [
+            1.0,
+            0.5
+          ],
+          "children": []
+        },
+        {
+          "sourceFile": "resources.assets",
+          "sourceGameObjectPathID": 447,
+          "sourceTransformPathID": 1550,
+          "name": "CoinIcon",
+          "active": true,
+          "isRectTransform": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "components": [
+            {
+              "pathID": 1550,
+              "classID": 224
+            },
+            {
+              "pathID": 1082,
+              "classID": 222
+            },
+            {
+              "pathID": 2570,
+              "classID": 114
+            },
+            {
+              "pathID": 2857,
+              "classID": 114
+            }
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "anchoredPosition": [
+            0.0,
+            0.0
+          ],
+          "sizeDelta": [
+            0.0,
+            0.0
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "children": [
+            {
+              "sourceFile": "resources.assets",
+              "sourceGameObjectPathID": 725,
+              "sourceTransformPathID": 1744,
+              "name": "CoinText",
+              "active": true,
+              "isRectTransform": true,
+              "localPosition": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "localRotationQuaternion": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "localScale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "components": [
+                {
+                  "pathID": 1744,
+                  "classID": 224
+                },
+                {
+                  "pathID": 1163,
+                  "classID": 222
+                },
+                {
+                  "pathID": 2472,
+                  "classID": 114
+                }
+              ],
+              "anchorMin": [
+                0.5,
+                0.0
+              ],
+              "anchorMax": [
+                0.5,
+                0.0
+              ],
+              "anchoredPosition": [
+                8.0,
+                -5.0
+              ],
+              "sizeDelta": [
+                100.0,
+                50.0
+              ],
+              "pivot": [
+                0.5,
+                0.0
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

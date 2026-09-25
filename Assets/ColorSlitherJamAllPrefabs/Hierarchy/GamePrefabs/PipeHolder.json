@@ -1,0 +1,136 @@
+{
+  "sourceFile": "sharedassets2.assets",
+  "sourceGameObjectPathID": 312,
+  "sourceTransformPathID": 487,
+  "name": "PipeHolder",
+  "active": true,
+  "isRectTransform": false,
+  "localPosition": [
+    -0.07457678765058517,
+    6.386707305908203,
+    -3.5614066123962402
+  ],
+  "localRotationQuaternion": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 487,
+      "classID": 4
+    },
+    {
+      "pathID": 649,
+      "classID": 114
+    }
+  ],
+  "children": [
+    {
+      "sourceFile": "sharedassets2.assets",
+      "sourceGameObjectPathID": 348,
+      "sourceTransformPathID": 635,
+      "name": "Text (TMP)",
+      "active": true,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.00599980354309082
+      ],
+      "localRotationQuaternion": [
+        0.7071068286895752,
+        -0.0,
+        -0.0,
+        0.7071068286895752
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 635,
+          "classID": 224
+        },
+        {
+          "pathID": 507,
+          "classID": 23,
+          "materialPathIDs": [
+            58
+          ]
+        },
+        {
+          "pathID": 671,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        0.5,
+        0.5
+      ],
+      "anchorMax": [
+        0.5,
+        0.5
+      ],
+      "anchoredPosition": [
+        0.0,
+        0.0
+      ],
+      "sizeDelta": [
+        4.0,
+        1.0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "children": [
+        {
+          "sourceFile": "sharedassets2.assets",
+          "sourceGameObjectPathID": 390,
+          "sourceTransformPathID": 449,
+          "name": "9-Sliced",
+          "active": true,
+          "isRectTransform": false,
+          "localPosition": [
+            0.0,
+            -0.005999804474413395,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "localScale": [
+            0.31452348828315735,
+            0.31452348828315735,
+            0.31452348828315735
+          ],
+          "components": [
+            {
+              "pathID": 449,
+              "classID": 4
+            },
+            {
+              "pathID": 615,
+              "classID": 212,
+              "materialPathIDs": [],
+              "spritePathID": 267
+            }
+          ],
+          "children": []
+        }
+      ]
+    }
+  ]
+}

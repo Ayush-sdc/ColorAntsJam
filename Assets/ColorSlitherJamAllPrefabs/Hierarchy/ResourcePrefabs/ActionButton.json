@@ -1,0 +1,127 @@
+{
+  "sourceFile": "resources.assets",
+  "sourceGameObjectPathID": 572,
+  "sourceTransformPathID": 1832,
+  "name": "ActionButton",
+  "active": true,
+  "isRectTransform": true,
+  "localPosition": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 1832,
+      "classID": 224
+    },
+    {
+      "pathID": 1085,
+      "classID": 222
+    },
+    {
+      "pathID": 2899,
+      "classID": 114
+    },
+    {
+      "pathID": 2762,
+      "classID": 114
+    },
+    {
+      "pathID": 2716,
+      "classID": 114
+    }
+  ],
+  "anchorMin": [
+    0.0,
+    0.0
+  ],
+  "anchorMax": [
+    0.0,
+    0.0
+  ],
+  "anchoredPosition": [
+    0.0,
+    0.0
+  ],
+  "sizeDelta": [
+    550.0,
+    164.0
+  ],
+  "pivot": [
+    0.5,
+    0.5
+  ],
+  "children": [
+    {
+      "sourceFile": "resources.assets",
+      "sourceGameObjectPathID": 493,
+      "sourceTransformPathID": 1517,
+      "name": "Text (TMP)",
+      "active": true,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 1517,
+          "classID": 224
+        },
+        {
+          "pathID": 1200,
+          "classID": 222
+        },
+        {
+          "pathID": 2427,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        0.0,
+        0.0
+      ],
+      "anchorMax": [
+        1.0,
+        1.0
+      ],
+      "anchoredPosition": [
+        0.0,
+        0.0
+      ],
+      "sizeDelta": [
+        -32.0,
+        0.0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "children": []
+    }
+  ]
+}

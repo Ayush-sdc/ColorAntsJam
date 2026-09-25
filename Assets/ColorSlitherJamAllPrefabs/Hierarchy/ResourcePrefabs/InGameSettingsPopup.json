@@ -1,0 +1,1819 @@
+{
+  "sourceFile": "resources.assets",
+  "sourceGameObjectPathID": 839,
+  "sourceTransformPathID": 1789,
+  "name": "InGameSettingsPopup",
+  "active": true,
+  "isRectTransform": true,
+  "localPosition": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    -0.0,
+    -0.0,
+    -0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 1789,
+      "classID": 224
+    },
+    {
+      "pathID": 1233,
+      "classID": 222
+    },
+    {
+      "pathID": 2379,
+      "classID": 114
+    },
+    {
+      "pathID": 2405,
+      "classID": 114
+    },
+    {
+      "pathID": 2274,
+      "classID": 114
+    },
+    {
+      "pathID": 2441,
+      "classID": 114
+    }
+  ],
+  "anchorMin": [
+    0.5,
+    0.5
+  ],
+  "anchorMax": [
+    0.5,
+    0.5
+  ],
+  "anchoredPosition": [
+    0.0,
+    0.0
+  ],
+  "sizeDelta": [
+    1027.0,
+    0.0
+  ],
+  "pivot": [
+    0.5,
+    0.5
+  ],
+  "children": [
+    {
+      "sourceFile": "resources.assets",
+      "sourceGameObjectPathID": 760,
+      "sourceTransformPathID": 1918,
+      "name": "Title Area",
+      "active": true,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        -0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 1918,
+          "classID": 224
+        },
+        {
+          "pathID": 2812,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        0.0,
+        0.0
+      ],
+      "anchorMax": [
+        0.0,
+        0.0
+      ],
+      "anchoredPosition": [
+        0.0,
+        0.0
+      ],
+      "sizeDelta": [
+        0.0,
+        0.0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "children": [
+        {
+          "sourceFile": "resources.assets",
+          "sourceGameObjectPathID": 733,
+          "sourceTransformPathID": 1807,
+          "name": "Text (TMP)",
+          "active": true,
+          "isRectTransform": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "components": [
+            {
+              "pathID": 1807,
+              "classID": 224
+            },
+            {
+              "pathID": 1086,
+              "classID": 222
+            },
+            {
+              "pathID": 2590,
+              "classID": 114
+            }
+          ],
+          "anchorMin": [
+            0.0,
+            0.5
+          ],
+          "anchorMax": [
+            1.0,
+            0.5
+          ],
+          "anchoredPosition": [
+            0.0,
+            0.0
+          ],
+          "sizeDelta": [
+            0.0,
+            50.0
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "children": []
+        },
+        {
+          "sourceFile": "resources.assets",
+          "sourceGameObjectPathID": 659,
+          "sourceTransformPathID": 1702,
+          "name": "Cancel Button",
+          "active": true,
+          "isRectTransform": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "components": [
+            {
+              "pathID": 1702,
+              "classID": 224
+            },
+            {
+              "pathID": 1272,
+              "classID": 222
+            },
+            {
+              "pathID": 2863,
+              "classID": 114
+            },
+            {
+              "pathID": 2816,
+              "classID": 114
+            }
+          ],
+          "anchorMin": [
+            1.0,
+            1.0
+          ],
+          "anchorMax": [
+            1.0,
+            1.0
+          ],
+          "anchoredPosition": [
+            -22.0,
+            -9.0
+          ],
+          "sizeDelta": [
+            190.0,
+            190.0
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "sourceFile": "resources.assets",
+      "sourceGameObjectPathID": 840,
+      "sourceTransformPathID": 1926,
+      "name": "ButtonArea",
+      "active": true,
+      "isRectTransform": true,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 1926,
+          "classID": 224
+        },
+        {
+          "pathID": 2415,
+          "classID": 114
+        },
+        {
+          "pathID": 2648,
+          "classID": 114
+        },
+        {
+          "pathID": 1062,
+          "classID": 222
+        },
+        {
+          "pathID": 2612,
+          "classID": 114
+        }
+      ],
+      "anchorMin": [
+        0.0,
+        1.0
+      ],
+      "anchorMax": [
+        0.0,
+        1.0
+      ],
+      "anchoredPosition": [
+        513.5,
+        -778.5
+      ],
+      "sizeDelta": [
+        927.0,
+        0.0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "children": [
+        {
+          "sourceFile": "resources.assets",
+          "sourceGameObjectPathID": 627,
+          "sourceTransformPathID": 1779,
+          "name": "InGameButtons",
+          "active": true,
+          "isRectTransform": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "components": [
+            {
+              "pathID": 1779,
+              "classID": 224
+            },
+            {
+              "pathID": 1328,
+              "classID": 222
+            },
+            {
+              "pathID": 2419,
+              "classID": 114
+            },
+            {
+              "pathID": 2378,
+              "classID": 114
+            },
+            {
+              "pathID": 2788,
+              "classID": 114
+            }
+          ],
+          "anchorMin": [
+            0.0,
+            1.0
+          ],
+          "anchorMax": [
+            0.0,
+            1.0
+          ],
+          "anchoredPosition": [
+            463.5,
+            -228.5
+          ],
+          "sizeDelta": [
+            751.0,
+            337.0
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "children": [
+            {
+              "sourceFile": "resources.assets",
+              "sourceGameObjectPathID": 729,
+              "sourceTransformPathID": 1753,
+              "name": "VibrationToggle",
+              "active": true,
+              "isRectTransform": true,
+              "localPosition": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "localRotationQuaternion": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "localScale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "components": [
+                {
+                  "pathID": 1753,
+                  "classID": 224
+                },
+                {
+                  "pathID": 2423,
+                  "classID": 114
+                },
+                {
+                  "pathID": 2703,
+                  "classID": 114
+                }
+              ],
+              "anchorMin": [
+                0.0,
+                1.0
+              ],
+              "anchorMax": [
+                0.0,
+                1.0
+              ],
+              "anchoredPosition": [
+                159.5,
+                -168.5
+              ],
+              "sizeDelta": [
+                200.0,
+                212.0
+              ],
+              "pivot": [
+                0.5,
+                0.5
+              ],
+              "children": [
+                {
+                  "sourceFile": "resources.assets",
+                  "sourceGameObjectPathID": 865,
+                  "sourceTransformPathID": 1839,
+                  "name": "Toggle",
+                  "active": true,
+                  "isRectTransform": true,
+                  "localPosition": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "localRotationQuaternion": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "localScale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "components": [
+                    {
+                      "pathID": 1839,
+                      "classID": 224
+                    },
+                    {
+                      "pathID": 2275,
+                      "classID": 114
+                    }
+                  ],
+                  "anchorMin": [
+                    0.0,
+                    0.0
+                  ],
+                  "anchorMax": [
+                    0.0,
+                    0.0
+                  ],
+                  "anchoredPosition": [
+                    0.0,
+                    0.0
+                  ],
+                  "sizeDelta": [
+                    154.0,
+                    154.0
+                  ],
+                  "pivot": [
+                    0.5,
+                    0.5
+                  ],
+                  "children": [
+                    {
+                      "sourceFile": "resources.assets",
+                      "sourceGameObjectPathID": 870,
+                      "sourceTransformPathID": 1904,
+                      "name": "Background",
+                      "active": true,
+                      "isRectTransform": true,
+                      "localPosition": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "localRotationQuaternion": [
+                        -0.0,
+                        -0.0,
+                        -0.0,
+                        1.0
+                      ],
+                      "localScale": [
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "components": [
+                        {
+                          "pathID": 1904,
+                          "classID": 224
+                        },
+                        {
+                          "pathID": 1296,
+                          "classID": 222
+                        },
+                        {
+                          "pathID": 2273,
+                          "classID": 114
+                        }
+                      ],
+                      "anchorMin": [
+                        0.0,
+                        0.0
+                      ],
+                      "anchorMax": [
+                        1.0,
+                        1.0
+                      ],
+                      "anchoredPosition": [
+                        0.0,
+                        0.0
+                      ],
+                      "sizeDelta": [
+                        0.0,
+                        0.0
+                      ],
+                      "pivot": [
+                        0.5,
+                        0.5
+                      ],
+                      "children": [
+                        {
+                          "sourceFile": "resources.assets",
+                          "sourceGameObjectPathID": 525,
+                          "sourceTransformPathID": 1826,
+                          "name": "Checkmark",
+                          "active": true,
+                          "isRectTransform": true,
+                          "localPosition": [
+                            0.0,
+                            0.0,
+                            0.0
+                          ],
+                          "localRotationQuaternion": [
+                            -0.0,
+                            -0.0,
+                            -0.0,
+                            1.0
+                          ],
+                          "localScale": [
+                            1.0,
+                            1.0,
+                            1.0
+                          ],
+                          "components": [
+                            {
+                              "pathID": 1826,
+                              "classID": 224
+                            },
+                            {
+                              "pathID": 901,
+                              "classID": 222
+                            },
+                            {
+                              "pathID": 2757,
+                              "classID": 114
+                            }
+                          ],
+                          "anchorMin": [
+                            0.5,
+                            0.5
+                          ],
+                          "anchorMax": [
+                            0.5,
+                            0.5
+                          ],
+                          "anchoredPosition": [
+                            0.0,
+                            0.0
+                          ],
+                          "sizeDelta": [
+                            102.0,
+                            103.0
+                          ],
+                          "pivot": [
+                            0.5,
+                            0.5
+                          ],
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "sourceFile": "resources.assets",
+                  "sourceGameObjectPathID": 776,
+                  "sourceTransformPathID": 1541,
+                  "name": "Text (TMP)",
+                  "active": true,
+                  "isRectTransform": true,
+                  "localPosition": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "localRotationQuaternion": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "localScale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "components": [
+                    {
+                      "pathID": 1541,
+                      "classID": 224
+                    },
+                    {
+                      "pathID": 1190,
+                      "classID": 222
+                    },
+                    {
+                      "pathID": 2814,
+                      "classID": 114
+                    }
+                  ],
+                  "anchorMin": [
+                    0.0,
+                    0.0
+                  ],
+                  "anchorMax": [
+                    0.0,
+                    0.0
+                  ],
+                  "anchoredPosition": [
+                    0.0,
+                    0.0
+                  ],
+                  "sizeDelta": [
+                    200.0,
+                    50.0
+                  ],
+                  "pivot": [
+                    0.5,
+                    0.5
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "sourceFile": "resources.assets",
+              "sourceGameObjectPathID": 576,
+              "sourceTransformPathID": 1669,
+              "name": "SoundToggle",
+              "active": true,
+              "isRectTransform": true,
+              "localPosition": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "localRotationQuaternion": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "localScale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "components": [
+                {
+                  "pathID": 1669,
+                  "classID": 224
+                },
+                {
+                  "pathID": 2706,
+                  "classID": 114
+                },
+                {
+                  "pathID": 2426,
+                  "classID": 114
+                }
+              ],
+              "anchorMin": [
+                0.0,
+                1.0
+              ],
+              "anchorMax": [
+                0.0,
+                1.0
+              ],
+              "anchoredPosition": [
+                375.5,
+                -168.5
+              ],
+              "sizeDelta": [
+                200.0,
+                212.0
+              ],
+              "pivot": [
+                0.5,
+                0.5
+              ],
+              "children": [
+                {
+                  "sourceFile": "resources.assets",
+                  "sourceGameObjectPathID": 479,
+                  "sourceTransformPathID": 1646,
+                  "name": "Toggle",
+                  "active": true,
+                  "isRectTransform": true,
+                  "localPosition": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "localRotationQuaternion": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "localScale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "components": [
+                    {
+                      "pathID": 1646,
+                      "classID": 224
+                    },
+                    {
+                      "pathID": 2875,
+                      "classID": 114
+                    }
+                  ],
+                  "anchorMin": [
+                    0.0,
+                    0.0
+                  ],
+                  "anchorMax": [
+                    0.0,
+                    0.0
+                  ],
+                  "anchoredPosition": [
+                    0.0,
+                    0.0
+                  ],
+                  "sizeDelta": [
+                    154.0,
+                    154.0
+                  ],
+                  "pivot": [
+                    0.5,
+                    0.5
+                  ],
+                  "children": [
+                    {
+                      "sourceFile": "resources.assets",
+                      "sourceGameObjectPathID": 482,
+                      "sourceTransformPathID": 1521,
+                      "name": "Background",
+                      "active": true,
+                      "isRectTransform": true,
+                      "localPosition": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "localRotationQuaternion": [
+                        -0.0,
+                        -0.0,
+                        -0.0,
+                        1.0
+                      ],
+                      "localScale": [
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "components": [
+                        {
+                          "pathID": 1521,
+                          "classID": 224
+                        },
+                        {
+                          "pathID": 1029,
+                          "classID": 222
+                        },
+                        {
+                          "pathID": 2866,
+                          "classID": 114
+                        }
+                      ],
+                      "anchorMin": [
+                        0.0,
+                        0.0
+                      ],
+                      "anchorMax": [
+                        1.0,
+                        1.0
+                      ],
+                      "anchoredPosition": [
+                        0.0,
+                        0.0
+                      ],
+                      "sizeDelta": [
+                        0.0,
+                        0.0
+                      ],
+                      "pivot": [
+                        0.5,
+                        0.5
+                      ],
+                      "children": [
+                        {
+                          "sourceFile": "resources.assets",
+                          "sourceGameObjectPathID": 832,
+                          "sourceTransformPathID": 1658,
+                          "name": "Checkmark",
+                          "active": true,
+                          "isRectTransform": true,
+                          "localPosition": [
+                            0.0,
+                            0.0,
+                            0.0
+                          ],
+                          "localRotationQuaternion": [
+                            -0.0,
+                            -0.0,
+                            -0.0,
+                            1.0
+                          ],
+                          "localScale": [
+                            1.0,
+                            1.0,
+                            1.0
+                          ],
+                          "components": [
+                            {
+                              "pathID": 1658,
+                              "classID": 224
+                            },
+                            {
+                              "pathID": 1305,
+                              "classID": 222
+                            },
+                            {
+                              "pathID": 2355,
+                              "classID": 114
+                            }
+                          ],
+                          "anchorMin": [
+                            0.5,
+                            0.5
+                          ],
+                          "anchorMax": [
+                            0.5,
+                            0.5
+                          ],
+                          "anchoredPosition": [
+                            0.0,
+                            0.0
+                          ],
+                          "sizeDelta": [
+                            102.0,
+                            93.0
+                          ],
+                          "pivot": [
+                            0.5,
+                            0.5
+                          ],
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "sourceFile": "resources.assets",
+                  "sourceGameObjectPathID": 583,
+                  "sourceTransformPathID": 1958,
+                  "name": "Text (TMP)",
+                  "active": true,
+                  "isRectTransform": true,
+                  "localPosition": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "localRotationQuaternion": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "localScale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "components": [
+                    {
+                      "pathID": 1958,
+                      "classID": 224
+                    },
+                    {
+                      "pathID": 1152,
+                      "classID": 222
+                    },
+                    {
+                      "pathID": 2375,
+                      "classID": 114
+                    }
+                  ],
+                  "anchorMin": [
+                    0.0,
+                    0.0
+                  ],
+                  "anchorMax": [
+                    0.0,
+                    0.0
+                  ],
+                  "anchoredPosition": [
+                    0.0,
+                    0.0
+                  ],
+                  "sizeDelta": [
+                    200.0,
+                    50.0
+                  ],
+                  "pivot": [
+                    0.5,
+                    0.5
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "sourceFile": "resources.assets",
+              "sourceGameObjectPathID": 459,
+              "sourceTransformPathID": 1711,
+              "name": "ChatButton",
+              "active": true,
+              "isRectTransform": true,
+              "localPosition": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "localRotationQuaternion": [
+                -0.0,
+                -0.0,
+                -0.0,
+                1.0
+              ],
+              "localScale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "components": [
+                {
+                  "pathID": 1711,
+                  "classID": 224
+                },
+                {
+                  "pathID": 2828,
+                  "classID": 114
+                },
+                {
+                  "pathID": 2822,
+                  "classID": 114
+                }
+              ],
+              "anchorMin": [
+                0.0,
+                1.0
+              ],
+              "anchorMax": [
+                0.0,
+                1.0
+              ],
+              "anchoredPosition": [
+                591.5,
+                -168.5
+              ],
+              "sizeDelta": [
+                200.0,
+                222.0
+              ],
+              "pivot": [
+                0.5,
+                0.5
+              ],
+              "children": [
+                {
+                  "sourceFile": "resources.assets",
+                  "sourceGameObjectPathID": 513,
+                  "sourceTransformPathID": 1565,
+                  "name": "Button",
+                  "active": true,
+                  "isRectTransform": true,
+                  "localPosition": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "localRotationQuaternion": [
+                    -0.0,
+                    -0.0,
+                    -0.0,
+                    1.0
+                  ],
+                  "localScale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "components": [
+                    {
+                      "pathID": 1565,
+                      "classID": 224
+                    },
+                    {
+                      "pathID": 1290,
+                      "classID": 222
+                    },
+                    {
+                      "pathID": 2652,
+                      "classID": 114
+                    },
+                    {
+                      "pathID": 2809,
+                      "classID": 114
+                    }
+                  ],
+                  "anchorMin": [
+                    0.0,
+                    0.0
+                  ],
+                  "anchorMax": [
+                    0.0,
+                    0.0
+                  ],
+                  "anchoredPosition": [
+                    0.0,
+                    0.0
+                  ],
+                  "sizeDelta": [
+                    154.0,
+                    164.0
+                  ],
+                  "pivot": [
+                    0.5,
+                    0.5
+                  ],
+                  "children": [
+                    {
+                      "sourceFile": "resources.assets",
+                      "sourceGameObjectPathID": 682,
+                      "sourceTransformPathID": 1670,
+                      "name": "Icon",
+                      "active": true,
+                      "isRectTransform": true,
+                      "localPosition": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "localRotationQuaternion": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                      ],
+                      "localScale": [
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "components": [
+                        {
+                          "pathID": 1670,
+                          "classID": 224
+                        },
+                        {
+                          "pathID": 1110,
+                          "classID": 222
+                        },
+                        {
+                          "pathID": 2861,
+                          "classID": 114
+                        }
+                      ],
+                      "anchorMin": [
+                        0.5,
+                        0.5
+                      ],
+                      "anchorMax": [
+                        0.5,
+                        0.5
+                      ],
+                      "anchoredPosition": [
+                        0.0,
+                        0.0
+                      ],
+                      "sizeDelta": [
+                        100.0,
+                        100.0
+                      ],
+                      "pivot": [
+                        0.5,
+                        0.5
+                      ],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "sourceFile": "resources.assets",
+                  "sourceGameObjectPathID": 683,
+                  "sourceTransformPathID": 1725,
+                  "name": "Text (TMP)",
+                  "active": true,
+                  "isRectTransform": true,
+                  "localPosition": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "localRotationQuaternion": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "localScale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "components": [
+                    {
+                      "pathID": 1725,
+                      "classID": 224
+                    },
+                    {
+                      "pathID": 1101,
+                      "classID": 222
+                    },
+                    {
+                      "pathID": 2749,
+                      "classID": 114
+                    }
+                  ],
+                  "anchorMin": [
+                    0.0,
+                    0.0
+                  ],
+                  "anchorMax": [
+                    0.0,
+                    0.0
+                  ],
+                  "anchoredPosition": [
+                    0.0,
+                    0.0
+                  ],
+                  "sizeDelta": [
+                    200.0,
+                    50.0
+                  ],
+                  "pivot": [
+                    0.5,
+                    0.5
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sourceFile": "resources.assets",
+          "sourceGameObjectPathID": 587,
+          "sourceTransformPathID": 1522,
+          "name": "Action Buttons",
+          "active": true,
+          "isRectTransform": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "components": [
+            {
+              "pathID": 1522,
+              "classID": 224
+            },
+            {
+              "pathID": 2630,
+              "classID": 114
+            }
+          ],
+          "anchorMin": [
+            0.0,
+            0.0
+          ],
+          "anchorMax": [
+            0.0,
+            0.0
+          ],
+          "anchoredPosition": [
+            0.0,
+            0.0
+          ],
+          "sizeDelta": [
+            0.0,
+            0.0
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "children": [
+            {
+              "sourceFile": "resources.assets",
+              "sourceGameObjectPathID": 789,
+              "sourceTransformPathID": 1613,
+              "name": "LegalTermsButton",
+              "active": true,
+              "isRectTransform": true,
+              "localPosition": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "localRotationQuaternion": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "localScale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "components": [
+                {
+                  "pathID": 1613,
+                  "classID": 224
+                },
+                {
+                  "pathID": 1271,
+                  "classID": 222
+                },
+                {
+                  "pathID": 2540,
+                  "classID": 114
+                },
+                {
+                  "pathID": 2430,
+                  "classID": 114
+                },
+                {
+                  "pathID": 2398,
+                  "classID": 114
+                }
+              ],
+              "anchorMin": [
+                0.0,
+                0.0
+              ],
+              "anchorMax": [
+                0.0,
+                0.0
+              ],
+              "anchoredPosition": [
+                0.0,
+                0.0
+              ],
+              "sizeDelta": [
+                0.0,
+                0.0
+              ],
+              "pivot": [
+                0.5,
+                0.5
+              ],
+              "children": [
+                {
+                  "sourceFile": "resources.assets",
+                  "sourceGameObjectPathID": 749,
+                  "sourceTransformPathID": 1747,
+                  "name": "Text (TMP)",
+                  "active": true,
+                  "isRectTransform": true,
+                  "localPosition": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "localRotationQuaternion": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "localScale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "components": [
+                    {
+                      "pathID": 1747,
+                      "classID": 224
+                    },
+                    {
+                      "pathID": 1047,
+                      "classID": 222
+                    },
+                    {
+                      "pathID": 2763,
+                      "classID": 114
+                    }
+                  ],
+                  "anchorMin": [
+                    0.0,
+                    0.0
+                  ],
+                  "anchorMax": [
+                    1.0,
+                    1.0
+                  ],
+                  "anchoredPosition": [
+                    0.0,
+                    0.0
+                  ],
+                  "sizeDelta": [
+                    -32.0,
+                    0.0
+                  ],
+                  "pivot": [
+                    0.5,
+                    0.5
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "sourceFile": "resources.assets",
+              "sourceGameObjectPathID": 606,
+              "sourceTransformPathID": 1774,
+              "name": "RestorePurchasesButton",
+              "active": true,
+              "isRectTransform": true,
+              "localPosition": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "localRotationQuaternion": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "localScale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "components": [
+                {
+                  "pathID": 1774,
+                  "classID": 224
+                },
+                {
+                  "pathID": 1139,
+                  "classID": 222
+                },
+                {
+                  "pathID": 2796,
+                  "classID": 114
+                },
+                {
+                  "pathID": 2847,
+                  "classID": 114
+                },
+                {
+                  "pathID": 2659,
+                  "classID": 114
+                }
+              ],
+              "anchorMin": [
+                0.0,
+                0.0
+              ],
+              "anchorMax": [
+                0.0,
+                0.0
+              ],
+              "anchoredPosition": [
+                0.0,
+                0.0
+              ],
+              "sizeDelta": [
+                0.0,
+                0.0
+              ],
+              "pivot": [
+                0.5,
+                0.5
+              ],
+              "children": [
+                {
+                  "sourceFile": "resources.assets",
+                  "sourceGameObjectPathID": 464,
+                  "sourceTransformPathID": 1581,
+                  "name": "Text (TMP)",
+                  "active": true,
+                  "isRectTransform": true,
+                  "localPosition": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "localRotationQuaternion": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "localScale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "components": [
+                    {
+                      "pathID": 1581,
+                      "classID": 224
+                    },
+                    {
+                      "pathID": 1251,
+                      "classID": 222
+                    },
+                    {
+                      "pathID": 2515,
+                      "classID": 114
+                    }
+                  ],
+                  "anchorMin": [
+                    0.0,
+                    0.0
+                  ],
+                  "anchorMax": [
+                    1.0,
+                    1.0
+                  ],
+                  "anchoredPosition": [
+                    0.0,
+                    0.0
+                  ],
+                  "sizeDelta": [
+                    -32.0,
+                    0.0
+                  ],
+                  "pivot": [
+                    0.5,
+                    0.5
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "sourceFile": "resources.assets",
+              "sourceGameObjectPathID": 473,
+              "sourceTransformPathID": 1928,
+              "name": "SupportButton",
+              "active": true,
+              "isRectTransform": true,
+              "localPosition": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "localRotationQuaternion": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "localScale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "components": [
+                {
+                  "pathID": 1928,
+                  "classID": 224
+                },
+                {
+                  "pathID": 1043,
+                  "classID": 222
+                },
+                {
+                  "pathID": 2670,
+                  "classID": 114
+                },
+                {
+                  "pathID": 2629,
+                  "classID": 114
+                },
+                {
+                  "pathID": 2858,
+                  "classID": 114
+                }
+              ],
+              "anchorMin": [
+                0.0,
+                0.0
+              ],
+              "anchorMax": [
+                0.0,
+                0.0
+              ],
+              "anchoredPosition": [
+                0.0,
+                0.0
+              ],
+              "sizeDelta": [
+                0.0,
+                0.0
+              ],
+              "pivot": [
+                0.5,
+                0.5
+              ],
+              "children": [
+                {
+                  "sourceFile": "resources.assets",
+                  "sourceGameObjectPathID": 658,
+                  "sourceTransformPathID": 1664,
+                  "name": "Text (TMP)",
+                  "active": true,
+                  "isRectTransform": true,
+                  "localPosition": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "localRotationQuaternion": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "localScale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "components": [
+                    {
+                      "pathID": 1664,
+                      "classID": 224
+                    },
+                    {
+                      "pathID": 1269,
+                      "classID": 222
+                    },
+                    {
+                      "pathID": 2321,
+                      "classID": 114
+                    }
+                  ],
+                  "anchorMin": [
+                    0.0,
+                    0.0
+                  ],
+                  "anchorMax": [
+                    1.0,
+                    1.0
+                  ],
+                  "anchoredPosition": [
+                    0.0,
+                    0.0
+                  ],
+                  "sizeDelta": [
+                    -32.0,
+                    0.0
+                  ],
+                  "pivot": [
+                    0.5,
+                    0.5
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sourceFile": "resources.assets",
+          "sourceGameObjectPathID": 468,
+          "sourceTransformPathID": 1896,
+          "name": "SocialButtons",
+          "active": false,
+          "isRectTransform": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRotationQuaternion": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "components": [
+            {
+              "pathID": 1896,
+              "classID": 224
+            },
+            {
+              "pathID": 2518,
+              "classID": 114
+            }
+          ],
+          "anchorMin": [
+            0.0,
+            1.0
+          ],
+          "anchorMax": [
+            0.0,
+            1.0
+          ],
+          "anchoredPosition": [
+            463.5,
+            -1137.0
+          ],
+          "sizeDelta": [
+            927.0,
+            112.0
+          ],
+          "pivot": [
+            0.5,
+            0.5
+          ],
+          "children": [
+            {
+              "sourceFile": "resources.assets",
+              "sourceGameObjectPathID": 458,
+              "sourceTransformPathID": 1817,
+              "name": "TopButtons",
+              "active": true,
+              "isRectTransform": true,
+              "localPosition": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "localRotationQuaternion": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "localScale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "components": [
+                {
+                  "pathID": 1817,
+                  "classID": 224
+                },
+                {
+                  "pathID": 2381,
+                  "classID": 114
+                }
+              ],
+              "anchorMin": [
+                0.0,
+                1.0
+              ],
+              "anchorMax": [
+                0.0,
+                1.0
+              ],
+              "anchoredPosition": [
+                463.5,
+                -44.0
+              ],
+              "sizeDelta": [
+                32.0,
+                0.0
+              ],
+              "pivot": [
+                0.5,
+                0.5
+              ],
+              "children": []
+            },
+            {
+              "sourceFile": "resources.assets",
+              "sourceGameObjectPathID": 871,
+              "sourceTransformPathID": 1865,
+              "name": "BottomButtons",
+              "active": true,
+              "isRectTransform": true,
+              "localPosition": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "localRotationQuaternion": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "localScale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "components": [
+                {
+                  "pathID": 1865,
+                  "classID": 224
+                },
+                {
+                  "pathID": 2599,
+                  "classID": 114
+                }
+              ],
+              "anchorMin": [
+                0.0,
+                1.0
+              ],
+              "anchorMax": [
+                0.0,
+                1.0
+              ],
+              "anchoredPosition": [
+                463.5,
+                -68.0
+              ],
+              "sizeDelta": [
+                32.0,
+                0.0
+              ],
+              "pivot": [
+                0.5,
+                0.5
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

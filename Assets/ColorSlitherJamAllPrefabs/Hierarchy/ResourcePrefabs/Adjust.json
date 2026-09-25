@@ -1,0 +1,35 @@
+{
+  "sourceFile": "resources.assets",
+  "sourceGameObjectPathID": 745,
+  "sourceTransformPathID": 897,
+  "name": "Adjust",
+  "active": true,
+  "isRectTransform": false,
+  "localPosition": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 897,
+      "classID": 4
+    },
+    {
+      "pathID": 2698,
+      "classID": 114
+    }
+  ],
+  "children": []
+}

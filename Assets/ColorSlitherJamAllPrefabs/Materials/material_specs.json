@@ -1,0 +1,280 @@
+{
+  "materials": [
+    {
+      "pathID": 41,
+      "name": "Connector Variant",
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "metallic": 0.5410000085830688,
+      "smoothness": 0.257999986410141,
+      "outlineColor": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "outlineWidth": 0.5,
+      "sourceShaderRef": [
+        0,
+        192
+      ]
+    },
+    {
+      "pathID": 44,
+      "name": "Plane 14",
+      "baseColor": [
+        0.0,
+        0.3199765086174011,
+        0.4433962106704712,
+        0.8941176533699036
+      ],
+      "metallic": 0.5410000085830688,
+      "smoothness": 0.257999986410141,
+      "outlineColor": [
+        0.0,
+        0.7911868095397949,
+        1.0,
+        1.0
+      ],
+      "outlineWidth": 0.7900000214576721,
+      "sourceShaderRef": [
+        0,
+        192
+      ]
+    },
+    {
+      "pathID": 45,
+      "name": "Plane 15",
+      "baseColor": [
+        0.27092593908309937,
+        0.41870367527008057,
+        0.4749999940395355,
+        1.0
+      ],
+      "metallic": 0.5410000085830688,
+      "smoothness": 0.257999986410141,
+      "outlineColor": [
+        0.3094720244407654,
+        0.0,
+        0.6509804129600525,
+        1.0
+      ],
+      "outlineWidth": 0.5,
+      "sourceShaderRef": [
+        0,
+        192
+      ]
+    },
+    {
+      "pathID": 46,
+      "name": "Plane 1",
+      "baseColor": [
+        0.4470588266849518,
+        0.430608332157135,
+        0.4117647111415863,
+        1.0
+      ],
+      "metallic": 0.5410000085830688,
+      "smoothness": 0.257999986410141,
+      "outlineColor": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "outlineWidth": 1.0,
+      "sourceShaderRef": [
+        0,
+        192
+      ]
+    },
+    {
+      "pathID": 47,
+      "name": "Plane 10",
+      "baseColor": [
+        0.29090288281440735,
+        0.33997082710266113,
+        0.3609999716281891,
+        1.0
+      ],
+      "metallic": 0.5410000085830688,
+      "smoothness": 0.257999986410141,
+      "outlineColor": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "outlineWidth": 1.0,
+      "sourceShaderRef": [
+        0,
+        200
+      ]
+    },
+    {
+      "pathID": 52,
+      "name": "Plane 2",
+      "baseColor": [
+        0.29090288281440735,
+        0.33997082710266113,
+        0.3609999716281891,
+        1.0
+      ],
+      "metallic": 0.5410000085830688,
+      "smoothness": 0.257999986410141,
+      "outlineColor": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "outlineWidth": 1.0,
+      "sourceShaderRef": [
+        0,
+        192
+      ]
+    },
+    {
+      "pathID": 54,
+      "name": "Plane 6",
+      "baseColor": [
+        0.29090288281440735,
+        0.33997082710266113,
+        0.3609999716281891,
+        1.0
+      ],
+      "metallic": 0.5410000085830688,
+      "smoothness": 0.257999986410141,
+      "outlineColor": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "outlineWidth": 1.0,
+      "sourceShaderRef": [
+        0,
+        203
+      ]
+    },
+    {
+      "pathID": 55,
+      "name": "Plane 7",
+      "baseColor": [
+        0.29090288281440735,
+        0.33997082710266113,
+        0.3609999716281891,
+        1.0
+      ],
+      "metallic": 0.5410000085830688,
+      "smoothness": 0.257999986410141,
+      "outlineColor": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "outlineWidth": 1.0,
+      "sourceShaderRef": [
+        0,
+        192
+      ]
+    },
+    {
+      "pathID": 56,
+      "name": "Plane 9",
+      "baseColor": [
+        0.29090288281440735,
+        0.33997082710266113,
+        0.3609999716281891,
+        1.0
+      ],
+      "metallic": 0.5410000085830688,
+      "smoothness": 0.257999986410141,
+      "outlineColor": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "outlineWidth": 1.0,
+      "sourceShaderRef": [
+        0,
+        192
+      ]
+    },
+    {
+      "pathID": 57,
+      "name": "Lit",
+      "baseColor": [
+        0.5,
+        0.5,
+        0.5,
+        1.0
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "outlineColor": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "outlineWidth": 0.0,
+      "sourceShaderRef": [
+        0,
+        204
+      ]
+    },
+    {
+      "pathID": 58,
+      "name": "LilitaOne-Regular SDF Material",
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "outlineColor": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "outlineWidth": 0.8889999985694885,
+      "sourceShaderRef": [
+        4,
+        150
+      ]
+    },
+    {
+      "pathID": 61,
+      "name": "LilitaOne-Regular Outline_Extended ASCII_120 SDF Material",
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.0,
+      "smoothness": 0.5,
+      "outlineColor": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "outlineWidth": 0.0,
+      "sourceShaderRef": [
+        0,
+        202
+      ]
+    }
+  ]
+}

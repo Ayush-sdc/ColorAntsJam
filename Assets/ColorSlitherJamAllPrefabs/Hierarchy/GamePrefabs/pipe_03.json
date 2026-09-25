@@ -1,0 +1,115 @@
+{
+  "sourceFile": "sharedassets2.assets",
+  "sourceGameObjectPathID": 394,
+  "sourceTransformPathID": 482,
+  "name": "pipe_03",
+  "active": true,
+  "isRectTransform": false,
+  "localPosition": [
+    0.0,
+    -0.28999999165534973,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    -0.0,
+    -0.0,
+    -0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 482,
+      "classID": 4
+    }
+  ],
+  "children": [
+    {
+      "sourceFile": "sharedassets2.assets",
+      "sourceGameObjectPathID": 349,
+      "sourceTransformPathID": 419,
+      "name": "pipe_03",
+      "active": true,
+      "isRectTransform": false,
+      "localPosition": [
+        0.0,
+        0.23600000143051147,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        0.0,
+        -0.7071068286895752,
+        0.0,
+        0.7071068286895752
+      ],
+      "localScale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 419,
+          "classID": 4
+        },
+        {
+          "pathID": 574,
+          "classID": 33,
+          "meshPathID": 180,
+          "meshFileID": 0
+        },
+        {
+          "pathID": 529,
+          "classID": 23,
+          "materialPathIDs": [
+            44
+          ]
+        }
+      ],
+      "children": []
+    },
+    {
+      "sourceFile": "sharedassets2.assets",
+      "sourceGameObjectPathID": 355,
+      "sourceTransformPathID": 420,
+      "name": "Shadow",
+      "active": false,
+      "isRectTransform": false,
+      "localPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "localRotationQuaternion": [
+        0.5,
+        0.5,
+        -0.5,
+        0.5
+      ],
+      "localScale": [
+        0.8100000023841858,
+        0.8100000023841858,
+        1.0
+      ],
+      "components": [
+        {
+          "pathID": 420,
+          "classID": 4
+        },
+        {
+          "pathID": 616,
+          "classID": 212,
+          "materialPathIDs": [
+            47
+          ],
+          "spritePathID": 295
+        }
+      ],
+      "children": []
+    }
+  ]
+}

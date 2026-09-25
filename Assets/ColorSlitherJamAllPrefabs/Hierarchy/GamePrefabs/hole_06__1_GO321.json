@@ -1,0 +1,44 @@
+{
+  "sourceFile": "sharedassets2.assets",
+  "sourceGameObjectPathID": 321,
+  "sourceTransformPathID": 406,
+  "name": "hole_06",
+  "active": true,
+  "isRectTransform": false,
+  "localPosition": [
+    -0.0,
+    0.0,
+    0.0
+  ],
+  "localRotationQuaternion": [
+    0.0,
+    -0.0,
+    -0.0,
+    1.0
+  ],
+  "localScale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "components": [
+    {
+      "pathID": 406,
+      "classID": 4
+    },
+    {
+      "pathID": 545,
+      "classID": 33,
+      "meshPathID": 170,
+      "meshFileID": 0
+    },
+    {
+      "pathID": 493,
+      "classID": 23,
+      "materialPathIDs": [
+        57
+      ]
+    }
+  ],
+  "children": []
+}
