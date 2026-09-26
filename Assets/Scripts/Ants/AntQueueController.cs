@@ -540,9 +540,14 @@ public class AntQueueController : MonoBehaviour
 
         InitializeTrail();
 
-        Vector3 holePitPos = destinationHole != null 
-            ? destinationHole.transform.position + new Vector3(0f, -0.2f, 0f) 
-            : (currentSmoothRoute.Count > 0 ? currentSmoothRoute[currentSmoothRoute.Count - 1] : transform.position);
+        float initialAntY = units[0] != null ? units[0].transform.position.y : 0.05f;
+        Vector3 holeDespawnPoint = (currentSmoothRoute.Count > 0) 
+            ? currentSmoothRoute[currentSmoothRoute.Count - 1] 
+            : (destinationHole != null ? destinationHole.transform.position : transform.position);
+
+        Vector3 holeEntryPoint = destinationHole != null 
+            ? destinationHole.GetHoleEntryPoint(holeEntranceCoordinate, forwardDirection) 
+            : holeDespawnPoint;
 
         int routeIndex = 0;
         Vector3 currentHeadPos = units[0] != null ? units[0].transform.position : transform.position;
@@ -552,15 +557,30 @@ public class AntQueueController : MonoBehaviour
         bool headReachedPit = false;
         float pitReachDistance = 0f;
         float virtualHeadDist = totalTrailDistance;
+        bool hasAcquiredHoleEntry = false;
 
         while (swallowedAntCount < totalAnts)
         {
             float dt = Mathf.Min(Time.deltaTime, 0.05f);
             float stepBudget = moveSpeed * dt;
 
-            // 1. Advance head along route until pit is reached
+            // 1. Advance head along route until HoleDespawnPoint is reached
             if (!headReachedPit)
             {
+                // Check if head is crossing into the hole entrance rim
+                if (!hasAcquiredHoleEntry && destinationHole != null)
+                {
+                    float distToEntry = Vector3.Distance(currentHeadPos, holeEntryPoint);
+                    if (distToEntry < 0.35f)
+                    {
+                        while (destinationHole != null && !destinationHole.RequestHoleEntry(this))
+                        {
+                            yield return null;
+                        }
+                        hasAcquiredHoleEntry = true;
+                    }
+                }
+
                 if (currentSmoothRoute != null && currentSmoothRoute.Count > 1 && routeIndex < currentSmoothRoute.Count - 1)
                 {
                     while (stepBudget > 0f && routeIndex < currentSmoothRoute.Count - 1)
@@ -592,20 +612,20 @@ public class AntQueueController : MonoBehaviour
 
                 virtualHeadDist = totalTrailDistance;
 
-                // Check if head reached the final route point (the pit)
+                // Check if head reached the deep despawn point inside the hole
                 if (routeIndex >= currentSmoothRoute.Count - 1)
                 {
                     headReachedPit = true;
-                    currentHeadPos = holePitPos;
+                    currentHeadPos = holeDespawnPoint;
                     Vector3 pitFwd = units[0] != null ? units[0].transform.forward : Vector3.forward;
-                    AddTrailPoint(holePitPos, pitFwd);
+                    AddTrailPoint(holeDespawnPoint, pitFwd);
                     pitReachDistance = totalTrailDistance;
                     virtualHeadDist = pitReachDistance;
                 }
             }
             else
             {
-                // Head has already reached pit. Followers continue marching along the recorded trail!
+                // Head reached despawn point; followers continue marching along recorded trail deep into hole!
                 virtualHeadDist += stepBudget;
             }
 
@@ -622,7 +642,7 @@ public class AntQueueController : MonoBehaviour
                     continue;
                 }
 
-                // If ant is the head and has not reached the pit yet, position it directly at currentHeadPos
+                // If ant is the head and has not reached the despawn point yet, position it directly at currentHeadPos
                 if (i == 0 && !headReachedPit)
                 {
                     Vector3 headDir = currentHeadPos - unit.transform.position;
@@ -633,6 +653,16 @@ public class AntQueueController : MonoBehaviour
                     }
                     unit.transform.position = currentHeadPos;
 
+                    if (currentHeadPos.y < initialAntY - 0.03f)
+                    {
+                        if (unit.IsWalkTweenActive)
+                        {
+                            unit.StopWalkAnimation();
+                        }
+                        float pitDescent = Mathf.Clamp01((initialAntY - currentHeadPos.y) / 0.20f);
+                        unit.transform.localScale = Vector3.one * (1.0f - pitDescent * 0.70f);
+                    }
+
                     if (currentBodyCoordinates != null && i < currentBodyCoordinates.Count && BoardManager.Instance != null)
                     {
                         currentBodyCoordinates[i] = BoardManager.Instance.WorldToGridPosition(currentHeadPos);
@@ -640,18 +670,29 @@ public class AntQueueController : MonoBehaviour
                     continue;
                 }
 
-                // Ant's distance along the trail
+                // Ant's distance along the recorded trail
                 float targetDist = virtualHeadDist - i * segmentDistance;
 
                 if (!headReachedPit || targetDist < pitReachDistance)
                 {
-                    // Still moving along trail towards the pit
+                    // Still moving along trail towards/inside the hole
                     if (SampleTrail(targetDist, out Vector3 followPos, out Vector3 followDir))
                     {
                         unit.transform.position = followPos;
                         if (followDir.sqrMagnitude > 0.0001f)
                         {
                             unit.transform.rotation = Quaternion.LookRotation(followDir);
+                        }
+
+                        // Smoothly descend into recessed dark pit and stop walk tween safely
+                        if (followPos.y < initialAntY - 0.03f)
+                        {
+                            if (unit.IsWalkTweenActive)
+                            {
+                                unit.StopWalkAnimation();
+                            }
+                            float pitDescent = Mathf.Clamp01((initialAntY - followPos.y) / 0.20f);
+                            unit.transform.localScale = Vector3.one * (1.0f - pitDescent * 0.70f);
                         }
 
                         if (currentBodyCoordinates != null && i < currentBodyCoordinates.Count && BoardManager.Instance != null)
@@ -662,56 +703,25 @@ public class AntQueueController : MonoBehaviour
                 }
                 else
                 {
-                    // Ant has reached the pit!
+                    // Complete ant has reached HoleDespawnPoint (deep inside hole, entire body fully cleared entrance opening)
                     hasStartedDiving[i] = true;
-                    int antIndex = i;
-                    bool isTail = (antIndex == totalAnts - 1);
+                    swallowedAntCount++;
 
                     unit.StopWalkAnimation();
 
-                    if (isTail)
+                    if (destinationHole != null)
                     {
-                        // FINAL ANT / TAIL:
-                        // Synchronously wait for its dive & scale-to-zero animation to fully complete!
-                        unit.transform.DOJump(holePitPos, enterHoleJumpPower, 1, 0.22f);
-                        unit.transform.DOScale(Vector3.zero, 0.22f);
-
-                        yield return new WaitForSeconds(0.24f);
-
-                        if (destinationHole != null)
-                        {
-                            destinationHole.OnAntEnteredHole();
-                        }
-                        swallowedAntCount++;
-                        if (unit != null)
-                        {
-                            SafeDestroy(unit.gameObject);
-                        }
+                        destinationHole.OnAntEnteredHole();
                     }
-                    else
-                    {
-                        // Head or Body ant:
-                        unit.transform.DOJump(holePitPos, enterHoleJumpPower, 1, 0.20f);
-                        unit.transform.DOScale(Vector3.zero, 0.20f).OnComplete(() =>
-                        {
-                            if (destinationHole != null)
-                            {
-                                destinationHole.OnAntEnteredHole();
-                            }
-                            swallowedAntCount++;
-                            if (unit != null)
-                            {
-                                SafeDestroy(unit.gameObject);
-                            }
-                        });
-                    }
+
+                    SafeDestroy(unit.gameObject);
                 }
             }
 
             yield return null;
         }
 
-        // Wait to be 100% sure all ant swallow callbacks have incremented swallowedAntCount
+        // Wait to be 100% sure all ant swallows have completed
         float safetyTimeout = 1.0f;
         while (swallowedAntCount < totalAnts && safetyTimeout > 0f)
         {
@@ -734,6 +744,7 @@ public class AntQueueController : MonoBehaviour
 
         if (destinationHole != null)
         {
+            destinationHole.ReleaseHoleEntry(this);
             destinationHole.OnEntireQueueEnteredHole();
         }
 
@@ -745,8 +756,22 @@ public class AntQueueController : MonoBehaviour
         destinationHole = null;
     }
 
+    public void ReleaseReservedHole()
+    {
+        if (destinationHole != null)
+        {
+            destinationHole.ReleaseHoleEntry(this);
+            if (isMoving)
+            {
+                destinationHole.ReleaseReservation();
+            }
+            destinationHole = null;
+        }
+    }
+
     private void OnDisable()
     {
+        ReleaseReservedHole();
         if (antUnits != null)
         {
             foreach (var u in antUnits)
@@ -758,6 +783,7 @@ public class AntQueueController : MonoBehaviour
 
     private void OnDestroy()
     {
+        ReleaseReservedHole();
         if (antUnits != null)
         {
             foreach (var u in antUnits)

@@ -19,6 +19,13 @@ public class GameUIManager : MonoBehaviour
     [SerializeField] private GameObject losePanel;
     [SerializeField] private Text loseReasonText;
 
+    [Header("Level Failed UI")]
+    [SerializeField] private Image failDimBackground;
+    [SerializeField] private Transform failPopupRoot;
+    [SerializeField] private Transform failTitleTransform;
+    [SerializeField] private Transform failHeartTransform;
+    [SerializeField] private Transform failRestartButtonTransform;
+
     [Header("Settings Modal")]
     [SerializeField] private GameObject settingsModal;
     [SerializeField] private Transform settingsCard;
@@ -42,6 +49,7 @@ public class GameUIManager : MonoBehaviour
     private readonly Color colorToggleOn = new Color(0.18f, 0.72f, 0.32f);
     private readonly Color colorToggleOff = new Color(0.55f, 0.58f, 0.62f);
     private bool isSettingsAnimating = false;
+    private Sequence failSequence;
 
     private void Awake()
     {
@@ -51,12 +59,34 @@ public class GameUIManager : MonoBehaviour
         LevelManager.OnLevelLoaded += HandleLevelLoaded;
         AntQueueController.OnQueueMoveStarted += HandleQueueMoveStarted;
 
+        EnsureFailUIReferences();
+
         // Top bar buttons
         if (restartButton != null) restartButton.onClick.AddListener(() => GameManager.Instance.RestartLevel());
         if (gearSettingsButton != null) gearSettingsButton.onClick.AddListener(OpenSettingsModal);
 
         // Overlay panel buttons
-        if (retryButton != null) retryButton.onClick.AddListener(() => GameManager.Instance.RestartLevel());
+        if (retryButton != null)
+        {
+            retryButton.onClick.AddListener(() =>
+            {
+                if (SoundManager.Instance != null)
+                {
+                    SoundManager.Instance.PlayTap();
+                }
+                if (failRestartButtonTransform != null)
+                {
+                    failRestartButtonTransform.DOKill();
+                    failRestartButtonTransform.DOPunchScale(new Vector3(-0.08f, -0.08f, 0f), 0.12f, 1, 0f)
+                        .SetUpdate(true)
+                        .OnComplete(() => GameManager.Instance.RestartLevel());
+                }
+                else
+                {
+                    GameManager.Instance.RestartLevel();
+                }
+            });
+        }
         if (nextLevelButton != null) nextLevelButton.onClick.AddListener(() => GameManager.Instance.NextLevel());
 
         // Settings modal buttons
@@ -75,7 +105,40 @@ public class GameUIManager : MonoBehaviour
         }
 
         if (settingsModal != null) settingsModal.SetActive(false);
+        if (losePanel != null) losePanel.SetActive(false);
         UpdateSettingsButtonsUI();
+    }
+
+    public void EnsureFailUIReferences()
+    {
+        if (losePanel != null)
+        {
+            if (failDimBackground == null)
+            {
+                failDimBackground = losePanel.GetComponent<Image>();
+            }
+            if (failPopupRoot == null)
+            {
+                var root = losePanel.transform.Find("FailPopupRoot");
+                failPopupRoot = root != null ? root : losePanel.transform;
+            }
+            if (failPopupRoot != null)
+            {
+                if (failTitleTransform == null)
+                    failTitleTransform = failPopupRoot.Find("FailedTitleImage");
+                if (failHeartTransform == null)
+                    failHeartTransform = failPopupRoot.Find("BrokenHeartImage");
+                if (failRestartButtonTransform == null)
+                {
+                    var btnTrans = failPopupRoot.Find("RestartButton") ?? failPopupRoot.Find("ActionButton");
+                    failRestartButtonTransform = btnTrans;
+                }
+            }
+            if (retryButton == null && failRestartButtonTransform != null)
+            {
+                retryButton = failRestartButtonTransform.GetComponent<Button>();
+            }
+        }
     }
 
     private void OnDestroy()
@@ -192,6 +255,7 @@ public class GameUIManager : MonoBehaviour
             tutorialContainer.SetActive(level != null && level.LevelNumber == 1);
         }
 
+        failSequence?.Kill();
         if (winPanel != null) winPanel.SetActive(false);
         if (losePanel != null) losePanel.SetActive(false);
         if (settingsModal != null) settingsModal.SetActive(false);
@@ -236,12 +300,54 @@ public class GameUIManager : MonoBehaviour
 
         if (losePanel != null)
         {
-            losePanel.SetActive(state == GameState.LevelLost);
-            if (state == GameState.LevelLost)
+            bool isLost = state == GameState.LevelLost;
+            losePanel.SetActive(isLost);
+            if (isLost)
             {
-                losePanel.transform.localScale = Vector3.one * 0.7f;
-                losePanel.transform.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutBack);
+                AnimateFailScreenEntrance();
+            }
+            else
+            {
+                failSequence?.Kill();
             }
         }
+    }
+
+    private void AnimateFailScreenEntrance()
+    {
+        EnsureFailUIReferences();
+        failSequence?.Kill();
+        failSequence = DOTween.Sequence();
+
+        // 1. Dark dim overlay fades in quickly
+        if (failDimBackground != null)
+        {
+            Color targetColor = new Color(0f, 0f, 0f, 0.82f);
+            failDimBackground.color = new Color(0f, 0f, 0f, 0f);
+            failSequence.Join(failDimBackground.DOColor(targetColor, 0.20f).SetEase(Ease.Linear));
+        }
+
+        // 2. Title art scales in
+        if (failTitleTransform != null)
+        {
+            failTitleTransform.localScale = Vector3.one * 0.72f;
+            failSequence.Join(failTitleTransform.DOScale(Vector3.one, 0.32f).SetEase(Ease.OutBack));
+        }
+
+        // 3. Broken heart scales in
+        if (failHeartTransform != null)
+        {
+            failHeartTransform.localScale = Vector3.one * 0.68f;
+            failSequence.Join(failHeartTransform.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutBack));
+        }
+
+        // 4. Glossy Restart button pops in gently with short delay
+        if (failRestartButtonTransform != null)
+        {
+            failRestartButtonTransform.localScale = Vector3.zero;
+            failSequence.Insert(0.10f, failRestartButtonTransform.DOScale(Vector3.one, 0.32f).SetEase(Ease.OutBack));
+        }
+
+        failSequence.SetUpdate(true);
     }
 }

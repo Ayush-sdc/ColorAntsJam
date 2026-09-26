@@ -90,6 +90,84 @@ public class HoleController : MonoBehaviour
             }
         }
     }
+    private AntQueueController activeIngestingQueue = null;
+
+    public bool RequestHoleEntry(AntQueueController queue)
+    {
+        if (activeIngestingQueue == null || activeIngestingQueue == queue)
+        {
+            activeIngestingQueue = queue;
+            return true;
+        }
+        return false;
+    }
+
+    public void ReleaseHoleEntry(AntQueueController queue)
+    {
+        if (activeIngestingQueue == queue)
+        {
+            activeIngestingQueue = null;
+        }
+    }
+
+    public void ResetState()
+    {
+        inboundReservations = 0;
+        activeIngestingQueue = null;
+        isCompleted = false;
+        hasDisappeared = false;
+        remainingCount = initialCapacity;
+        UpdateBadgeDisplay();
+    }
+
+    /// <summary>
+    /// Calculates the point where an ant begins entering the hole (outer rim boundary along approach direction).
+    /// </summary>
+    public Vector3 GetHoleEntryPoint(Vector2Int entranceCell, Vector2Int approachDir)
+    {
+        Vector3 cellCenter = BoardManager.Instance != null 
+            ? BoardManager.Instance.GridToWorldPosition(entranceCell)
+            : transform.position;
+        float cs = BoardManager.Instance != null ? BoardManager.Instance.CellSize : 1.0f;
+        Vector3 dir = new Vector3(approachDir.x, 0f, approachDir.y).normalized;
+        return cellCenter - dir * (0.50f * cs);
+    }
+
+    /// <summary>
+    /// Calculates the deep despawn point inside the hole, past the point where the COMPLETE ant has cleared the visible opening.
+    /// </summary>
+    public Vector3 GetHoleDespawnPoint(Vector2Int entranceCell, Vector2Int approachDir, float antVisualLength = 0.85f)
+    {
+        Vector3 entryPoint = GetHoleEntryPoint(entranceCell, approachDir);
+        Vector3 dir = new Vector3(approachDir.x, 0f, approachDir.y).normalized;
+        float cs = BoardManager.Instance != null ? BoardManager.Instance.CellSize : 1.0f;
+        
+        // Ant must clear the entry rim by its full visual length + safe margin
+        float minDespawnDist = antVisualLength + 0.25f * cs;
+        Vector3 despawnPoint = entryPoint + dir * minDespawnDist;
+        
+        // Recessed down into the dark pit floor
+        despawnPoint.y = transform.position.y - 0.20f;
+        return despawnPoint;
+    }
+
+    /// <summary>
+    /// Calculates combined visual mesh bounds of this hole for overlap validation.
+    /// </summary>
+    public Bounds CalculateVisualBounds()
+    {
+        var renderers = GetComponentsInChildren<MeshRenderer>();
+        Bounds totalBounds = new Bounds(transform.position, Vector3.zero);
+        bool first = true;
+        foreach (var r in renderers)
+        {
+            if (r == null || !r.enabled) continue;
+            if (first) { totalBounds = r.bounds; first = false; }
+            else totalBounds.Encapsulate(r.bounds);
+        }
+        return totalBounds;
+    }
+
     public int ParallelRows => parallelRows;
     public int WidthCells => widthCells;
     public int HeightCells => heightCells;
@@ -102,14 +180,8 @@ public class HoleController : MonoBehaviour
             isRightSide = value;
             if (!IsPrefabAsset())
             {
-                int visualW = (this.initialQueueCount == 1) ? 1 : this.widthCells;
-                int visualH = (this.initialQueueCount == 1) ? 1 : this.heightCells;
-                BuildStadiumSlotVisuals(isRightSide, parallelRows, visualW, visualH);
+                BuildStadiumSlotVisuals(isRightSide, parallelRows, this.widthCells, this.heightCells);
                 UpdateBadgeDisplay();
-                if (this.initialQueueCount == 1)
-                {
-                    ApplySingleQueueHolderVisualOverride();
-                }
             }
         }
     }
@@ -153,18 +225,9 @@ public class HoleController : MonoBehaviour
 
         if (!hasVisuals)
         {
-            int visualW = (this.initialQueueCount == 1) ? 1 : this.widthCells;
-            int visualH = (this.initialQueueCount == 1) ? 1 : this.heightCells;
-            BuildStadiumSlotVisuals(isRightSide, parallelRows, visualW, visualH);
-            if (this.initialQueueCount == 1)
-            {
-                ApplySingleQueueHolderVisualOverride();
-            }
+            BuildStadiumSlotVisuals(isRightSide, parallelRows, this.widthCells, this.heightCells);
         }
-        else
-        {
-            UpdateBadgeDisplay();
-        }
+        UpdateBadgeDisplay();
     }
 
     public void Initialize(int rawColorId, Vector2Int coordinate, List<Vector2Int> allCells, int capacity = 1, bool isRightSideSlot = true, int rowCount = 1, int widthInCells = 1, int heightInCells = 1, bool queueBased = true)
@@ -217,15 +280,8 @@ public class HoleController : MonoBehaviour
 
         if (!IsPrefabAsset())
         {
-            int visualW = (this.initialQueueCount == 1) ? 1 : this.widthCells;
-            int visualH = (this.initialQueueCount == 1) ? 1 : this.heightCells;
-            BuildStadiumSlotVisuals(isRightSideSlot, this.parallelRows, visualW, visualH);
+            BuildStadiumSlotVisuals(isRightSideSlot, this.parallelRows, this.widthCells, this.heightCells);
             UpdateBadgeDisplay();
-
-            if (this.initialQueueCount == 1)
-            {
-                ApplySingleQueueHolderVisualOverride();
-            }
         }
     }
 
@@ -279,14 +335,8 @@ public class HoleController : MonoBehaviour
     [ContextMenu("Rebuild Stadium Visuals")]
     public void BuildStadiumSlotVisuals()
     {
-        int visualW = (this.initialQueueCount == 1) ? 1 : this.widthCells;
-        int visualH = (this.initialQueueCount == 1) ? 1 : this.heightCells;
-        BuildStadiumSlotVisuals(isRightSide, parallelRows, visualW, visualH);
+        BuildStadiumSlotVisuals(isRightSide, parallelRows, this.widthCells, this.heightCells);
         UpdateBadgeDisplay();
-        if (this.initialQueueCount == 1)
-        {
-            ApplySingleQueueHolderVisualOverride();
-        }
     }
 
     public void BuildStadiumSlotVisuals(bool rightSide, int rows, int wCells = -1, int hCells = -1)
@@ -305,13 +355,14 @@ public class HoleController : MonoBehaviour
             SafeDestroy(transform.GetChild(i).gameObject);
         }
 
-        slotRoot = new GameObject("HoleSlotRoot").transform;
+        // Hierarchy root: HoleVisualRoot
+        slotRoot = new GameObject("HoleVisualRoot").transform;
         slotRoot.SetParent(transform, false);
         slotRoot.localPosition = Vector3.zero;
         slotRoot.localRotation = Quaternion.identity;
 
-        if (wCells > 0 && this.widthCells <= 1) this.widthCells = wCells;
-        if (hCells > 0 && this.heightCells <= 1) this.heightCells = hCells;
+        if (wCells > 0) this.widthCells = wCells;
+        if (hCells > 0) this.heightCells = hCells;
         if (rows > 0) this.parallelRows = rows;
         this.isRightSide = rightSide;
 
@@ -319,11 +370,11 @@ public class HoleController : MonoBehaviour
         int effectiveH = (hCells > 0) ? hCells : this.heightCells;
 
         float cs = (BoardManager.Instance != null && BoardManager.Instance.CellSize > 0f) ? BoardManager.Instance.CellSize : 1.0f;
-        float smallMargin = 0.06f * cs;
-        float outerW = Mathf.Max(0.60f * cs, effectiveW * cs - smallMargin);
-        float outerH = Mathf.Max(0.60f * cs, effectiveH * cs - smallMargin);
+        float safeMargin = 0.08f * cs;
+        float outerW = Mathf.Max(0.50f * cs, effectiveW * cs - safeMargin);
+        float outerH = Mathf.Max(0.50f * cs, effectiveH * cs - safeMargin);
 
-        // Moderate rounded rectangle radius: clearly rectangular body, NOT a pill or capsule!
+        // Rounded rectangle radius: clearly rectangular body with rounded corners
         float cornerRadius = Mathf.Min(
             0.22f * cs,
             Mathf.Min(outerW, outerH) * 0.28f
@@ -374,112 +425,96 @@ public class HoleController : MonoBehaviour
         pitRenderer = pitObj.AddComponent<MeshRenderer>();
         pitRenderer.material = pitMat;
 
-        // 4. Integrated Counter Badge
+        // 4. Integrated Counter Badge — sticks to the nearest side of the colored SlotRim, inside holder bounds
         countBadgeObj = new GameObject("SlotCounterBadge");
         countBadgeObj.transform.SetParent(slotRoot, false);
-        countBadgeObj.transform.localPosition = Vector3.zero;
+
+        // BadgeMesh size: increased by ~20-25% from 0.34 to 0.42 for clear mobile readability and clean padding
+        float badgeH = (effectiveW == 1 && effectiveH == 1)
+            ? Mathf.Clamp(0.38f * cs, 0.28f * cs, pitH * 0.68f)
+            : Mathf.Clamp(0.42f * cs, 0.32f * cs, Mathf.Min(pitW, pitH) * 0.72f);
+        float badgeW = (remainingCount >= 10) ? badgeH * 1.25f : badgeH;
+        float badgeRadius = Mathf.Min(0.09f * cs, Mathf.Min(badgeW, badgeH) * 0.35f);
 
         Vector3 badgePos;
-        if (this.widthCells > this.heightCells)
+        float insetFromRim = 0.04f * cs;
+
+        if (effectiveW > effectiveH)
         {
-            // Horizontal holder: badge on right edge of rim
-            badgePos = new Vector3(outerW * 0.5f - 0.20f * cs, 0f, 0f);
+            // Horizontal holder: badge sticks to the end of the slot (right or left depending on isRightSide)
+            float endSignX = isRightSide ? 1f : -1f;
+            float badgeCenterX = endSignX * (outerW * 0.5f - badgeW * 0.5f - insetFromRim);
+            badgePos = new Vector3(badgeCenterX, 0f, 0f);
         }
-        else if (this.heightCells > this.widthCells)
+        else if (effectiveH > effectiveW)
         {
-            // Vertical holder: badge at bottom edge of rim
-            badgePos = new Vector3(0f, 0f, -(outerH * 0.5f - 0.20f * cs));
+            // Vertical holder: badge sticks to the nearest end along vertical axis (bottom or top)
+            float endSignZ = -1f;
+            if (gridCoordinate.y > 0 && occupiedCells != null && occupiedCells.Count > 1)
+            {
+                int minY = int.MaxValue, maxY = int.MinValue;
+                foreach (var c in occupiedCells)
+                {
+                    if (c.y < minY) minY = c.y;
+                    if (c.y > maxY) maxY = c.y;
+                }
+                // If entrance is at top (maxY), badge is at bottom (-Z); if entrance is at bottom (minY), badge is at top (+Z)
+                endSignZ = (gridCoordinate.y >= (minY + maxY) * 0.5f) ? -1f : 1f;
+            }
+            float badgeCenterZ = endSignZ * (outerH * 0.5f - badgeH * 0.5f - insetFromRim);
+            badgePos = new Vector3(0f, 0f, badgeCenterZ);
         }
         else
         {
-            // Box / rectangular holder: badge at bottom-right
-            badgePos = new Vector3(outerW * 0.5f - 0.22f * cs, 0f, -(outerH * 0.5f - 0.22f * cs));
+            // 1x1 or square holder
+            if (effectiveW == 1 && effectiveH == 1)
+            {
+                float endSignX = isRightSide ? 1f : -1f;
+                float badgeCenterX = endSignX * (outerW * 0.5f - badgeW * 0.5f - insetFromRim);
+                badgePos = new Vector3(badgeCenterX, 0f, 0f);
+            }
+            else
+            {
+                // Multi-row square (e.g. 2x2): tuck against bottom-right inner rim
+                float endSignX = isRightSide ? 1f : -1f;
+                float badgeCenterX = endSignX * (outerW * 0.5f - badgeW * 0.5f - insetFromRim);
+                float badgeCenterZ = -(outerH * 0.5f - badgeH * 0.5f - insetFromRim);
+                badgePos = new Vector3(badgeCenterX, 0f, badgeCenterZ);
+            }
         }
+        countBadgeObj.transform.localPosition = badgePos;
 
         GameObject badgeMeshObj = new GameObject("BadgeMesh");
         badgeMeshObj.transform.SetParent(countBadgeObj.transform, false);
-        badgeMeshObj.transform.localPosition = badgePos;
+        badgeMeshObj.transform.localPosition = new Vector3(0f, 0.022f, 0f);
 
         MeshFilter badgeFilter = badgeMeshObj.AddComponent<MeshFilter>();
-        float badgeSize = 0.38f * cs;
-        badgeFilter.sharedMesh = CreateRoundedRectFilledMesh(badgeSize, badgeSize, 0.08f * cs, 0.038f, 8, "StadiumBadgeTabMesh");
+        badgeFilter.sharedMesh = CreateRoundedRectFilledMesh(badgeW, badgeH, badgeRadius, 0.016f, 8, "StadiumBadgeTabMesh");
         badgeBackgroundRenderer = badgeMeshObj.AddComponent<MeshRenderer>();
         badgeBackgroundRenderer.material = rimMat;
 
-        // Number Text
+        // Number Text: centered relative to BadgeMesh, clear padding, no z-fighting
         GameObject textObj = new GameObject("BadgeCountText");
         textObj.transform.SetParent(countBadgeObj.transform, false);
-        textObj.transform.localPosition = new Vector3(badgePos.x, 0.22f, badgePos.z);
+        textObj.transform.localPosition = new Vector3(0f, 0.042f, 0f);
         textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
 
         countTextMesh = textObj.AddComponent<TextMesh>();
         countTextMesh.alignment = TextAlignment.Center;
         countTextMesh.anchor = TextAnchor.MiddleCenter;
-        countTextMesh.fontSize = 62;
-        countTextMesh.characterSize = (this.widthCells >= 2 || this.heightCells >= 2) ? 0.080f : 0.092f;
+        countTextMesh.fontSize = 64;
+        countTextMesh.characterSize = (remainingCount >= 10) ? 0.034f : 0.035f;
         countTextMesh.fontStyle = FontStyle.Bold;
         countTextMesh.color = UnityEngine.Color.white;
+        countTextMesh.text = remainingCount.ToString();
     }
 
     [ContextMenu("Apply Single Queue Holder Visual Override")]
     public void ApplySingleQueueHolderVisualOverride(int levelNumber = -1)
     {
-        if (slotRoot == null) return;
-
-        // SlotRim: LocalScale X = 1.9205, Y = keep existing, Z = keep existing
-        Transform rimTr = rimMeshRenderer != null ? rimMeshRenderer.transform : slotRoot.Find("SlotRim");
-        if (rimTr != null)
-        {
-            Vector3 s = rimTr.localScale;
-            s.x = 1.9205f;
-            rimTr.localScale = s;
-        }
-
-        // SlotInnerBevel: LocalScale X = 2.3861, Y = keep existing, Z = keep existing
-        Transform bevelTr = innerBevelRenderer != null ? innerBevelRenderer.transform : slotRoot.Find("SlotInnerBevel");
-        if (bevelTr != null)
-        {
-            Vector3 s = bevelTr.localScale;
-            s.x = 2.3861f;
-            bevelTr.localScale = s;
-        }
-
-        // SlotPit: LocalScale X = 2.6535, Y = keep existing, Z = keep existing
-        Transform pitTr = pitRenderer != null ? pitRenderer.transform : slotRoot.Find("SlotPit");
-        if (pitTr != null)
-        {
-            Vector3 s = pitTr.localScale;
-            s.x = 2.6535f;
-            pitTr.localScale = s;
-        }
-
-        // SlotCounterBadge: LocalPosition X = 0.35, Y = 0, Z = 0
-        Transform badgeTr = countBadgeObj != null ? countBadgeObj.transform : slotRoot.Find("SlotCounterBadge");
-        if (badgeTr != null)
-        {
-            badgeTr.localPosition = new Vector3(0.35f, 0f, 0f);
-
-            // BadgeMesh: LocalPosition X = 0.25, Y = 0, Z = -0.25
-            Transform badgeMeshTr = badgeBackgroundRenderer != null ? badgeBackgroundRenderer.transform : badgeTr.Find("BadgeMesh");
-            if (badgeMeshTr != null)
-            {
-                badgeMeshTr.localPosition = new Vector3(0.25f, 0f, -0.25f);
-            }
-
-            // BadgeCountText: LocalPosition X = 0.25, Y = 0.22, Z = -0.25
-            Transform badgeTextTr = countTextMesh != null ? countTextMesh.transform : badgeTr.Find("BadgeCountText");
-            if (badgeTextTr != null)
-            {
-                badgeTextTr.localPosition = new Vector3(0.25f, 0.22f, -0.25f);
-            }
-        }
-
-        if (!singleQueueVisualOverrideApplied)
-        {
-            singleQueueVisualOverrideApplied = true;
-            int lvl = levelNumber > 0 ? levelNumber : (BoardManager.Instance?.CurrentLevel?.LevelNumber ?? (LevelManager.Instance != null ? LevelManager.Instance.CurrentLevelNumber : 1));
-            Debug.Log($"[SingleQueueHolderVisual] Level={lvl} Hole={gameObject.name} Color={holeColor} InitialQueueCount={initialQueueCount} OverrideApplied=True");
-        }
+        // Visual dimensions are authoritatively bounded by OccupiedCells footprint.
+        // Scaling beyond the footprint is disabled to strictly prevent hole overlaps.
+        singleQueueVisualOverrideApplied = true;
     }
 
     /// <summary>
@@ -772,7 +807,7 @@ public class HoleController : MonoBehaviour
         if (countTextMesh == null) return;
 
         countTextMesh.text = remainingCount.ToString();
-        countTextMesh.characterSize = remainingCount >= 10 ? 0.080f : 0.092f;
+        countTextMesh.characterSize = (remainingCount >= 10) ? 0.034f : 0.035f;
         countTextMesh.color = remainingCount > 0 ? UnityEngine.Color.white : new UnityEngine.Color(1f, 1f, 1f, 0.85f);
     }
 
@@ -977,14 +1012,8 @@ public class HoleController : MonoBehaviour
         {
             if (this != null && !Application.isPlaying && !IsPrefabAsset())
             {
-                int visualW = (this.initialQueueCount == 1) ? 1 : this.widthCells;
-                int visualH = (this.initialQueueCount == 1) ? 1 : this.heightCells;
-                BuildStadiumSlotVisuals(isRightSide, parallelRows, visualW, visualH);
+                BuildStadiumSlotVisuals(isRightSide, parallelRows, this.widthCells, this.heightCells);
                 UpdateBadgeDisplay();
-                if (this.initialQueueCount == 1)
-                {
-                    ApplySingleQueueHolderVisualOverride();
-                }
             }
         };
     }

@@ -261,6 +261,8 @@ public class BoardManager : MonoBehaviour
                 SpawnAntQueue(queueData);
             }
         }
+
+        ValidateHoleOverlaps();
     }
 
     /// <summary>
@@ -280,6 +282,8 @@ public class BoardManager : MonoBehaviour
         {
             SpawnReferenceAntQueue(rQueue);
         }
+
+        ValidateHoleOverlaps();
     }
 
     private void SpawnReferenceHole(RuntimeReferenceHole rHole)
@@ -1041,26 +1045,33 @@ public class BoardManager : MonoBehaviour
         Vector3 entrancePos = GridToWorldPosition(entranceCell);
         entrancePos.y = headWorldPos.y;
 
-        Vector3 pitPos = targetHole != null ? targetHole.transform.position : entrancePos;
-        pitPos.y = headWorldPos.y;
+        Vector3 moveDir = new Vector3(forwardDir.x, 0f, forwardDir.y).normalized;
+        Vector3 entryPoint = targetHole != null 
+            ? targetHole.GetHoleEntryPoint(entranceCell, forwardDir) 
+            : (entrancePos - moveDir * (0.50f * cellSize));
+        entryPoint.y = headWorldPos.y;
+
+        Vector3 despawnPoint = targetHole != null 
+            ? targetHole.GetHoleDespawnPoint(entranceCell, forwardDir, 0.85f * cellSize) 
+            : (entryPoint + moveDir * (1.10f * cellSize));
 
         List<Vector3> denseRoute = new List<Vector3>();
         float stepSize = 0.05f;
 
-        // March straight from headWorldPos to entrancePos
-        float dist1 = Vector3.Distance(headWorldPos, entrancePos);
+        // 1. March straight across open floor from headWorldPos to hole entryPoint
+        float dist1 = Vector3.Distance(headWorldPos, entryPoint);
         int steps1 = Mathf.Max(1, Mathf.RoundToInt(dist1 / stepSize));
         for (int s = 0; s < steps1; s++)
         {
-            denseRoute.Add(Vector3.Lerp(headWorldPos, entrancePos, (float)s / steps1));
+            denseRoute.Add(Vector3.Lerp(headWorldPos, entryPoint, (float)s / steps1));
         }
 
-        // March from entrancePos into hole pitPos
-        float dist2 = Vector3.Distance(entrancePos, pitPos);
+        // 2. March into the hole from entryPoint to deep despawnPoint (sloping Y down into dark recessed pit)
+        float dist2 = Vector3.Distance(entryPoint, despawnPoint);
         int steps2 = Mathf.Max(1, Mathf.RoundToInt(dist2 / stepSize));
         for (int s = 0; s <= steps2; s++)
         {
-            denseRoute.Add(Vector3.Lerp(entrancePos, pitPos, (float)s / steps2));
+            denseRoute.Add(Vector3.Lerp(entryPoint, despawnPoint, (float)s / steps2));
         }
 
         return denseRoute;
@@ -1451,6 +1462,7 @@ public class BoardManager : MonoBehaviour
     {
         if (queue != null)
         {
+            queue.ReleaseReservedHole();
             movingQueues.Remove(queue);
             Debug.Log($"[QueueMoveStoppedEarly] Queue={queue.QueueId} MovingQueues={movingQueues.Count}");
         }
@@ -1461,8 +1473,73 @@ public class BoardManager : MonoBehaviour
         OnQueueCompleted(queue);
     }
 
+    /// <summary>
+    /// Validates that no two active holes overlap logically (in OccupiedCells) or visually (in mesh bounds).
+    /// </summary>
+    public void ValidateHoleOverlaps()
+    {
+        int currentLvl = currentLevel != null ? currentLevel.LevelNumber : 1;
+        int logicalOverlapCount = 0;
+        int visualOverlapCount = 0;
+
+        // 1. Logical OccupiedCells overlap check
+        var claimedCells = new Dictionary<Vector2Int, HoleController>();
+        foreach (var hole in activeHoles)
+        {
+            if (hole == null || hole.IsCompleted) continue;
+            foreach (var cell in hole.OccupiedCells)
+            {
+                if (claimedCells.TryGetValue(cell, out var otherHole))
+                {
+                    logicalOverlapCount++;
+                    Debug.LogError($"[LogicalHoleOverlapError] Level={currentLvl} HoleA={otherHole.name} ({otherHole.Color}) HoleB={hole.name} ({hole.Color}) OverlappingCell=({cell.x},{cell.y})");
+                }
+                else
+                {
+                    claimedCells[cell] = hole;
+                }
+            }
+        }
+
+        // 2. Visual bounds overlap check
+        for (int i = 0; i < activeHoles.Count; i++)
+        {
+            var holeA = activeHoles[i];
+            if (holeA == null || holeA.IsCompleted) continue;
+            Bounds boundsA = holeA.CalculateVisualBounds();
+
+            for (int j = i + 1; j < activeHoles.Count; j++)
+            {
+                var holeB = activeHoles[j];
+                if (holeB == null || holeB.IsCompleted) continue;
+                Bounds boundsB = holeB.CalculateVisualBounds();
+
+                if (boundsA.Intersects(boundsB))
+                {
+                    visualOverlapCount++;
+                    float overlapX = Mathf.Min(boundsA.max.x, boundsB.max.x) - Mathf.Max(boundsA.min.x, boundsB.min.x);
+                    float overlapZ = Mathf.Min(boundsA.max.z, boundsB.max.z) - Mathf.Max(boundsA.min.z, boundsB.min.z);
+                    Debug.LogError($"[VisualHoleOverlapError] Level={currentLvl} HoleA={holeA.name} ({holeA.Color}) HoleB={holeB.name} ({holeB.Color}) OverlapX={overlapX:F3} OverlapZ={overlapZ:F3}");
+                }
+            }
+        }
+
+        if (logicalOverlapCount == 0 && visualOverlapCount == 0)
+        {
+            Debug.Log($"[HoleOverlapValidation] Level={currentLvl} PASS: LogicalOverlaps=0 VisualOverlaps=0 ActiveHoles={activeHoles.Count}");
+        }
+    }
+
     public void ClearBoard()
     {
+        foreach (var q in activeQueues)
+        {
+            if (q != null) q.ReleaseReservedHole();
+        }
+        foreach (var h in activeHoles)
+        {
+            if (h != null) h.ResetState();
+        }
         movingQueues.Clear();
 
         Transform parentTransform = boardParent != null ? boardParent : transform;

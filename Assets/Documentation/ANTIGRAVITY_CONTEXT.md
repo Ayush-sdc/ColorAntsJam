@@ -575,10 +575,10 @@ remaining queue count
 
 Managed by `GameUIManager.cs`:
 - **Win Popup (`winPanel`):** Activated when `GameState == GameState.LevelWon`. Displays level completed state, scales up with `Ease.OutBack`. Contains `nextLevelButton` calling `GameManager.Instance.NextLevel()`.
-- **Level Failed Popup (`losePanel`):** Activated when `GameState == GameState.LevelLost` (deadlock detected or timer expiry). Scales up with `Ease.OutBack`. Contains `retryButton` calling `GameManager.Instance.RestartLevel()`.
-- **Restart Behavior:** Top-bar restart button or in-modal restart button directly reloads active level via `GameManager.Instance.RestartLevel()`.
+- **Level Failed Overlay (`losePanel`):** Activated when `GameState == GameState.LevelLost` (lives depleted, deadlock detected, or timer expiry). Displays full-screen darkened gameplay background (`failDimBackground`), large centered "LEVEL FAILED!" title art (`failTitleTransform`), big broken red heart centerpiece (`failHeartTransform`), and glossy red "Restart" button (`failRestartButtonTransform` / `retryButton`).
+- **Restart Behavior:** Top-bar restart button or fail overlay restart button directly reloads active level via `GameManager.Instance.RestartLevel()`.
 - **Settings Modal (`settingsModal`):** Animated card overlay (`settingsCard`) with sound/music toggles and restart shortcut.
-- **Gameplay Blocking Overlays:** Modals and win/lose panels block further board raycasts/inputs while open.
+- **Gameplay Blocking Overlays:** Modals and win/lose panels block further board raycasts/inputs while open. `failDimBackground` raycast target blocks all pointer/touch input on the game board while the fail screen is visible.
 
 ## 8. DO NOT TOUCH / Safety Rules
 
@@ -1097,5 +1097,86 @@ DETAILS:
 - DOTween Walk Cadence: Synchronized with 6.8f moveSpeed (`halfStepDuration = 0.0735s`), providing crisp, snappy leg/body cadence without excessive bob height.
 - Queue Movement: Visually immediate response (0ms delay), leader moves along forward axis, followers strictly replicate trail at accurate segment spacing, full tail enters hole before holder disappears.
 
+## CORE MECHANICS: HOLE & HOLDER SYSTEM (2026-09-26)
 
+### 1. HOLE COUNTER BADGE
+- **Attachment to Nearest Side of SlotRim:** `SlotCounterBadge` is physically attached to the nearest/end side of the colored `SlotRim` (overlapping the inner rim by ~0.08 units and inset by 0.04 units from the outer perimeter). It never floats in the center of the slot, outside the rim, beside the holder, or between adjacent holes.
+- **Local Geometry & Orientation Derivation:** Position is derived from holder local geometry and orientation:
+  - Horizontal holders (`effectiveW > effectiveH`): Badge sits attached to the end of the slot (`badgeCenterX = endSignX * (outerW * 0.5f - badgeW * 0.5f - 0.04f * cs)`, `badgeCenterZ = 0f`).
+  - Vertical holders (`effectiveH > effectiveW`): Badge sticks to the nearest end along the vertical axis (`badgeCenterX = 0f`, `badgeCenterZ = endSignZ * (outerH * 0.5f - badgeH * 0.5f - 0.04f * cs)`).
+  - 1x1 or Square holders: Badge sits tucked into the inner rim boundary without blocking ant entry.
+- **Hierarchy:** `HoleController` -> `HoleVisualRoot` -> `SlotRim`, `SlotInnerBevel`, `SlotPit`, `SlotCounterBadge` -> `BadgeMesh` (at local Y = `0.022f`), `BadgeCountText` (at local Y = `0.042f`).
+- **BadgeMesh Sizing:** Clearly larger container (+20% to +25% larger than baseline, `badgeH = 0.42f * cs`, expands to `badgeW = 0.525f * cs` for counts >= 10).
+- **Text Centering & Padding:** `BadgeCountText` is centered relative to `BadgeMesh` with only depth separation to prevent z-fighting. Counter text occupies 55–70% of usable badge height with clean, visible internal padding on all sides. Never overflows or touches badge edges for single or double digits (1, 2, 9, 10, 12).
+- **Overlap Prevention:** Badge bounds remain strictly inside/attached to the holder footprint, guaranteeing 0 holder-to-holder visual or logical overlaps across all levels.
+- **Content:** Displays remaining matching queues, NOT individual ant count. Does not decrement per ant or upon reservation.
 
+### 2. ANT DESPAWN THRESHOLD (SEPARATION OF ENTRY AND DESPAWN)
+- **HoleEntryPoint vs HoleDespawnPoint:** The center of the hole is NOT the despawn threshold. Movement is split into two distinct waypoints:
+  1. `HoleEntryPoint`: Where the ant crosses the outer perimeter rim into the holder.
+  2. `HoleDespawnPoint`: Deep inside the holder pit, past the entry threshold by at least `antVisualLength + 0.25 * cellSize` with recessed Y depth into the dark pit floor.
+- **Full Visual Body Cleared:** An individual ant only despawns after its complete visual body has cleared the visible hole rim and fully entered the pit. No ant pops or disappears in the middle of the hole opening.
+- **Walk Tween Safety:** When descending past the rim into the pit, the ant's walking visual tween (`AntUnit.StopWalkAnimation()`) is safely stopped before despawn without affecting gameplay movement.
+
+### 3. HOLE COMPLETION & FINAL TAIL DISAPPEARANCE
+- **Queue Completion:** An ant queue is completed ONLY after its final tail ant has fully entered and disappeared.
+- **Remaining Count Decrement:** `remainingCount -= 1` occurs strictly when the entire queue (tail included) has completed swallowing.
+- **Hole Disappearance:** The hole remains fully visible and active while any ant is still entering. On the final required queue, the hole disappearance tween (`Ease.InBack` shrinkage) begins ONLY after the final tail ant has fully entered and despawned.
+
+### 4. HOLE OVERLAP PREVENTION & FOOTPRINT BOUNDING
+- **No Overlapping Holes:** No two holes may overlap logically (`OccupiedCells`) or visually on ANY level.
+- **Authoritative Footprint:** Visual geometry (`HoleVisualRoot`, `SlotRim`, `SlotPit`) is derived from the complete `OccupiedCells` bounding box `[minX, maxX, minY, maxY]`, correctly centering multi-cell trays.
+- **Visual Safety Margin:** Visual dimensions apply a safe margin (`0.08 * cellSize`) so adjacent holder visuals have a visible gap rather than intersecting.
+- **Resolution of Level 6 Yellow/Red Overlap:** The Level 6 Yellow (`(6,6), (7,6)`) and Red (`(8,6)`) logical cells did not overlap. The overlap was caused by `ApplySingleQueueHolderVisualOverride` in `HoleController.cs`, which artificially scaled 1-queue holders horizontally by 1.92x–2.65x, protruding into neighboring cells. Removing the artificial scale override and strictly bounding visuals to `OccupiedCells` resolved the overlap with a clean 0.045+ unit gap.
+- **Runtime Overlap Validation:** `BoardManager.ValidateHoleOverlaps()` runs on level setup, asserting 0 logical cell intersections and 0 visual bounding box intersections.
+
+### 5. SAME-COLOR QUEUE CONCURRENCY & CAPACITY RESERVATION
+- **Multiple Same-Color Queues:** Two or more same-color queues can be clicked/moving simultaneously toward the SAME matching hole, provided that hole has remaining capacity.
+- **Inbound Reservation System:** Managed via `availableCapacity = remainingCount - inboundReservations`. A queue reserves a slot on move start (`TryReserveSlot()`).
+- **Counter Timing:** Reservation does NOT decrement `remainingCount` or the visual badge counter. The counter decrements only upon complete ingestion of all ants in the queue.
+- **Oversubscription Prevention:** When `availableCapacity == 0`, subsequent queues cannot reserve the hole.
+- **Safe Release:** Reservations and ingestion reservations are safely released on queue cancellation, destruction, restart, or level reset (`ReleaseReservedHole()`, `HoleController.ResetState()`).
+- **Concurrent Ingestion Serialization:** `HoleController.RequestHoleEntry` and `ReleaseHoleEntry` ensure ant queues entering the same hole maintain distinct identities and smooth ingestion without mesh collision.
+- **Max Concurrent Moving Queues:** Remains 4 total across the board.
+
+## LEVEL FAILED UI (2026-09-27)
+
+### 1. Scene Objects & Hierarchy
+Configured under `GameUICanvas` in `Assets/Scenes/main.unity`:
+```
+GameUICanvas
+  LosePanel (full-screen dim overlay, anchorMin (0,0), anchorMax (1,1), color: (0,0,0,0.82), raycastTarget: true)
+    FailPopupRoot (centered container, anchorMin (0.5,0.5), anchorMax (0.5,0.5), size: 1080x1920)
+      FailedTitleImage (anchor (0.5, 0.5), pos (0, 520), size: 780x408, Image with LevelFailed_Title sprite)
+      BrokenHeartImage (anchor (0.5, 0.5), pos (0, -70), size: 680x452, Image with LevelFailed_Heart sprite)
+      RestartButton (anchor (0.5, 0.5), pos (0, -470), size: 560x190, Image with LevelFailed_RestartButton sprite + Button component)
+```
+
+### 2. Display & Controller Script
+- **Controller:** `Assets/Scripts/UI/GameUIManager.cs`.
+- **Trigger:** Subscribes to `GameManager.OnGameStateChanged`. When `state == GameState.LevelLost`, activates `losePanel` and invokes `AnimateFailScreenEntrance()`.
+- **Reset / Hide:** When `LevelManager.OnLevelLoaded` fires (upon restart or next level), `losePanel.SetActive(false)` is invoked and any running animation sequences are killed.
+
+### 3. Restart Button Wiring & Action
+- **Button:** `GameUICanvas/LosePanel/FailPopupRoot/RestartButton`.
+- **Wiring:** Serialized to `GameUIManager.retryButton`.
+- **Click Action:** Plays tap sound (`SoundManager.Instance.PlayTap()`), triggers a juicy tactile scale punch (`DOPunchScale(new Vector3(-0.08f, -0.08f, 0f), 0.12f)`), and on complete calls `GameManager.Instance.RestartLevel()`.
+- **Flow:** `GameManager.Instance.RestartLevel()` -> `LevelManager.Instance.RestartCurrentLevel()` -> reloads active level asset, resets timer and lives (3), resets game state to `Playing`, and hides the fail overlay.
+
+### 4. Art Assets Used
+Extracted directly from the author's provided reference assets and imported into `Assets/UI/FailScreen/` as uncompressed RGBA 32-bit crisp UI sprites:
+1. **Title Art:** `Assets/UI/FailScreen/LevelFailed_Title.png` — "LEVEL FAILED!" casual 3D stylized title with warm highlights and drop shadow (864x452 native).
+2. **Broken Heart Art:** `Assets/UI/FailScreen/LevelFailed_Heart.png` — Large central broken red heart with jagged crack and floating fracture pieces (792x527 native).
+3. **Restart Button Art:** `Assets/UI/FailScreen/LevelFailed_RestartButton.png` — Glossy red rounded-rectangular hybrid-casual button with bright top highlight, 3D bottom bevel, and centered bold "Restart" lettering (606x205 native).
+
+### 5. Animation Behavior
+Implemented via DOTween in `GameUIManager.AnimateFailScreenEntrance()`:
+- **Dim Background:** Fades in quickly from alpha 0.0 to 0.82 in `0.20s` (`Ease.Linear`), dimming the underlying gameplay while keeping the board context readable.
+- **Title Art:** Scales in from 0.72x to 1.0x in `0.32s` with `Ease.OutBack`.
+- **Broken Heart:** Scales in from 0.68x to 1.0x in `0.35s` with `Ease.OutBack`.
+- **Restart Button:** Pops in gently with a slight stagger (`0.10s` delay), scaling from 0.0x to 1.0x in `0.32s` with `Ease.OutBack`.
+- **Button Tap:** Tactile punch squash `(-0.08x, -0.08y)` for `0.12s` with `SoundManager.Instance.PlayTap()` before level reload.
+
+### 6. Input Blocking
+- **Raycast Interception:** `LosePanel` features a full-screen `Image` component (`failDimBackground`) with `raycastTarget = true` spanning across the entire canvas (`(0,0)` to `(1,1)`). Any mouse or touch inputs are intercepted by the UI canvas before reaching physics or ground planes.
+- **State Gating:** `PlayerInputHandler.cs` explicitly verifies `GameManager.Instance.CurrentState == GameState.Playing` before processing taps, ant selection, or camera dragging, fully blocking interaction while the fail overlay is active.
