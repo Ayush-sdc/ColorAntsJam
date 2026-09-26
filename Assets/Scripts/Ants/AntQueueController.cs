@@ -520,7 +520,7 @@ public class AntQueueController : MonoBehaviour
         {
             isMoving = false;
             OnQueueMoveCompleted?.Invoke(this);
-            if (destinationHole != null) destinationHole.OnEntireQueueEnteredHole();
+            if (destinationHole != null) destinationHole.OnEntireQueueEnteredHole(this);
             if (BoardManager.Instance != null) BoardManager.Instance.OnQueueCompleted(this);
             destinationHole = null;
             yield break;
@@ -543,10 +543,10 @@ public class AntQueueController : MonoBehaviour
         float initialAntY = units[0] != null ? units[0].transform.position.y : 0.05f;
         Vector3 holeDespawnPoint = (currentSmoothRoute.Count > 0) 
             ? currentSmoothRoute[currentSmoothRoute.Count - 1] 
-            : (destinationHole != null ? destinationHole.transform.position : transform.position);
+            : (destinationHole != null ? destinationHole.GetHoleDespawnPoint(holeEntranceCoordinate, forwardDirection, 0.85f, this) : transform.position);
 
         Vector3 holeEntryPoint = destinationHole != null 
-            ? destinationHole.GetHoleEntryPoint(holeEntranceCoordinate, forwardDirection) 
+            ? destinationHole.GetHoleEntryPoint(holeEntranceCoordinate, forwardDirection, this) 
             : holeDespawnPoint;
 
         int routeIndex = 0;
@@ -573,10 +573,7 @@ public class AntQueueController : MonoBehaviour
                     float distToEntry = Vector3.Distance(currentHeadPos, holeEntryPoint);
                     if (distToEntry < 0.35f)
                     {
-                        while (destinationHole != null && !destinationHole.RequestHoleEntry(this))
-                        {
-                            yield return null;
-                        }
+                        destinationHole.RequestHoleEntry(this);
                         hasAcquiredHoleEntry = true;
                     }
                 }
@@ -745,7 +742,7 @@ public class AntQueueController : MonoBehaviour
         if (destinationHole != null)
         {
             destinationHole.ReleaseHoleEntry(this);
-            destinationHole.OnEntireQueueEnteredHole();
+            destinationHole.OnEntireQueueEnteredHole(this);
         }
 
         if (BoardManager.Instance != null)
@@ -763,7 +760,7 @@ public class AntQueueController : MonoBehaviour
             destinationHole.ReleaseHoleEntry(this);
             if (isMoving)
             {
-                destinationHole.ReleaseReservation();
+                destinationHole.ReleaseReservation(this);
             }
             destinationHole = null;
         }

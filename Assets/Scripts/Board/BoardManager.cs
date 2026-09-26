@@ -950,9 +950,53 @@ public class BoardManager : MonoBehaviour
             return false;
         }
 
-        // Trace straight ray forward from head
+        // First scan forward to see which holder (if any) is encountered first
+        HoleController destinationHolder = null;
+        Vector2Int entrance = Vector2Int.zero;
+        Vector2Int scan = head + forwardDir;
+        while (IsInBounds(scan))
+        {
+            HoleController h = GetHoleAt(scan);
+            if (h != null)
+            {
+                destinationHolder = h;
+                entrance = scan;
+                break;
+            }
+            scan += forwardDir;
+        }
+
+        // If no holder encountered before falling out of bounds
+        if (destinationHolder == null)
+        {
+            blockedReason = "OutOfBoundsNoHolder";
+            return false;
+        }
+
+        // Must match queue color
+        if (destinationHolder.ColorID != queue.ColorID)
+        {
+            blockedReason = "WrongColorHolder";
+            return false;
+        }
+
+        // Check holder capacity
+        int alreadyReserved = 0;
+        if (pendingReservations != null && pendingReservations.TryGetValue(destinationHolder, out int count))
+        {
+            alreadyReserved = count;
+        }
+
+        int available = destinationHolder.AvailableCapacity - alreadyReserved;
+        if (available <= 0)
+        {
+            blockedReason = "MatchingHolderFull";
+            return false;
+        }
+
+        // Now verify path from (head + forwardDir) up to entrance
         Vector2Int curr = head + forwardDir;
-        while (IsInBounds(curr))
+        while (curr != entrance)
         {
             // 1. Check stationary queues (ignore queues in the same connected moving group)
             var otherQueue = GetQueueOccupying(curr, queue);
@@ -969,6 +1013,16 @@ public class BoardManager : MonoBehaviour
                 {
                     if (mq != null && mq != queue && (group == null || !group.Contains(mq)))
                     {
+                        // EXCEPTION: Two queues that have BOTH validly reserved the SAME destination hole
+                        // must not block each other in the destination entry region.
+                        bool isJointReservationToSameHole = (mq.DestinationHole != null && mq.DestinationHole == destinationHolder);
+                        bool isInDestinationEntryRegion = (curr == entrance - forwardDir || curr == entrance - forwardDir * 2);
+
+                        if (isJointReservationToSameHole && isInDestinationEntryRegion)
+                        {
+                            continue;
+                        }
+
                         if (mq.Occupies(curr))
                         {
                             blockedReason = "OccupiedByMovingQueue";
@@ -989,89 +1043,101 @@ public class BoardManager : MonoBehaviour
                 }
             }
 
-            // 3. Check if cell has a holder
-            HoleController hole = GetHoleAt(curr);
-            if (hole != null)
-            {
-                // Holder encountered!
-                if (hole.ColorID == queue.ColorID)
-                {
-                    int alreadyReserved = 0;
-                    if (pendingReservations != null && pendingReservations.TryGetValue(hole, out int count))
-                    {
-                        alreadyReserved = count;
-                    }
-
-                    int available = hole.AvailableCapacity - alreadyReserved;
-                    if (available > 0)
-                    {
-                        targetHole = hole;
-                        entranceCell = curr;
-                        blockedReason = "None";
-                        return true;
-                    }
-                    else
-                    {
-                        blockedReason = "MatchingHolderFull";
-                        return false;
-                    }
-                }
-                else
-                {
-                    // Reached holder of wrong color!
-                    blockedReason = "WrongColorHolder";
-                    return false;
-                }
-            }
-
             curr += forwardDir;
         }
 
-        // Exited board boundaries without reaching matching holder
-        blockedReason = "OutOfBoundsNoHolder";
-        return false;
+        // Reached entrance of matching holder with available capacity
+        targetHole = destinationHolder;
+        entranceCell = entrance;
+        blockedReason = "None";
+        return true;
     }
 
     /// <summary>
     /// Generates a straight continuous world-space trajectory across open floor from the queue's head to the destination hole.
     /// Strictly moves in forwardDir without any waypoint navigation or A* route generation.
+    /// Supports side-by-side parallel approach and parallel hole entry for queues sharing the same hole.
     /// </summary>
     public List<Vector3> GenerateStraightFreeWorldPath(AntQueueController queue, Vector2Int forwardDir, HoleController targetHole, Vector2Int entranceCell)
     {
         Vector3 headWorldPos = queue.Units != null && queue.Units.Count > 0 && queue.Units[0] != null 
             ? queue.Units[0].transform.position 
-            : GridToWorldPosition(queue.CurrentBodyCoordinates[0]);
+            : (queue.CurrentBodyCoordinates != null && queue.CurrentBodyCoordinates.Count > 0 ? GridToWorldPosition(queue.CurrentBodyCoordinates[0]) : queue.transform.position);
+
+        float cs = cellSize > 0 ? cellSize : 1.0f;
+        Vector3 entryForward = new Vector3(forwardDir.x, 0f, forwardDir.y).normalized;
+        Vector3 entryRight = Vector3.Cross(Vector3.up, entryForward).normalized;
 
         Vector3 entrancePos = GridToWorldPosition(entranceCell);
         entrancePos.y = headWorldPos.y;
 
-        Vector3 moveDir = new Vector3(forwardDir.x, 0f, forwardDir.y).normalized;
         Vector3 entryPoint = targetHole != null 
-            ? targetHole.GetHoleEntryPoint(entranceCell, forwardDir) 
-            : (entrancePos - moveDir * (0.50f * cellSize));
+            ? targetHole.GetHoleEntryPoint(entranceCell, forwardDir, queue) 
+            : (entrancePos - entryForward * (0.50f * cs));
         entryPoint.y = headWorldPos.y;
 
         Vector3 despawnPoint = targetHole != null 
-            ? targetHole.GetHoleDespawnPoint(entranceCell, forwardDir, 0.85f * cellSize) 
-            : (entryPoint + moveDir * (1.10f * cellSize));
+            ? targetHole.GetHoleDespawnPoint(entranceCell, forwardDir, 0.85f * cs, queue) 
+            : (entryPoint + entryForward * (1.10f * cs));
 
         List<Vector3> denseRoute = new List<Vector3>();
-        float stepSize = 0.05f;
+        float stepSize = 0.04f;
 
-        // 1. March straight across open floor from headWorldPos to hole entryPoint
-        float dist1 = Vector3.Distance(headWorldPos, entryPoint);
-        int steps1 = Mathf.Max(1, Mathf.RoundToInt(dist1 / stepSize));
-        for (int s = 0; s < steps1; s++)
+        // 1. Calculate approach geometry
+        // Parallel entry zone: A dedicated straight channel of length `approachZoneLength` directly in front of the hole rim.
+        float totalForwardDist = Vector3.Dot(entryPoint - headWorldPos, entryForward);
+        float approachZoneLength = 1.35f * cs;
+
+        Vector3 approachStartPos;
+        float alignForwardDist;
+
+        if (totalForwardDist > approachZoneLength + 0.1f * cs)
         {
-            denseRoute.Add(Vector3.Lerp(headWorldPos, entryPoint, (float)s / steps1));
+            approachStartPos = entryPoint - entryForward * approachZoneLength;
+            alignForwardDist = totalForwardDist - approachZoneLength;
+        }
+        else
+        {
+            // If already within approach zone, dedicate first 35% to smooth lateral alignment and the rest to parallel approach
+            alignForwardDist = Mathf.Max(0.05f * cs, totalForwardDist * 0.35f);
+            approachStartPos = entryPoint - entryForward * (totalForwardDist - alignForwardDist);
         }
 
-        // 2. March into the hole from entryPoint to deep despawnPoint (sloping Y down into dark recessed pit)
-        float dist2 = Vector3.Distance(entryPoint, despawnPoint);
-        int steps2 = Mathf.Max(1, Mathf.RoundToInt(dist2 / stepSize));
-        for (int s = 0; s <= steps2; s++)
+        // 2. Smooth lane alignment phase: from headWorldPos to approachStartPos
+        // Uses smooth cubic Hermite easing (3t^2 - 2t^3) so start and end tangents are entryForward (0 sideways jerk, 0 snap)
+        int alignSteps = Mathf.Max(1, Mathf.RoundToInt(alignForwardDist / stepSize));
+        Vector3 lateralDeltaVec = Vector3.Project(headWorldPos - approachStartPos, entryRight);
+
+        for (int s = 0; s < alignSteps; s++)
         {
-            denseRoute.Add(Vector3.Lerp(entryPoint, despawnPoint, (float)s / steps2));
+            float t = (float)s / alignSteps;
+            float smoothT = t * t * (3f - 2f * t); // S-curve easing
+            Vector3 forwardProgression = Vector3.Lerp(headWorldPos, headWorldPos + entryForward * alignForwardDist, t);
+            Vector3 pt = forwardProgression - lateralDeltaVec * smoothT;
+            pt.y = headWorldPos.y;
+            denseRoute.Add(pt);
+        }
+
+        // 3. Parallel approach phase: from approachStartPos to entryPoint
+        // 100% strictly parallel to entryForward, perfectly aligned with assigned lane, 0 degree angle between queues
+        float parallelDist = Vector3.Distance(approachStartPos, entryPoint);
+        int parallelSteps = Mathf.Max(1, Mathf.RoundToInt(parallelDist / stepSize));
+        for (int s = 0; s < parallelSteps; s++)
+        {
+            float t = (float)s / parallelSteps;
+            Vector3 pt = Vector3.Lerp(approachStartPos, entryPoint, t);
+            pt.y = headWorldPos.y;
+            denseRoute.Add(pt);
+        }
+
+        // 4. Parallel entry and swallowing phase: from entryPoint into deep despawnPoint
+        // Continues strictly on the same lane inward into the recessed pit
+        float despawnDist = Vector3.Distance(entryPoint, despawnPoint);
+        int despawnSteps = Mathf.Max(1, Mathf.RoundToInt(despawnDist / stepSize));
+        for (int s = 0; s <= despawnSteps; s++)
+        {
+            float t = (float)s / despawnSteps;
+            denseRoute.Add(Vector3.Lerp(entryPoint, despawnPoint, t));
         }
 
         return denseRoute;
@@ -1168,22 +1234,25 @@ public class BoardManager : MonoBehaviour
             // Reserve destination slots
             bool allReserved = true;
             List<HoleController> reservedHoles = new List<HoleController>();
+            List<AntQueueController> reservedMembers = new List<AntQueueController>();
             foreach (var kvp in groupTargetHoles)
             {
+                AntQueueController member = kvp.Key;
                 HoleController targetHole = kvp.Value;
-                if (targetHole == null || !targetHole.TryReserveSlot())
+                if (targetHole == null || !targetHole.TryReserveSlot(member))
                 {
                     allReserved = false;
                     break;
                 }
                 reservedHoles.Add(targetHole);
+                reservedMembers.Add(member);
             }
 
             if (!allReserved)
             {
-                foreach (var hole in reservedHoles)
+                for (int i = 0; i < reservedHoles.Count; i++)
                 {
-                    hole.ReleaseReservation();
+                    reservedHoles[i].ReleaseReservation(reservedMembers[i]);
                 }
                 queue.PlayBlockedShake();
                 return false;
@@ -1277,22 +1346,25 @@ public class BoardManager : MonoBehaviour
         // Reserve destination slots
         bool legacyAllReserved = true;
         List<HoleController> legacyReservedList = new List<HoleController>();
+        List<AntQueueController> legacyReservedMembers = new List<AntQueueController>();
         foreach (var kvp in legacyTargetHoles)
         {
+            AntQueueController member = kvp.Key;
             HoleController targetHole = kvp.Value;
-            if (targetHole == null || !targetHole.TryReserveSlot())
+            if (targetHole == null || !targetHole.TryReserveSlot(member))
             {
                 legacyAllReserved = false;
                 break;
             }
             legacyReservedList.Add(targetHole);
+            legacyReservedMembers.Add(member);
         }
 
         if (!legacyAllReserved)
         {
-            foreach (var hole in legacyReservedList)
+            for (int i = 0; i < legacyReservedList.Count; i++)
             {
-                hole.ReleaseReservation();
+                legacyReservedList[i].ReleaseReservation(legacyReservedMembers[i]);
             }
             queue.PlayBlockedShake();
             return false;
@@ -1443,7 +1515,7 @@ public class BoardManager : MonoBehaviour
 
                     if (targetHole != null)
                     {
-                        targetHole.OnEntireQueueEnteredHole();
+                        targetHole.OnEntireQueueEnteredHole(queue);
                     }
                 }
 

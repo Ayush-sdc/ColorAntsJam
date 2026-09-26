@@ -56,95 +56,153 @@ public class HoleController : MonoBehaviour
     public bool SingleQueueVisualOverrideApplied => singleQueueVisualOverrideApplied;
 
     [SerializeField] private int inboundReservations = 0;
-    public int InboundReservations => inboundReservations;
-    public int AvailableCapacity => Mathf.Max(0, remainingCount - inboundReservations);
+    private readonly HashSet<AntQueueController> reservedQueues = new HashSet<AntQueueController>();
+    private readonly HashSet<AntQueueController> enteringQueues = new HashSet<AntQueueController>();
+    private readonly Dictionary<AntQueueController, int> queueLaneIndices = new Dictionary<AntQueueController, int>();
+    private int nextLaneCounter = 0;
+
+    public int InboundReservations => reservedQueues.Count + inboundReservations;
+    public int AvailableCapacity => Mathf.Max(0, remainingCount - InboundReservations);
     public bool HasAvailableCapacity => !isCompleted && AvailableCapacity > 0;
     public bool IsFull => isCompleted || AvailableCapacity <= 0;
+    public int EnteringQueueCount => enteringQueues.Count;
 
-    public bool TryReserveSlot()
+    public bool TryReserveSlot(AntQueueController queue = null)
     {
         if (!HasAvailableCapacity) return false;
-        inboundReservations++;
-        Debug.Log($"[HolderReservation] Color={holeColor} Remaining={remainingCount} Reservations={inboundReservations} Available={AvailableCapacity}");
+
+        if (queue != null)
+        {
+            reservedQueues.Add(queue);
+            if (!queueLaneIndices.ContainsKey(queue))
+            {
+                queueLaneIndices[queue] = (nextLaneCounter++) % 4;
+            }
+        }
+        else
+        {
+            inboundReservations++;
+        }
+
+        Debug.Log($"[HolderReservation] Color={holeColor} Remaining={remainingCount} ReservedQueues={reservedQueues.Count} Reservations={InboundReservations} Available={AvailableCapacity}");
         return true;
     }
 
-    public void ReleaseReservation()
+    public void ReleaseReservation(AntQueueController queue = null)
     {
-        if (inboundReservations > 0)
+        if (queue != null)
+        {
+            reservedQueues.Remove(queue);
+            queueLaneIndices.Remove(queue);
+        }
+        else if (inboundReservations > 0)
         {
             inboundReservations--;
-            Debug.Log($"[HolderReservationReleased] Color={holeColor} Remaining={remainingCount} Reservations={inboundReservations} Available={AvailableCapacity}");
         }
 
-        if (remainingCount <= 0 && inboundReservations <= 0 && !isCompleted)
-        {
-            isCompleted = true;
-            if (BoardManager.Instance != null)
-            {
-                BoardManager.Instance.RemoveCompletedHole(this);
-            }
-            else
-            {
-                PlayCompletedEffectAndDisappear();
-            }
-        }
+        Debug.Log($"[HolderReservationReleased] Color={holeColor} Remaining={remainingCount} ReservedQueues={reservedQueues.Count} Reservations={InboundReservations} Available={AvailableCapacity}");
+        CheckCompletion();
     }
-    private AntQueueController activeIngestingQueue = null;
 
     public bool RequestHoleEntry(AntQueueController queue)
     {
-        if (activeIngestingQueue == null || activeIngestingQueue == queue)
+        if (queue != null)
         {
-            activeIngestingQueue = queue;
-            return true;
+            enteringQueues.Add(queue);
         }
-        return false;
+        return true;
     }
 
     public void ReleaseHoleEntry(AntQueueController queue)
     {
-        if (activeIngestingQueue == queue)
+        if (queue != null)
         {
-            activeIngestingQueue = null;
+            enteringQueues.Remove(queue);
         }
+        CheckCompletion();
     }
 
     public void ResetState()
     {
         inboundReservations = 0;
-        activeIngestingQueue = null;
+        reservedQueues.Clear();
+        enteringQueues.Clear();
+        queueLaneIndices.Clear();
+        nextLaneCounter = 0;
         isCompleted = false;
         hasDisappeared = false;
         remainingCount = initialCapacity;
         UpdateBadgeDisplay();
     }
 
+    [Header("Parallel Lanes")]
+    [SerializeField] private float laneSpacing = 0.30f; // Lateral distance between parallel queue paths in cellSize units
+    public float LaneSpacing => laneSpacing;
+
+    public float GetLaneOffset(AntQueueController queue, float cs)
+    {
+        if (queue == null) return 0f;
+        if (!queueLaneIndices.TryGetValue(queue, out int lane))
+        {
+            lane = (nextLaneCounter++) % 4;
+            queueLaneIndices[queue] = lane;
+        }
+
+        float spacing = laneSpacing * cs;
+
+        // When capacity is 1, single center lane
+        if (initialCapacity <= 1 && reservedQueues.Count <= 1 && queueLaneIndices.Count <= 1)
+        {
+            return 0f;
+        }
+
+        // Deterministic symmetric parallel lanes:
+        // Lane 0: Left lane  (-0.5 * laneSpacing)
+        // Lane 1: Right lane (+0.5 * laneSpacing)
+        // Lane 2: Outer Left (-1.15 * laneSpacing) for 3/4 queue capacity
+        // Lane 3: Outer Right (+1.15 * laneSpacing) for 3/4 queue capacity
+        switch (lane)
+        {
+            case 0: return -0.5f * spacing;
+            case 1: return  0.5f * spacing;
+            case 2: return -1.15f * spacing;
+            case 3: return  1.15f * spacing;
+            default: return 0f;
+        }
+    }
+
     /// <summary>
     /// Calculates the point where an ant begins entering the hole (outer rim boundary along approach direction).
+    /// Uses board-plane entryForward and entryRight to position the parallel entry lane accurately.
     /// </summary>
-    public Vector3 GetHoleEntryPoint(Vector2Int entranceCell, Vector2Int approachDir)
+    public Vector3 GetHoleEntryPoint(Vector2Int entranceCell, Vector2Int approachDir, AntQueueController queue = null)
     {
         Vector3 cellCenter = BoardManager.Instance != null 
             ? BoardManager.Instance.GridToWorldPosition(entranceCell)
             : transform.position;
         float cs = BoardManager.Instance != null ? BoardManager.Instance.CellSize : 1.0f;
-        Vector3 dir = new Vector3(approachDir.x, 0f, approachDir.y).normalized;
-        return cellCenter - dir * (0.50f * cs);
+        Vector3 entryForward = new Vector3(approachDir.x, 0f, approachDir.y).normalized;
+        Vector3 entryRight = Vector3.Cross(Vector3.up, entryForward).normalized;
+
+        float lateralOffset = GetLaneOffset(queue, cs);
+        Vector3 point = cellCenter - entryForward * (0.50f * cs) + entryRight * lateralOffset;
+        point.y = transform.position.y;
+        return point;
     }
 
     /// <summary>
     /// Calculates the deep despawn point inside the hole, past the point where the COMPLETE ant has cleared the visible opening.
+    /// Preserves the exact same parallel lane lateral offset so ants remain side-by-side inside the pit.
     /// </summary>
-    public Vector3 GetHoleDespawnPoint(Vector2Int entranceCell, Vector2Int approachDir, float antVisualLength = 0.85f)
+    public Vector3 GetHoleDespawnPoint(Vector2Int entranceCell, Vector2Int approachDir, float antVisualLength = 0.85f, AntQueueController queue = null)
     {
-        Vector3 entryPoint = GetHoleEntryPoint(entranceCell, approachDir);
-        Vector3 dir = new Vector3(approachDir.x, 0f, approachDir.y).normalized;
+        Vector3 entryPoint = GetHoleEntryPoint(entranceCell, approachDir, queue);
+        Vector3 entryForward = new Vector3(approachDir.x, 0f, approachDir.y).normalized;
         float cs = BoardManager.Instance != null ? BoardManager.Instance.CellSize : 1.0f;
         
         // Ant must clear the entry rim by its full visual length + safe margin
         float minDespawnDist = antVisualLength + 0.25f * cs;
-        Vector3 despawnPoint = entryPoint + dir * minDespawnDist;
+        Vector3 despawnPoint = entryPoint + entryForward * minDespawnDist;
         
         // Recessed down into the dark pit floor
         despawnPoint.y = transform.position.y - 0.20f;
@@ -381,12 +439,13 @@ public class HoleController : MonoBehaviour
         );
 
         // Visible colored plastic rim border
-        float rimThickness = Mathf.Clamp(0.12f * cs, 0.08f * cs, Mathf.Min(outerW, outerH) * 0.24f);
+        float baseRim = (initialCapacity >= 2 && effectiveW == 1 && effectiveH == 1) ? 0.09f * cs : 0.12f * cs;
+        float rimThickness = Mathf.Clamp(baseRim, 0.08f * cs, Mathf.Min(outerW, outerH) * 0.24f);
         float innerW = outerW - (rimThickness * 2f);
         float innerH = outerH - (rimThickness * 2f);
         float innerCornerRadius = Mathf.Max(0.04f * cs, cornerRadius - rimThickness);
 
-        float pitInset = 0.035f * cs;
+        float pitInset = (initialCapacity >= 2 && effectiveW == 1 && effectiveH == 1) ? 0.025f * cs : 0.035f * cs;
         float pitW = innerW - (pitInset * 2f);
         float pitH = innerH - (pitInset * 2f);
         float pitCornerRadius = Mathf.Max(0.02f * cs, innerCornerRadius - pitInset);
@@ -429,9 +488,9 @@ public class HoleController : MonoBehaviour
         countBadgeObj = new GameObject("SlotCounterBadge");
         countBadgeObj.transform.SetParent(slotRoot, false);
 
-        // BadgeMesh size: increased by ~20-25% from 0.34 to 0.42 for clear mobile readability and clean padding
+        // BadgeMesh size: compact and clear padding without obstructing parallel entry lanes
         float badgeH = (effectiveW == 1 && effectiveH == 1)
-            ? Mathf.Clamp(0.38f * cs, 0.28f * cs, pitH * 0.68f)
+            ? Mathf.Clamp((initialCapacity >= 2 ? 0.32f : 0.38f) * cs, 0.24f * cs, pitH * 0.58f)
             : Mathf.Clamp(0.42f * cs, 0.32f * cs, Mathf.Min(pitW, pitH) * 0.72f);
         float badgeW = (remainingCount >= 10) ? badgeH * 1.25f : badgeH;
         float badgeRadius = Mathf.Min(0.09f * cs, Mathf.Min(badgeW, badgeH) * 0.35f);
@@ -828,16 +887,22 @@ public class HoleController : MonoBehaviour
         }
     }
 
-    public void OnEntireQueueEnteredHole()
+    public void OnEntireQueueEnteredHole(AntQueueController queue = null)
     {
-        OnQueueSwallowed();
+        OnQueueSwallowed(queue);
     }
 
-    public void OnQueueSwallowed()
+    public void OnQueueSwallowed(AntQueueController queue = null)
     {
         if (isCompleted) return;
 
-        if (inboundReservations > 0)
+        if (queue != null)
+        {
+            enteringQueues.Remove(queue);
+            reservedQueues.Remove(queue);
+            queueLaneIndices.Remove(queue);
+        }
+        else if (inboundReservations > 0)
         {
             inboundReservations--;
         }
@@ -845,7 +910,24 @@ public class HoleController : MonoBehaviour
         remainingCount = Mathf.Max(0, remainingCount - 1);
         UpdateBadgeDisplay();
 
-        if (remainingCount <= 0 && inboundReservations <= 0)
+        CheckCompletion();
+
+        if (SoundManager.Instance != null && Application.isPlaying)
+        {
+            SoundManager.Instance.PlaySwallow();
+        }
+    }
+
+    private void CheckCompletion()
+    {
+        if (isCompleted || hasDisappeared) return;
+
+        // Hole disappears only when:
+        // 1. remainingCount == 0
+        // 2. inboundReservations == 0
+        // 3. enteringQueues.Count == 0
+        // 4. every ant belonging to every final reserved queue has fully crossed the despawn threshold
+        if (remainingCount <= 0 && InboundReservations <= 0 && enteringQueues.Count <= 0)
         {
             remainingCount = 0;
             isCompleted = true;
@@ -858,15 +940,6 @@ public class HoleController : MonoBehaviour
             {
                 PlayCompletedEffectAndDisappear();
             }
-        }
-        else if (remainingCount <= 0)
-        {
-            remainingCount = 0;
-        }
-
-        if (SoundManager.Instance != null && Application.isPlaying)
-        {
-            SoundManager.Instance.PlaySwallow();
         }
     }
 

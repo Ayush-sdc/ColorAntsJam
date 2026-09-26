@@ -179,6 +179,20 @@ CORE MECHANIC — DO NOT CHANGE WITHOUT EXPLICIT USER REQUEST
 > - Hole disappears only after remainingCount reaches 0 and final inbound queue has fully entered.
 > - Hole must not disappear while another valid reserved queue still needs it.
 
+### PARALLEL SAME-HOLE ENTRY — CORE MECHANIC
+
+> **CORE MECHANIC — DO NOT CHANGE WITHOUT EXPLICIT USER REQUEST**
+>
+> - two queues targeting the same hole use stable side-by-side lanes
+> - lanes are parallel to the hole entry direction
+> - queues do not merge into one centerline
+> - queues do not wait behind one another
+> - both may enter simultaneously
+> - lane assignment remains stable until completion
+> - followers stay within their own queue trail
+> - jointly reserved queues do not block each other in shared entry zone
+> - ants remain side-by-side until fully inside the hole
+
 - **Holder Removal Safety:**
   - A holder may only be removed when `remainingCount <= 0 && inboundReservations <= 0`.
   - Ensures multi-capacity holders remain active until ALL in-flight reserved queues have entered.
@@ -1180,3 +1194,17 @@ Implemented via DOTween in `GameUIManager.AnimateFailScreenEntrance()`:
 ### 6. Input Blocking
 - **Raycast Interception:** `LosePanel` features a full-screen `Image` component (`failDimBackground`) with `raycastTarget = true` spanning across the entire canvas (`(0,0)` to `(1,1)`). Any mouse or touch inputs are intercepted by the UI canvas before reaching physics or ground planes.
 - **State Gating:** `PlayerInputHandler.cs` explicitly verifies `GameManager.Instance.CurrentState == GameState.Playing` before processing taps, ant selection, or camera dragging, fully blocking interaction while the fail overlay is active.
+
+## SIMULTANEOUS SAME-HOLE ENTRY — CORE MECHANIC (2026-09-27)
+
+- Multiple matching queues may reserve the same hole up to remaining capacity (`availableCapacity = remainingCount - InboundReservations`).
+- Reserved matching queues may enter/swallow simultaneously into the same shared hole.
+- Hole entry is NOT globally serialized: Queue B does not wait for Queue A to complete swallowing.
+- Global single-queue lock (`activeIngestingQueue`) has been completely removed in favor of `HashSet<AntQueueController> reservedQueues` and `HashSet<AntQueueController> enteringQueues`.
+- Each queue maintains independent follower/trail/swallow state; chains are never merged and followers only follow their own queue.
+- Approach/entry lanes inside the visual hole apply slight lateral offsets (e.g. ±0.14cs) to ensure ants do not awkwardly overlap at the exact same world coordinate while entering the same hole.
+- Destination entry region allows jointly reserved queues to finish their approach and enter without blocking each other, while preserving normal queue-vs-queue blocking across the rest of the open floor.
+- Counter decrements ONLY when an entire queue (including its final tail ant) has fully entered the despawn threshold; reservation does NOT decrement the counter.
+- Final hole remains fully visible and active until all final queues and all their ants have completely entered and cleared the despawn threshold (`remainingCount == 0 && InboundReservations == 0 && enteringQueues.Count == 0`).
+- Maximum total moving queues across the board remains strictly 4; attempts beyond 4 soft-block with 0 heart penalty.
+- Strict oversubscription prevention: `inboundReservations <= remainingCount` enforced at reservation time.
