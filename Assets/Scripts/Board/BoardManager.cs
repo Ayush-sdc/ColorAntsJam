@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using AntsJam.Ropes;
 
 public class BoardManager : MonoBehaviour
 {
@@ -62,6 +63,11 @@ public class BoardManager : MonoBehaviour
     public bool CanStartQueueMove => movingQueues.Count < MAX_CONCURRENT_MOVING_QUEUES;
     public bool IsQueueMoving(AntQueueController queue) => queue != null && movingQueues.Contains(queue);
     public IEnumerable<AntQueueController> MovingQueues => movingQueues;
+    public void AddMovingQueueForTesting(AntQueueController queue) { if (queue != null) movingQueues.Add(queue); }
+    public void RemoveMovingQueueForTesting(AntQueueController queue) { if (queue != null) movingQueues.Remove(queue); }
+
+    private readonly List<LinkedAntsRopeVisual> activeLinkedRopes = new List<LinkedAntsRopeVisual>();
+    public IReadOnlyList<LinkedAntsRopeVisual> ActiveLinkedRopes => activeLinkedRopes;
 
     public static event Action OnBoardStateChanged;
 
@@ -263,6 +269,7 @@ public class BoardManager : MonoBehaviour
         }
 
         ValidateHoleOverlaps();
+        SetupLinkedRopes();
     }
 
     /// <summary>
@@ -284,6 +291,7 @@ public class BoardManager : MonoBehaviour
         }
 
         ValidateHoleOverlaps();
+        SetupLinkedRopes();
     }
 
     private void SpawnReferenceHole(RuntimeReferenceHole rHole)
@@ -1076,8 +1084,9 @@ public class BoardManager : MonoBehaviour
             : (entrancePos - entryForward * (0.50f * cs));
         entryPoint.y = headWorldPos.y;
 
+        float leaderVisualLength = (queue != null && queue.Units.Count > 0 && queue.Units[0] != null) ? queue.Units[0].VisualLength : AntVisualConfig.Instance.LeaderVisualLength;
         Vector3 despawnPoint = targetHole != null 
-            ? targetHole.GetHoleDespawnPoint(entranceCell, forwardDir, 0.85f * cs, queue) 
+            ? targetHole.GetHoleDespawnPoint(entranceCell, forwardDir, leaderVisualLength * cs, queue) 
             : (entryPoint + entryForward * (1.10f * cs));
 
         List<Vector3> denseRoute = new List<Vector3>();
@@ -1167,7 +1176,10 @@ public class BoardManager : MonoBehaviour
         if (movingQueues.Count + group.Count > MAX_CONCURRENT_MOVING_QUEUES)
         {
             Debug.Log($"[QueueMoveBlocked] Queue={queue.QueueId} Reason=ConcurrentMoveLimit GroupSize={group.Count} MovingQueues={movingQueues.Count} HeartPenalty=False");
-            queue.PlayBlockedShake();
+            foreach (var member in group)
+            {
+                if (member != null) member.PlayBlockedShake();
+            }
             return false;
         }
 
@@ -1235,17 +1247,48 @@ public class BoardManager : MonoBehaviour
             bool allReserved = true;
             List<HoleController> reservedHoles = new List<HoleController>();
             List<AntQueueController> reservedMembers = new List<AntQueueController>();
+
+            // Group members by target hole so same-hole members preserve lateral left-to-right order without crossing
+            var membersByHole = new Dictionary<HoleController, List<AntQueueController>>();
             foreach (var kvp in groupTargetHoles)
             {
-                AntQueueController member = kvp.Key;
-                HoleController targetHole = kvp.Value;
-                if (targetHole == null || !targetHole.TryReserveSlot(member))
+                var member = kvp.Key;
+                var hole = kvp.Value;
+                if (!membersByHole.TryGetValue(hole, out var mList))
                 {
-                    allReserved = false;
-                    break;
+                    mList = new List<AntQueueController>();
+                    membersByHole[hole] = mList;
                 }
-                reservedHoles.Add(targetHole);
-                reservedMembers.Add(member);
+                mList.Add(member);
+            }
+
+            foreach (var kvp in membersByHole)
+            {
+                var mList = kvp.Value;
+                if (mList.Count >= 2)
+                {
+                    Vector3 fwd = new Vector3(groupDirections[mList[0]].x, 0f, groupDirections[mList[0]].y).normalized;
+                    Vector3 right = Vector3.Cross(Vector3.up, fwd).normalized;
+                    mList.Sort((a, b) =>
+                    {
+                        float dotA = Vector3.Dot(a.transform.position, right);
+                        float dotB = Vector3.Dot(b.transform.position, right);
+                        return dotA.CompareTo(dotB);
+                    });
+                }
+
+                foreach (var member in mList)
+                {
+                    HoleController targetHole = kvp.Key;
+                    if (targetHole == null || !targetHole.TryReserveSlot(member))
+                    {
+                        allReserved = false;
+                        break;
+                    }
+                    reservedHoles.Add(targetHole);
+                    reservedMembers.Add(member);
+                }
+                if (!allReserved) break;
             }
 
             if (!allReserved)
@@ -1254,7 +1297,10 @@ public class BoardManager : MonoBehaviour
                 {
                     reservedHoles[i].ReleaseReservation(reservedMembers[i]);
                 }
-                queue.PlayBlockedShake();
+                foreach (var member in group)
+                {
+                    if (member != null) member.PlayBlockedShake();
+                }
                 return false;
             }
 
@@ -1275,6 +1321,8 @@ public class BoardManager : MonoBehaviour
                     member.StartSmoothMovement(straightRoute, hole, entrance);
                 }
             }
+
+            UpdateParallelRopes();
 
             GameManager.Instance?.StartTimerOnFirstValidMove(queue);
             return true;
@@ -1385,8 +1433,45 @@ public class BoardManager : MonoBehaviour
             }
         }
 
+        UpdateParallelRopes();
+
         GameManager.Instance?.StartTimerOnFirstValidMove(queue);
         return true;
+    }
+
+    /// <summary>
+    /// Checks moving queues and activates GoldenRope visuals when 2 or more queues target the same hole.
+    /// Strictly visual only; does not affect movement or collision.
+    /// </summary>
+    public void UpdateParallelRopes()
+    {
+        Dictionary<HoleController, List<AntQueueController>> queuesByHole = new Dictionary<HoleController, List<AntQueueController>>();
+        foreach (var q in movingQueues)
+        {
+            if (q != null && q.DestinationHole != null)
+            {
+                if (!queuesByHole.TryGetValue(q.DestinationHole, out var list))
+                {
+                    list = new List<AntQueueController>();
+                    queuesByHole[q.DestinationHole] = list;
+                }
+                list.Add(q);
+            }
+        }
+
+        foreach (var kvp in queuesByHole)
+        {
+            if (kvp.Value.Count >= 2)
+            {
+                foreach (var q in kvp.Value)
+                {
+                    if (!q.IsConnected)
+                    {
+                        q.EnableParallelRope();
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -1604,9 +1689,15 @@ public class BoardManager : MonoBehaviour
 
     public void ClearBoard()
     {
+        ClearLinkedRopes();
+
         foreach (var q in activeQueues)
         {
-            if (q != null) q.ReleaseReservedHole();
+            if (q != null)
+            {
+                q.ReleaseReservedHole();
+                q.RopeVisual?.Cleanup();
+            }
         }
         foreach (var h in activeHoles)
         {
@@ -1676,6 +1767,82 @@ public class BoardManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Spawns horizontal GoldenRope connectors between linked ant queues.
+    /// Generic implementation that automatically discovers any linked groups defined in level data.
+    /// </summary>
+    public void SetupLinkedRopes()
+    {
+        ClearLinkedRopes();
+
+        var connectedGroups = new Dictionary<int, List<AntQueueController>>();
+        foreach (var q in activeQueues)
+        {
+            if (q != null && q.IsConnected && q.ConnectedIndex >= 0)
+            {
+                if (!connectedGroups.TryGetValue(q.ConnectedIndex, out var list))
+                {
+                    list = new List<AntQueueController>();
+                    connectedGroups[q.ConnectedIndex] = list;
+                }
+                list.Add(q);
+            }
+        }
+
+        Transform parentTransform = boardParent != null ? boardParent : transform;
+
+        foreach (var kvp in connectedGroups)
+        {
+            var list = kvp.Value;
+            if (list.Count < 2) continue;
+
+            if (list.Count == 2)
+            {
+                CreateLinkedRope(list[0], list[1], kvp.Key, parentTransform);
+            }
+            else
+            {
+                Vector3 fwd = list[0].GetHeadForwardWorld();
+                Vector3 right = Vector3.Cross(Vector3.up, fwd).normalized;
+                list.Sort((a, b) =>
+                {
+                    float dotA = Vector3.Dot(a.transform.position, right);
+                    float dotB = Vector3.Dot(b.transform.position, right);
+                    return dotA.CompareTo(dotB);
+                });
+
+                for (int i = 0; i < list.Count - 1; i++)
+                {
+                    CreateLinkedRope(list[i], list[i + 1], kvp.Key, parentTransform);
+                }
+            }
+        }
+    }
+
+    private void CreateLinkedRope(AntQueueController a, AntQueueController b, int groupId, Transform parent)
+    {
+        if (a == null || b == null) return;
+        GameObject ropeObj = new GameObject($"LinkedRopeGroup_{groupId}_{a.QueueId}_{b.QueueId}");
+        ropeObj.transform.SetParent(parent, false);
+        var visual = ropeObj.AddComponent<LinkedAntsRopeVisual>();
+        visual.Initialize(a, b);
+        activeLinkedRopes.Add(visual);
+    }
+
+    public void ClearLinkedRopes()
+    {
+        for (int i = activeLinkedRopes.Count - 1; i >= 0; i--)
+        {
+            var rope = activeLinkedRopes[i];
+            if (rope != null)
+            {
+                rope.Cleanup();
+                SafeDestroy(rope.gameObject);
+            }
+        }
+        activeLinkedRopes.Clear();
     }
 
     private void SafeDestroy(UnityEngine.Object obj)

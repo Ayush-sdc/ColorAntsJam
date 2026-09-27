@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 316e47d4809d719458b54f69967bae9d, type: 3}
+  m_Name: AntVisualConfig
+  m_EditorClassIdentifier: SlitherAnts.Runtime::AntVisualConfig
+  defaultLeaderPrefab: {fileID: 8650707300605782591, guid: b7724ea94805fd643976fa710083f86c, type: 3}
+  defaultWorkerPrefab: {fileID: 150884698792890893, guid: 4950eeba06bbd064b8e52dc8401c9b4a, type: 3}
+  leaderPrefabs:
+  - color: 4
+    prefab: {fileID: 8650707300605782591, guid: b7724ea94805fd643976fa710083f86c, type: 3}
+  - color: 3
+    prefab: {fileID: 7156700145511228128, guid: 54410f865c84a124e80a6def799539c0, type: 3}
+  - color: 11
+    prefab: {fileID: 2037428946159622027, guid: 309e5b451baf8da4887c21ecd62ea7b5, type: 3}
+  - color: 0
+    prefab: {fileID: 2037428946159622027, guid: 309e5b451baf8da4887c21ecd62ea7b5, type: 3}
+  - color: 1
+    prefab: {fileID: 2095509227581655959, guid: ef45efca6f5d9514ab7d220122472944, type: 3}
+  - color: 5
+    prefab: {fileID: 5555392809648963405, guid: 249928b08d3558b4ca76fdb564fdd17f, type: 3}
+  - color: 7
+    prefab: {fileID: 5320672693418951974, guid: 53a9252d7241865418fbdfe35a824f2e, type: 3}
+  - color: 2
+    prefab: {fileID: 772270595935822451, guid: 62f16f4c0f731de408a30070c58f0b7d, type: 3}
+  - color: 10
+    prefab: {fileID: 3663289371486519858, guid: d96f93fcdf8873c41b5cc01d57e11e00, type: 3}
+  - color: 14
+    prefab: {fileID: 1646296373818214308, guid: 83af570cf651046439df758f1da08280, type: 3}
+  - color: 6
+    prefab: {fileID: 1646296373818214308, guid: 83af570cf651046439df758f1da08280, type: 3}
+  workerPrefabs:
+  - color: 4
+    prefab: {fileID: 150884698792890893, guid: 4950eeba06bbd064b8e52dc8401c9b4a, type: 3}
+  - color: 3
+    prefab: {fileID: 5664789346643380493, guid: 34d7be4b19c8bd04eb11278cd36d0804, type: 3}
+  - color: 11
+    prefab: {fileID: 5512496472872137228, guid: fb172f528d1fbc94ea39283132af2dd2, type: 3}
+  - color: 0
+    prefab: {fileID: 5512496472872137228, guid: fb172f528d1fbc94ea39283132af2dd2, type: 3}
+  - color: 1
+    prefab: {fileID: 7903541262160397889, guid: d4d9c401f844c444fb31f30f91fe33da, type: 3}
+  - color: 5
+    prefab: {fileID: 7498134484544464659, guid: a1b954467eac88444827e0ff65de113f, type: 3}
+  - color: 7
+    prefab: {fileID: 5654817885685294842, guid: c1f309d8f5e6ae9488c57c99938c3d86, type: 3}
+  - color: 2
+    prefab: {fileID: 7181655099326334058, guid: 3f19ddeed73a9fe4681177b24357d0f0, type: 3}
+  - color: 10
+    prefab: {fileID: 2650170786584725995, guid: 52cf67bf3a5c8bf45b14b6614a2b2a8c, type: 3}
+  - color: 14
+    prefab: {fileID: 1524703437662775787, guid: 53a440d0f2134354091f3807f3b48fd1, type: 3}
+  - color: 6
+    prefab: {fileID: 1524703437662775787, guid: 53a440d0f2134354091f3807f3b48fd1, type: 3}
+  leaderScale: 0.37
+  workerScale: 0.315
+  leaderVisualLength: 1.1
+  workerVisualLength: 0.92
+  leaderBobHeight: 0.028
+  leaderTiltAngle: 2.8
+  workerBobHeight: 0.035
+  workerTiltAngle: 3.5

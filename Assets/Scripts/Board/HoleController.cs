@@ -54,6 +54,7 @@ public class HoleController : MonoBehaviour
     public int InitialCapacity => initialCapacity;
     public int InitialQueueCount => initialQueueCount;
     public bool SingleQueueVisualOverrideApplied => singleQueueVisualOverrideApplied;
+    public Color ResolvedRimColor => AntColorPalette.GetColor(holeColor);
 
     [SerializeField] private int inboundReservations = 0;
     private readonly HashSet<AntQueueController> reservedQueues = new HashSet<AntQueueController>();

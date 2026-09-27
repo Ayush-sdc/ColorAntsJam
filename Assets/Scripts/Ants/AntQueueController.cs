@@ -47,6 +47,26 @@ public class AntQueueController : MonoBehaviour
     public IReadOnlyList<Vector2Int> RemainingPath => remainingPath;
     public IReadOnlyList<AntUnit> Units => antUnits;
 
+    [SerializeField] private AntsJam.Ropes.AntQueueRopeVisual ropeVisual;
+    public AntsJam.Ropes.AntQueueRopeVisual RopeVisual => ropeVisual;
+
+    public void EnableParallelRope()
+    {
+        if (ropeVisual == null)
+        {
+            ropeVisual = GetComponent<AntsJam.Ropes.AntQueueRopeVisual>();
+            if (ropeVisual == null)
+            {
+                ropeVisual = gameObject.AddComponent<AntsJam.Ropes.AntQueueRopeVisual>();
+            }
+            ropeVisual.Initialize(this);
+        }
+        if (destinationHole != null)
+        {
+            ropeVisual.EnableParallelRope(destinationHole, forwardDirection);
+        }
+    }
+
     public static event Action<AntQueueController> OnQueueMoveStarted;
     public static event Action<AntQueueController> OnQueueMoveCompleted;
     public static event Action<AntQueueController> OnQueueBlockedFeedback;
@@ -145,7 +165,8 @@ public class AntQueueController : MonoBehaviour
             antObj.transform.position = worldPos;
 
             var antUnit = antObj.AddComponent<AntUnit>();
-            antUnit.Setup(antColor, (i == 0), (i == currentBodyCoordinates.Count - 1));
+            Color queueColor = destinationHole != null ? destinationHole.ResolvedRimColor : AntColorPalette.GetColor(antColor);
+            antUnit.Setup(antColor, (i == 0), (i == currentBodyCoordinates.Count - 1), queueColor);
 
             antUnits.Add(antUnit);
         }
@@ -541,9 +562,10 @@ public class AntQueueController : MonoBehaviour
         InitializeTrail();
 
         float initialAntY = units[0] != null ? units[0].transform.position.y : 0.05f;
+        float leaderLen = (units.Count > 0 && units[0] != null) ? units[0].VisualLength : AntVisualConfig.Instance.LeaderVisualLength;
         Vector3 holeDespawnPoint = (currentSmoothRoute.Count > 0) 
             ? currentSmoothRoute[currentSmoothRoute.Count - 1] 
-            : (destinationHole != null ? destinationHole.GetHoleDespawnPoint(holeEntranceCoordinate, forwardDirection, 0.85f, this) : transform.position);
+            : (destinationHole != null ? destinationHole.GetHoleDespawnPoint(holeEntranceCoordinate, forwardDirection, leaderLen, this) : transform.position);
 
         Vector3 holeEntryPoint = destinationHole != null 
             ? destinationHole.GetHoleEntryPoint(holeEntranceCoordinate, forwardDirection, this) 
@@ -750,11 +772,21 @@ public class AntQueueController : MonoBehaviour
             BoardManager.Instance.OnQueueCompleted(this);
         }
 
+        if (ropeVisual != null)
+        {
+            ropeVisual.Cleanup();
+        }
+
         destinationHole = null;
     }
 
     public void ReleaseReservedHole()
     {
+        if (ropeVisual != null)
+        {
+            ropeVisual.Cleanup();
+        }
+
         if (destinationHole != null)
         {
             destinationHole.ReleaseHoleEntry(this);
@@ -769,6 +801,7 @@ public class AntQueueController : MonoBehaviour
     private void OnDisable()
     {
         ReleaseReservedHole();
+        if (ropeVisual != null) ropeVisual.Cleanup();
         if (antUnits != null)
         {
             foreach (var u in antUnits)
@@ -781,6 +814,7 @@ public class AntQueueController : MonoBehaviour
     private void OnDestroy()
     {
         ReleaseReservedHole();
+        if (ropeVisual != null) ropeVisual.Cleanup();
         if (antUnits != null)
         {
             foreach (var u in antUnits)

@@ -1208,3 +1208,51 @@ Implemented via DOTween in `GameUIManager.AnimateFailScreenEntrance()`:
 - Final hole remains fully visible and active until all final queues and all their ants have completely entered and cleared the despawn threshold (`remainingCount == 0 && InboundReservations == 0 && enteringQueues.Count == 0`).
 - Maximum total moving queues across the board remains strictly 4; attempts beyond 4 soft-block with 0 heart penalty.
 - Strict oversubscription prevention: `inboundReservations <= remainingCount` enforced at reservation time.
+
+## GOLDEN ROPE VISUAL:
+
+Source:
+C:\Users\ayush\Desktop\Unity Projects\Slither Ants Jam\GoldenRope.unitypackage
+
+- imported GoldenRope prefab used as visual-only asset
+- ropes are enabled for queues participating in parallel same-hole movement
+- each queue owns its own rope
+- ropes align to stable parallel lanes
+- rope length matches remaining active queue length
+- rope shortens as ants enter holder
+- rope disappears when its queue fully enters
+- rope has no collision/pathfinding/gameplay authority
+- GoldenRope material remains unchanged unless explicitly requested
+
+## ANT VISUAL PREFABS — CORE VISUAL RULE (2026-09-27)
+
+- queue index 0 always uses ChubbyAntColors
+- all indices > 0 use WorkerAnt
+- tail uses WorkerAnt
+- prefabs are visual-only children of AntUnit (`AntUnit` -> `VisualRoot` -> `ChubbyAntColors` / `WorkerAnt`)
+- Chubby and Worker bodies use the exact same resolved base color as their matching Hole SlotRim
+- ReferenceColorMapper / AntColorPalette remains the authoritative color source
+- neutral details such as eyes/pupils are not recolored
+- snake/slither prefabs are never used as fallback
+- MaterialPropertyBlock is used to tint body, limbs, and iris without duplicating runtime materials
+- visual scales (increased visual root scale for improved mobile readability):
+  - ChubbyAntColors (Leader, index 0): 0.37 (increased +15.6% from 0.32 baseline)
+  - WorkerAnt (Followers/Tail, index > 0): 0.315 (increased +12.5% from 0.28 baseline)
+  - Despawn visual lengths: ChubbyAntColors = 1.10f, WorkerAnt = 0.92f
+- full ant visual body clears visible rim before despawn (verified with increased visual lengths so no early popping occurs)
+
+## LINKED ANTS — CORE MECHANIC
+
+- mechanic introduced in Level 7
+- two queues may belong to same linkedGroupId (`isConnected: 1` and `connectedIndex >= 0`)
+- clicking either member attempts to start both atomically
+- linked queues count independently toward max 4 moving queues (linked pair = 2 slots)
+- followers remain independent inside each queue
+- GoldenRope visually connects linked queues horizontally
+- rope is perpendicular to shared movement direction / spans between queues
+- rope dynamically follows queue attachment points (derived from leader transforms, offset behind face, constant thickness)
+- GoldenRope remains gold and has no navigation authority
+- linked pair must never partially start (atomic move validation and reservation)
+- one linked-pair invalid player action produces at most one heart penalty
+- system must support linked groups in future levels without level-number hardcoding
+

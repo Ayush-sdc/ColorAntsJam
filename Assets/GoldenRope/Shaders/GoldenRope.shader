@@ -1,0 +1,45 @@
+Shader "AntsJam/Golden Rope"
+{
+    Properties
+    {
+        _Color ("Rope gold", Color) = (0.82,0.58,0.26,1)
+        _ShadowColor ("Groove tint", Color) = (0.34,0.19,0.055,1)
+        _HighlightColor ("Fiber highlight", Color) = (1,0.88,0.57,1)
+        _LightDirection ("Art light direction", Vector) = (-0.5,0.85,-0.3,0)
+    }
+    SubShader
+    {
+        Tags { "RenderType"="Opaque" "Queue"="Geometry" }
+        Pass
+        {
+            Cull Back
+            ZWrite On
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #include "UnityCG.cginc"
+            struct appdata { float4 vertex : POSITION; float3 normal : NORMAL; float2 uv : TEXCOORD0; float4 color : COLOR; };
+            struct v2f { float4 pos : SV_POSITION; float3 normal : TEXCOORD0; float3 world : TEXCOORD1; float2 uv : TEXCOORD2; float4 color : COLOR; };
+            fixed4 _Color, _ShadowColor, _HighlightColor;
+            float4 _LightDirection;
+            v2f vert(appdata v)
+            {
+                v2f o; o.pos=UnityObjectToClipPos(v.vertex);o.normal=UnityObjectToWorldNormal(v.normal);
+                o.world=mul(unity_ObjectToWorld,v.vertex).xyz;o.uv=v.uv;o.color=v.color;return o;
+            }
+            fixed4 frag(v2f i) : SV_Target
+            {
+                float3 n=normalize(i.normal),l=normalize(_LightDirection.xyz),v=normalize(_WorldSpaceCameraPos.xyz-i.world);
+                float diffuse=saturate(dot(n,l)*0.65+0.40);
+                float3 baseColor=lerp(_ShadowColor.rgb,_Color.rgb,smoothstep(0,1,diffuse));
+                float shine=pow(saturate(dot(n,normalize(l+v))),26)*0.30;
+                // Fine longitudinal fibers stay subtle at small screen sizes.
+                float fibers=0.975+0.025*sin(i.uv.x*50.265482+i.uv.y*1.8);
+                float3 rgb=baseColor*i.color.rgb*fibers+_HighlightColor.rgb*shine;
+                return fixed4(rgb,1);
+            }
+            ENDCG
+        }
+    }
+    Fallback Off
+}
