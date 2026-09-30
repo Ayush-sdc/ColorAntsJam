@@ -221,6 +221,25 @@ public static class ReferenceLevelRuntimeAdapter
                     currentAllocated++;
                 }
 
+                // If sum of capacities exceeds totalNeeded (e.g. because of max(1, 0)), trim holes with 0 forward count
+                while (currentAllocated > totalNeeded)
+                {
+                    RuntimeReferenceHole holeToTrim = null;
+                    int maxCap = 1;
+                    foreach (var h in colorHoles)
+                    {
+                        int fCount = forwardCounts.TryGetValue(h, out int fc) ? fc : 0;
+                        if (h.ExplicitCapacity <= 0 && fCount == 0 && h.Capacity > 0 && h.Capacity >= maxCap)
+                        {
+                            maxCap = h.Capacity;
+                            holeToTrim = h;
+                        }
+                    }
+                    if (holeToTrim == null) break;
+                    holeToTrim.Capacity--;
+                    currentAllocated--;
+                }
+
                 foreach (var h in colorHoles)
                 {
                     if (h.ExplicitCapacity <= 0)
@@ -259,8 +278,11 @@ public static class ReferenceLevelRuntimeAdapter
                 if (targetHole.ColorID == targetColorId)
                 {
                     forwardCounts[targetHole]++;
+                    break;
                 }
-                break;
+                // If a hole of a different color is encountered:
+                // During gameplay, that hole will be cleared and unmapped by its own matching queues,
+                // freeing this corridor. Do NOT break - continue scanning along the ray!
             }
 
             // Pipe entrance hit
@@ -363,6 +385,8 @@ public static class ReferenceLevelRuntimeAdapter
 
     /// <summary>
     /// Extracts runtime Pipe definitions from raw reference Level data (HolderType == 2).
+    /// Resolves required uses: if raw PipeCount > 0 (e.g. Level 45 has PipeCount 2), preserves it.
+    /// If raw PipeCount == 0, dynamically counts ant queues routed into the pipe entrance, ensuring all queues can pass.
     /// </summary>
     public static List<RuntimeReferencePipe> ExtractPipes(Level level)
     {
@@ -373,10 +397,40 @@ public static class ReferenceLevelRuntimeAdapter
         {
             if (record.HolderType == 2 && record.Cells != null && record.Cells.Count >= 2)
             {
+                int effectiveCount = record.PipeCount;
+                if (effectiveCount <= 0)
+                {
+                    // Dynamically resolve required uses from queues pointing into pipe entrance
+                    Vector2Int ent = record.Cells[0];
+                    Vector2Int entDir = record.Cells[1] - record.Cells[0];
+                    int pointingCount = 0;
+                    foreach (var q in level.AntQueues)
+                    {
+                        if (q.HolderType == 1 && q.Cells != null && q.Cells.Count >= 2)
+                        {
+                            Vector2Int head = q.Cells[0];
+                            Vector2Int neck = q.Cells[1];
+                            Vector2Int fwd = head - neck;
+                            if (fwd == entDir)
+                            {
+                                int steps = (fwd.x != 0) ? (ent.x - head.x) * fwd.x : (ent.y - head.y) * fwd.y;
+                                if (steps > 0)
+                                {
+                                    if ((fwd.x != 0 && head.y == ent.y) || (fwd.y != 0 && head.x == ent.x))
+                                    {
+                                        pointingCount++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    effectiveCount = Mathf.Max(1, pointingCount);
+                }
+
                 pipes.Add(new RuntimeReferencePipe
                 {
                     Cells = new List<Vector2Int>(record.Cells),
-                    PipeCount = record.PipeCount
+                    PipeCount = effectiveCount
                 });
             }
         }

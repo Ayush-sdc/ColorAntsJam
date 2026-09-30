@@ -255,4 +255,10 @@ public class GameManager : MonoBehaviour
             LevelManager.Instance.RestartCurrentLevel();
         }
     }
+
+    public void SetGameState(GameState state)
+    {
+        currentState = state;
+        OnGameStateChanged?.Invoke(currentState);
+    }
 }

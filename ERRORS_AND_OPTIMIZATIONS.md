@@ -51,6 +51,10 @@ Level 45 represents the largest stress scenario in the game, comprising:
 | **ERR-06** | Expensive Raycasting for Ant Eye Gaze | `PlayerInputHandler.cs` | **LOW** | Optimized; eye gaze disabled during camera pan |
 | **ERR-07** | Duplicate Queue Completion Processing | `BoardManager.cs` | **HIGH** | **RESOLVED** (`completedQueues` guard prevents duplicate lock decrements or route clearing) |
 | **ERR-08** | Concurrent Pipe Over-Reservation in Linked Groups | `PipeController.cs`, `BoardManager.cs` | **HIGH** | **RESOLVED** (Active reservations track concurrent queues; reject moves exceeding remaining uses) |
+| **ERR-09** | Settings Modal Pause Lockout & Input Freeze on Close | `GameUIManager.cs` | **CRITICAL** | **RESOLVED** (Corrected pause ownership evaluation; fixed timeScale resumption, Android Back handling, and PlayerPrefs audio persistence) |
+| **ERR-10** | Level 14 False Self-Collision on Vacated Trailing Cells | `AntQueueController.cs` | **HIGH** | **RESOLVED** (Simulated step-by-step body vacancy in `OccupiesAtStep` so trailing body segments do not block valid advancing bent moves) |
+| **ERR-11** | Distorted Pipe Elbow Bends & Normal Stretching | `PipeController.cs`, `BoardManager.cs` | **MEDIUM** | **RESOLVED** (Constructed procedural toroidal circular elbows with smooth normals and centerline arc waypoint traversal) |
+| **ERR-12** | Reference JSON Pipe Count Discrepancies (All Starting at 1) | `ReferenceLevelRuntimeAdapter.cs` | **MEDIUM** | **RESOLVED** (Identified 47/49 pipes have raw JSON count 0; dynamically derive from incoming queue head alignment while preserving raw counts > 0) |
 
 ---
 
@@ -58,13 +62,18 @@ Level 45 represents the largest stress scenario in the game, comprising:
 
 ### Implemented & Verified (Automated Tests)
 - `completedQueues` guard in `BoardManager.cs:1846` preventing duplicate callbacks from decrementing locks or double-releasing slots.
-- `activeReservations` in `PipeController.cs` and `pendingPipeReservations` in `BoardManager.cs` preventing linked groups from over-consuming pipes.
+- `activeReservations` in `PipeController.cs` and `pendingPipeReservations` in `BoardManager.cs` allowing concurrent traversals up to available uses without premature destruction.
+- Moving queue non-collision and shared/crossing path traversal (9/9 Simultaneous Tests PASS).
+- Level 14 `Queue_Record_42_10` legal movement through real movement pipeline (5/5 Moving Queue & Level 14 Tests PASS).
 - Color-grouped hole capacity allocation in `ReferenceLevelRuntimeAdapter.cs`.
 - 23/23 EditMode integration tests passing in `SlitherAnts.Tests.Editor.dll`.
+- 4/4 UI and feature verification tests passing in `FeatureUIPlayModeTests.cs`.
 
 ### Implemented & Verified (Manual Editor Testing)
-- Scene sanitization: `main.unity` reduced from 66.7 MB to 5.8 MB, loading cleanly without 546 baked particle systems.
-- Gameplay interaction, camera dragging, and hole animations on Levels 1, 2, and 4.
+- Settings modal redesign matching reference `Settings.png`: purple card, yellow header, white labels, green switches, dark purple privacy button.
+- Title restoration in Level Completed overlay: full 713x295 "LEVEL COMPLETED!" visible without cropping.
+- Clean toroidal elbow geometry on Level 22 without pinch or stretch.
+- Linked leader ropes restored on Level 7 without lengthwise queue ropes.
 
 ### Unverified on Mobile
 - Physical Android device frame rates, GPU fill rates, thermal throttling, and battery drain.

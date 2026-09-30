@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using AntsJam.Progression;
+using AntsJam.UI;
 
 public class GameUIManager : MonoBehaviour
 {
@@ -19,6 +21,17 @@ public class GameUIManager : MonoBehaviour
     [SerializeField] private GameObject losePanel;
     [SerializeField] private Text loseReasonText;
 
+    [Header("Feature Progression & Overlays")]
+    [SerializeField] private FeatureProgressionConfig progressionConfig;
+    [SerializeField] private LevelCompletedOverlay levelCompletedOverlay;
+    [SerializeField] private FeatureTutorialModal featureTutorialModal;
+    [SerializeField] private HardLevelIntroOverlay hardLevelIntroOverlay;
+
+    public LevelCompletedOverlay LevelCompletedOverlay => levelCompletedOverlay;
+    public FeatureTutorialModal FeatureTutorialModal => featureTutorialModal;
+    public HardLevelIntroOverlay HardLevelIntroOverlay => hardLevelIntroOverlay;
+    public FeatureProgressionConfig ProgressionConfig { get => progressionConfig; set => progressionConfig = value; }
+
     [Header("Level Failed UI")]
     [SerializeField] private Image failDimBackground;
     [SerializeField] private Transform failPopupRoot;
@@ -32,6 +45,14 @@ public class GameUIManager : MonoBehaviour
     [SerializeField] private Button soundToggleButton;
     [SerializeField] private Text soundToggleText;
     [SerializeField] private Image soundToggleBg;
+    [SerializeField] private RectTransform soundKnobTransform;
+    [SerializeField] private Image soundKnobImage;
+    [SerializeField] private Button vibrationToggleButton;
+    [SerializeField] private Image vibrationToggleBg;
+    [SerializeField] private RectTransform vibrationKnobTransform;
+    [SerializeField] private Image vibrationKnobImage;
+    [SerializeField] private Button privacyPolicyButton;
+    [SerializeField] private string privacyPolicyUrl = "";
     [SerializeField] private Button musicToggleButton;
     [SerializeField] private Text musicToggleText;
     [SerializeField] private Image musicToggleBg;
@@ -39,6 +60,10 @@ public class GameUIManager : MonoBehaviour
     [SerializeField] private Button resumeButton;
     [SerializeField] private Button settingsRestartButton;
     [SerializeField] private Button backdropCloseButton;
+    [SerializeField] private Sprite switchBgOn;
+    [SerializeField] private Sprite switchBgOff;
+    [SerializeField] private Sprite switchKnobOn;
+    [SerializeField] private Sprite switchKnobOff;
 
     [Header("Buttons")]
     [SerializeField] private Button restartButton;
@@ -94,6 +119,8 @@ public class GameUIManager : MonoBehaviour
         if (resumeButton != null) resumeButton.onClick.AddListener(CloseSettingsModal);
         if (backdropCloseButton != null) backdropCloseButton.onClick.AddListener(CloseSettingsModal);
         if (soundToggleButton != null) soundToggleButton.onClick.AddListener(ToggleSound);
+        if (vibrationToggleButton != null) vibrationToggleButton.onClick.AddListener(ToggleVibration);
+        if (privacyPolicyButton != null) privacyPolicyButton.onClick.AddListener(OpenPrivacyPolicy);
         if (musicToggleButton != null) musicToggleButton.onClick.AddListener(ToggleMusic);
         if (settingsRestartButton != null)
         {
@@ -182,6 +209,18 @@ public class GameUIManager : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        // Android Back button / Escape key dismisses Settings modal
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (settingsModal != null && settingsModal.activeSelf)
+            {
+                CloseSettingsModal();
+            }
+        }
+    }
+
     public void CloseSettingsModal()
     {
         if (settingsModal == null || !settingsModal.activeSelf || isSettingsAnimating) return;
@@ -191,7 +230,11 @@ public class GameUIManager : MonoBehaviour
             SoundManager.Instance.PlayTap();
         }
 
-        GameManager.Instance?.ResumeGame();
+        // Only resume gameplay if no OTHER modal (e.g. tutorial, hard intro, win, failure) owns pause
+        if (!IsAnyModalActive(excludeSettings: true))
+        {
+            GameManager.Instance?.ResumeGame();
+        }
 
         if (settingsCard != null)
         {
@@ -224,6 +267,37 @@ public class GameUIManager : MonoBehaviour
         UpdateSettingsButtonsUI();
     }
 
+    private void ToggleVibration()
+    {
+        AntsJam.Core.VibrationManager.Toggle();
+        if (AntsJam.Core.VibrationManager.IsEnabled)
+        {
+            AntsJam.Core.VibrationManager.Vibrate();
+        }
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayTap();
+        }
+        UpdateSettingsButtonsUI();
+    }
+
+    private void OpenPrivacyPolicy()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayTap();
+        }
+
+        if (string.IsNullOrEmpty(privacyPolicyUrl))
+        {
+            Debug.LogWarning("[Settings] Privacy Policy URL is not configured. (Reported as missing).");
+        }
+        else
+        {
+            Application.OpenURL(privacyPolicyUrl);
+        }
+    }
+
     private void ToggleMusic()
     {
         if (SoundManager.Instance != null)
@@ -240,43 +314,139 @@ public class GameUIManager : MonoBehaviour
     private void UpdateSettingsButtonsUI()
     {
         bool soundOn = SoundManager.Instance == null || !SoundManager.Instance.IsMuted;
-        bool musicOn = SoundManager.Instance == null || !SoundManager.Instance.IsMusicMuted;
+        bool vibrationOn = AntsJam.Core.VibrationManager.IsEnabled;
 
+        // Sounds switch visual
+        if (soundToggleBg != null)
+        {
+            if (switchBgOn != null && switchBgOff != null)
+                soundToggleBg.sprite = soundOn ? switchBgOn : switchBgOff;
+            else
+                soundToggleBg.color = soundOn ? colorToggleOn : colorToggleOff;
+        }
+        if (soundKnobTransform != null)
+        {
+            soundKnobTransform.anchoredPosition = new Vector2(soundOn ? 28f : -28f, 0f);
+        }
+        if (soundKnobImage != null && switchKnobOn != null && switchKnobOff != null)
+        {
+            soundKnobImage.sprite = soundOn ? switchKnobOn : switchKnobOff;
+        }
         if (soundToggleText != null) soundToggleText.text = soundOn ? "ON" : "OFF";
-        if (soundToggleBg != null) soundToggleBg.color = soundOn ? colorToggleOn : colorToggleOff;
 
+        // Vibration switch visual
+        if (vibrationToggleBg != null)
+        {
+            if (switchBgOn != null && switchBgOff != null)
+                vibrationToggleBg.sprite = vibrationOn ? switchBgOn : switchBgOff;
+            else
+                vibrationToggleBg.color = vibrationOn ? colorToggleOn : colorToggleOff;
+        }
+        if (vibrationKnobTransform != null)
+        {
+            vibrationKnobTransform.anchoredPosition = new Vector2(vibrationOn ? 28f : -28f, 0f);
+        }
+        if (vibrationKnobImage != null && switchKnobOn != null && switchKnobOff != null)
+        {
+            vibrationKnobImage.sprite = vibrationOn ? switchKnobOn : switchKnobOff;
+        }
+
+        // Backward compatibility for music toggle
+        bool musicOn = SoundManager.Instance == null || !SoundManager.Instance.IsMusicMuted;
         if (musicToggleText != null) musicToggleText.text = musicOn ? "ON" : "OFF";
         if (musicToggleBg != null) musicToggleBg.color = musicOn ? colorToggleOn : colorToggleOff;
     }
 
-    [Header("Hard Level Overlay")]
+    [Header("Hard Level Overlay (Legacy Fallback)")]
     [SerializeField] private GameObject hardLevelOverlay;
     [SerializeField] private Transform hardLevelCard;
     [SerializeField] private Button hardLevelStartButton;
     private bool isHardOverlayShowing = false;
 
+    public bool IsAnyModalActive(bool excludeSettings = false)
+    {
+        return (levelCompletedOverlay != null && levelCompletedOverlay.IsShowing) ||
+               (featureTutorialModal != null && featureTutorialModal.IsShowing) ||
+               (hardLevelIntroOverlay != null && hardLevelIntroOverlay.IsShowing) ||
+               (losePanel != null && losePanel.activeSelf) ||
+               (!excludeSettings && settingsModal != null && settingsModal.activeSelf);
+    }
+
     private void HandleLevelLoaded(Level level)
     {
         if (levelNumberText != null) levelNumberText.text = level != null ? level.LevelNumber.ToString() : "1";
 
-        // Data-driven tutorial presentation
-        UpdateTutorialForLevel(level);
-
         failSequence?.Kill();
         if (winPanel != null) winPanel.SetActive(false);
+        if (levelCompletedOverlay != null) levelCompletedOverlay.gameObject.SetActive(false);
         if (losePanel != null) losePanel.SetActive(false);
         if (settingsModal != null) settingsModal.SetActive(false);
 
-        // Hard level overlay check (LevelDifficulty >= 2 or ShowHardIntro)
-        bool isHard = level != null && (level.LevelDifficulty >= 2 || level.ShowHardIntro);
+        // Introductory sequence: Hard Intro (if applicable) -> Feature Tutorials (if due) -> Gameplay
+        StartIntroductorySequence(level);
+    }
+
+    private void StartIntroductorySequence(Level level)
+    {
+        if (level == null) return;
+
+        bool isHard = level.ShowHardIntro || level.LevelDifficulty >= 2 || level.Difficulty == "2" || level.Difficulty == "Hard";
+
         if (isHard)
         {
-            ShowHardLevelOverlay();
+            if (hardLevelIntroOverlay != null)
+            {
+                GameManager.Instance?.PauseGame();
+                hardLevelIntroOverlay.PlayHardIntro(() =>
+                {
+                    CheckAndShowTutorials(level);
+                });
+            }
+            else
+            {
+                ShowHardLevelOverlay();
+            }
         }
-        else if (hardLevelOverlay != null)
+        else
         {
-            hardLevelOverlay.SetActive(false);
-            isHardOverlayShowing = false;
+            if (hardLevelIntroOverlay != null)
+            {
+                hardLevelIntroOverlay.gameObject.SetActive(false);
+            }
+            if (hardLevelOverlay != null)
+            {
+                hardLevelOverlay.SetActive(false);
+                isHardOverlayShowing = false;
+            }
+            CheckAndShowTutorials(level);
+        }
+    }
+
+    private void CheckAndShowTutorials(Level level)
+    {
+        var cfg = progressionConfig != null ? progressionConfig : FeatureProgressionConfig.Instance;
+        var pending = cfg != null ? cfg.GetPendingTutorials(level.LevelNumber) : null;
+
+        if (pending != null && pending.Count > 0 && featureTutorialModal != null)
+        {
+            GameManager.Instance?.PauseGame();
+            featureTutorialModal.ShowTutorials(pending, () =>
+            {
+                FinishIntroAndResume();
+            });
+        }
+        else
+        {
+            UpdateTutorialForLevel(level);
+            FinishIntroAndResume();
+        }
+    }
+
+    private void FinishIntroAndResume()
+    {
+        if (!IsAnyModalActive())
+        {
+            GameManager.Instance?.ResumeGame();
         }
     }
 
@@ -321,6 +491,18 @@ public class GameUIManager : MonoBehaviour
 
     public void ShowHardLevelOverlay()
     {
+        if (hardLevelIntroOverlay != null)
+        {
+            GameManager.Instance?.PauseGame();
+            hardLevelIntroOverlay.PlayHardIntro(() =>
+            {
+                var lvl = LevelManager.Instance != null ? LevelManager.Instance.ActiveLevel : null;
+                if (lvl != null) CheckAndShowTutorials(lvl);
+                else FinishIntroAndResume();
+            });
+            return;
+        }
+
         EnsureHardLevelOverlay();
         if (hardLevelOverlay == null) return;
 
@@ -338,6 +520,12 @@ public class GameUIManager : MonoBehaviour
 
     public void DismissHardLevelOverlay()
     {
+        if (hardLevelIntroOverlay != null)
+        {
+            hardLevelIntroOverlay.Dismiss();
+            return;
+        }
+
         if (hardLevelOverlay == null || !isHardOverlayShowing) return;
 
         if (SoundManager.Instance != null)
@@ -352,14 +540,18 @@ public class GameUIManager : MonoBehaviour
             {
                 hardLevelOverlay.SetActive(false);
                 isHardOverlayShowing = false;
-                GameManager.Instance?.ResumeGame();
+                var lvl = LevelManager.Instance != null ? LevelManager.Instance.ActiveLevel : null;
+                if (lvl != null) CheckAndShowTutorials(lvl);
+                else FinishIntroAndResume();
             });
         }
         else
         {
             hardLevelOverlay.SetActive(false);
             isHardOverlayShowing = false;
-            GameManager.Instance?.ResumeGame();
+            var lvl = LevelManager.Instance != null ? LevelManager.Instance.ActiveLevel : null;
+            if (lvl != null) CheckAndShowTutorials(lvl);
+            else FinishIntroAndResume();
         }
     }
 
@@ -472,14 +664,33 @@ public class GameUIManager : MonoBehaviour
 
     private void HandleGameStateChanged(GameState state)
     {
-        if (winPanel != null)
+        if (state == GameState.LevelWon)
         {
-            winPanel.SetActive(state == GameState.LevelWon);
-            if (state == GameState.LevelWon)
+            GameManager.Instance?.PauseGame();
+
+            int currentLevel = LevelManager.Instance != null ? LevelManager.Instance.CurrentLevelNumber : 1;
+            int prevHighest = LevelManager.Instance != null ? LevelManager.Instance.HighestCompletedLevel : 0;
+            LevelManager.Instance?.RecordLevelCompleted(currentLevel);
+
+            if (levelCompletedOverlay != null)
             {
-                winPanel.transform.localScale = Vector3.one * 0.7f;
-                winPanel.transform.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutBack);
+                levelCompletedOverlay.Setup(progressionConfig, () =>
+                {
+                    GameManager.Instance?.NextLevel();
+                });
+                levelCompletedOverlay.Show(currentLevel, prevHighest);
             }
+            else if (winPanel != null)
+            {
+                winPanel.SetActive(true);
+                winPanel.transform.localScale = Vector3.one * 0.7f;
+                winPanel.transform.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutBack).SetUpdate(true);
+            }
+        }
+        else
+        {
+            if (winPanel != null) winPanel.SetActive(false);
+            if (levelCompletedOverlay != null) levelCompletedOverlay.gameObject.SetActive(false);
         }
 
         if (losePanel != null)
@@ -533,5 +744,13 @@ public class GameUIManager : MonoBehaviour
         }
 
         failSequence.SetUpdate(true);
+    }
+
+    public void SetOverlayReferences(LevelCompletedOverlay lc, FeatureTutorialModal ft, HardLevelIntroOverlay hi, FeatureProgressionConfig cfg)
+    {
+        this.levelCompletedOverlay = lc;
+        this.featureTutorialModal = ft;
+        this.hardLevelIntroOverlay = hi;
+        this.progressionConfig = cfg;
     }
 }

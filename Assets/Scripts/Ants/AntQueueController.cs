@@ -71,18 +71,10 @@ public class AntQueueController : MonoBehaviour
 
     public void EnableParallelRope()
     {
-        if (ropeVisual == null)
+        // Unwanted lengthwise queue rope removed per user specification
+        if (ropeVisual != null)
         {
-            ropeVisual = GetComponent<AntsJam.Ropes.AntQueueRopeVisual>();
-            if (ropeVisual == null)
-            {
-                ropeVisual = gameObject.AddComponent<AntsJam.Ropes.AntQueueRopeVisual>();
-            }
-            ropeVisual.Initialize(this);
-        }
-        if (destinationHole != null)
-        {
-            ropeVisual.EnableParallelRope(destinationHole, forwardDirection);
+            ropeVisual.Cleanup();
         }
     }
 
@@ -363,6 +355,51 @@ public class AntQueueController : MonoBehaviour
         return currentBodyCoordinates.Contains(coord);
     }
 
+    /// <summary>
+    /// Checks whether the queue's body occupies a given cell at step 'stepIndex' (1-based from head).
+    /// Dynamically accounts for trailing body segments vacated as the queue advances forward.
+    /// Trailing segments at indices >= (L - stepIndex) have moved forward and vacated their initial cells.
+    /// </summary>
+    public bool OccupiesAtStep(Vector2Int cell, int stepIndex, List<Vector2Int> pathSoFar = null)
+    {
+        if (currentBodyCoordinates == null || currentBodyCoordinates.Count == 0) return false;
+        int L = currentBodyCoordinates.Count;
+
+        // 1. Initial body segments that have not yet vacated at stepIndex
+        // At step 1: body[0] moves to path[1], body[1] moves to body[0], ..., body[L-1] (tail) moves to body[L-2].
+        // Thus, original cell body[L-1] is vacated at step 1!
+        // In general, at stepIndex s (>= 1), original cells body[j] for j >= (L - s) are VACATED.
+        // Still occupied initial cells are j in [0, L - 1 - s].
+        int maxOccupiedInitialIndex = L - 1 - stepIndex;
+        for (int j = 0; j <= maxOccupiedInitialIndex; j++)
+        {
+            if (currentBodyCoordinates[j] == cell)
+            {
+                return true;
+            }
+        }
+
+        // 2. Path segments traversed by head that the body currently stretches through
+        // At stepIndex s, the head is at pathSoFar[s]. Segments behind head occupy pathSoFar[s - k] for k in [1, min(s-1, L-1)].
+        if (pathSoFar != null && stepIndex >= 2)
+        {
+            int maxPathHistory = Mathf.Min(stepIndex - 1, L - 1);
+            for (int k = 1; k <= maxPathHistory; k++)
+            {
+                int historyIndex = stepIndex - k;
+                if (historyIndex >= 0 && historyIndex < pathSoFar.Count)
+                {
+                    if (pathSoFar[historyIndex] == cell)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
     public IReadOnlyList<Vector2Int> GetRemainingPath()
     {
         return remainingPath;
@@ -479,16 +516,6 @@ public class AntQueueController : MonoBehaviour
         this.destinationHole = targetHole;
         this.holeEntranceCoordinate = entranceCell;
 
-        if (BoardManager.Instance != null && BoardManager.Instance.UseAutomaticPathfinding)
-        {
-            var cellPath = AntPathfinder.FindPath(BoardManager.Instance, this, out var hole, out var entrance);
-            if (cellPath != null && cellPath.Count >= 2)
-            {
-                var smoothRoute = BoardManager.Instance.GenerateSmoothFreeWorldPath(cellPath, this, hole ?? targetHole);
-                StartSmoothMovement(smoothRoute, hole ?? targetHole, entrance);
-                return;
-            }
-        }
 
         // Direct straight free world movement without automatic pathfinder
         if (BoardManager.Instance != null)

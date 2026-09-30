@@ -127,6 +127,34 @@ public class LevelManager : MonoBehaviour
     /// <summary>
     /// Increments the current level in PlayerPrefs and loads it.
     /// From Level 45, remains on Level 45.
+    private const string HighestCompletedLevelPrefKey = "HighestCompletedLevel";
+
+    /// <summary>
+    /// Highest level number completed by the player in campaign progression.
+    /// Replaying a level does not decrement or artificially inflate this value.
+    /// </summary>
+    public int HighestCompletedLevel => PlayerPrefs.GetInt(HighestCompletedLevelPrefKey, 0);
+
+    /// <summary>
+    /// Records completion of a level. Persists HighestCompletedLevel if levelNumber is higher.
+    /// Returns true if this is a first-time completion of this level.
+    /// </summary>
+    public bool RecordLevelCompleted(int levelNumber)
+    {
+        int prevHighest = HighestCompletedLevel;
+        if (levelNumber > prevHighest)
+        {
+            PlayerPrefs.SetInt(HighestCompletedLevelPrefKey, levelNumber);
+            PlayerPrefs.Save();
+            Debug.Log($"[LevelManager] New campaign milestone reached! HighestCompletedLevel={levelNumber} (previously {prevHighest})");
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Increments the current level in PlayerPrefs and loads it.
+    /// Defines a graceful campaign completion state when exceeding the final level.
     /// </summary>
     public void AdvanceToNextLevel()
     {
@@ -135,8 +163,22 @@ public class LevelManager : MonoBehaviour
 
         if (currentLevelNumber >= maxLevels)
         {
-            currentLevelNumber = maxLevels;
-            Debug.Log($"[LevelManager] Already at final Level {currentLevelNumber}. Remaining on current level.");
+            Debug.Log($"[LevelManager] Campaign Completed! Final Level {currentLevelNumber} finished. Gracefully handling completion state.");
+            if (loopWhenExceeded)
+            {
+                currentLevelNumber = 1;
+                PlayerPrefs.SetInt(CurrentLevelPrefKey, currentLevelNumber);
+                PlayerPrefs.Save();
+                LoadLevel(currentLevelNumber);
+            }
+            else
+            {
+                // Remain cleanly on final level
+                currentLevelNumber = maxLevels;
+                PlayerPrefs.SetInt(CurrentLevelPrefKey, currentLevelNumber);
+                PlayerPrefs.Save();
+                LoadLevel(currentLevelNumber);
+            }
             return;
         }
 
@@ -182,6 +224,7 @@ public class LevelManager : MonoBehaviour
     public void ResetProgress()
     {
         PlayerPrefs.SetInt(CurrentLevelPrefKey, 1);
+        PlayerPrefs.DeleteKey(HighestCompletedLevelPrefKey);
         PlayerPrefs.Save();
         currentLevelNumber = 1;
         Debug.Log("[LevelManager] PlayerPrefs level progress reset to Level 1.");
@@ -192,6 +235,7 @@ public class LevelManager : MonoBehaviour
     public static void ResetProgressionEditorMenu()
     {
         PlayerPrefs.SetInt(CurrentLevelPrefKey, 1);
+        PlayerPrefs.DeleteKey(HighestCompletedLevelPrefKey);
         PlayerPrefs.Save();
         Debug.Log("[LevelManager] PlayerPrefs level progression reset to Level 1.");
     }

@@ -17,14 +17,20 @@
 ### The Gameplay Loop
 1. **Board Rebuild**: [LevelManager.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/LevelSystem/LevelManager.cs) loads the selected `Level` asset on start or on level change. [BoardManager.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Board/BoardManager.cs) clears previous runtime objects, resets grid dots, instantiates stadium holders, spawns ant queues, and configures the camera framing.
 2. **Pathfinding & Input**: [PlayerInputHandler.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Core/PlayerInputHandler.cs) detects touch/mouse taps on ant units or cells. [BoardManager.cs:912](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Board/BoardManager.cs#L912) (`ValidateForwardMove`) validates that an unblocked straight-line cardinal path exists from the ant head to a matching-color holder with available capacity.
-3. **Slithering & Hole Entry**: Ants move segment-by-segment along the smooth route ([AntQueueController.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Ants/AntQueueController.cs)), recording trail history. Followers trace the recorded trail at constant segment distances.
-4. **Queue Swallowing & Capacity**: As ant units reach the deep pit inside the holder, [HoleController.cs:880](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Board/HoleController.cs#L880) swallows units with scaling, swallow SFX, and burst VFX (`ant_dis`). When the entire queue finishes entering, `targetHole.OnQueueSwallowed()` decrements the holder's queue counter badge.
-5. **Holder Completion & Permanent Grid Release**: When a holder's counter reaches 0 and all entering ants have despawned:
+3. **Confirmed Moving-Queue Collision Rules (Supersedes Earlier Crossing Restrictions)**:
+   - Multiple ant queues can move simultaneously into the same matching hole if sufficient capacity remains.
+   - Moving queues may overlap, cross, or follow the exact same path. Once queues start moving, they **do not collide with each other**.
+   - Overlap does not block movement, cancel a rescue, or lose a life.
+   - Leaders continue straight on their natural grid trajectories without artificial lateral lane offsets.
+   - Stationary queues still block routes. However, once a queue starts moving, its old footprint is vacated immediately and does not remain registered as a stationary obstacle.
+4. **Slithering & Hole Entry**: Ants move segment-by-segment along the smooth route ([AntQueueController.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Ants/AntQueueController.cs)), recording trail history. Followers trace the recorded trail at constant segment distances.
+5. **Queue Swallowing & Capacity**: As ant units reach the deep pit inside the holder, [HoleController.cs:880](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Board/HoleController.cs#L880) swallows units with scaling, swallow SFX, and burst VFX (`ant_dis`). When the entire queue finishes entering, `targetHole.OnQueueSwallowed()` decrements the holder's queue counter badge.
+6. **Holder Completion & Permanent Grid Release**: When a holder's counter reaches 0 and all entering ants have despawned:
    - The holder enters `IsCompleted = true`.
    - `BoardManager.RemoveCompletedHole(hole)` unregisters **ALL cells across the holder's entire multi-cell footprint (`OccupiedCells`)** from `holesMap`.
    - Grid blocking is released immediately so remaining queues can path through that space.
    - The holder shrinks cleanly (`0.20s`, `Ease.InBack`) and its GameObject is destroyed.
-6. **Win / Loss Evaluation**:
+7. **Win / Loss Evaluation**:
    - **Win**: All ant queues on the board have been cleared ([GameManager.cs:164](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Core/GameManager.cs#L164): `activeQueues.Count == 0`).
    - **Loss (Deadlock)**: If queues remain on the board, none are currently moving, and no remaining queue has an unblocked path to its matching hole, the game triggers `LevelLost` ("Deadlock!").
    - **Loss (Lives/Timer)**: Player loses all 3 hearts (deducted on invalid moves) or the countdown timer expires.
@@ -93,13 +99,15 @@ The project utilizes a hybrid ScriptableObject and JSON architecture containing 
 
 | Mechanic | Controlling Script | Data Fields | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| **Normal Queues** | `AntQueueController`, `BoardManager`, `HoleController` | `Cells`, `ColorID`, `HolderType=1` | **WORKING** | 45 levels, 2,029 queues fully functional |
-| **Linked Ants** | `BoardManager:638`, `BoardManager:1776`, `LinkedAntsRopeVisual` | `IsConnected`, `ConnectedIndex` | **WORKING** | 21 levels, 283 queues, 126 groups move atomically with GoldenRope visuals |
+| **Normal Queues** | `AntQueueController`, `BoardManager`, `HoleController` | `Cells`, `ColorID`, `HolderType=1` | **WORKING** | Lengthwise queue rope removed; clean 3D ants, eyes, and materials preserved |
+| **Linked Ants** | `BoardManager:638`, `BoardManager:1776`, `LinkedAntsRopeVisual` | `IsConnected`, `ConnectedIndex` | **WORKING** | Leader connector preserved; dismisses into hole; all-or-none launch preserved |
 | **Locked Ants** | `AntLockBadge.cs`, `AntQueueController.cs` | `IsLocked`, `LockAmount` | **COMPLETE** | Padlock badge, move gating, counter decrement on rescues, unlock at 0 |
 | **Stacked Ants** | `AntQueueController.cs`, `BoardManager.cs` | `IsSecondColor`, `SecondColor` | **COMPLETE** | Dominant moves first; lower layer revealed on accepted move as independent queue |
 | **Pipes** | `PipeController.cs`, `BoardManager.cs` | `PipeCount` (in HolderType 2) | **COMPLETE** | 3D glossy tube mesh, directional entry gating, remaining-use badge |
-| **Hard Overlay** | `GameUIManager.cs`, `Level.cs` | `LevelDifficulty` | **COMPLETE** | Pause timer/input during overlay, confirm to start, ant-only terminology |
-| **Forward & Pipe Routing** | `BoardManager.cs` | Forward raycast + directional pipe polyline | **COMPLETE** | Direct straight ray + pipe transit paths; zero missing hole routes |
+| **Level Completed Overlay** | `LevelCompletedOverlay.cs`, `GameUIManager.cs` | `HighestCompletedLevel`, `FeatureProgressionConfig` | **COMPLETE** | Animated progress bar, percentage, upcoming feature icon with blue glow, NEXT button |
+| **Next-Feature Progression** | `FeatureProgressionConfig.cs`, `FeatureDefinition.cs` | ScriptableObject config | **COMPLETE** | Clamped 0-100%, anti-farming guards, saved campaign progress |
+| **Feature Tutorials** | `FeatureTutorialModal.cs`, `GameUIManager.cs` | `SeenTutorial_<id>` | **COMPLETE** | Reusable prefab, radial rays, 4 ant-themed 3D illustrations & icons, sequential queue |
+| **Hard Level Intro** | `HardLevelIntroOverlay.cs`, `GameUIManager.cs` | `level.ShowHardIntro` (`difficulty=="2"`) | **COMPLETE** | Red horned skull emblem, pop-in, hold, fade-out; blocks board input & pauses timer |
 
 ---
 

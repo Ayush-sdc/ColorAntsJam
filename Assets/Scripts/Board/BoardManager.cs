@@ -739,7 +739,7 @@ public class BoardManager : MonoBehaviour
     {
         foreach (var q in activeQueues)
         {
-            if (q == null || q == ignoreQueue) continue;
+            if (q == null || q == ignoreQueue || q.IsMoving) continue;
             if (q.Occupies(coord))
             {
                 return q;
@@ -1119,14 +1119,15 @@ public class BoardManager : MonoBehaviour
 
         while (IsInBounds(curr) && steps++ < maxSteps)
         {
-            // 1. Moving into own body?
-            if (queue.Occupies(curr))
+            // 1. Moving into own body? (Accounts for trailing body cells vacated as queue advances)
+            if (queue.OccupiesAtStep(curr, steps, routeCells))
             {
                 blockedReason = "BlockedByOwnBody";
                 return false;
             }
 
             // 2. Moving into stationary queue?
+            // Once a queue starts moving (q.IsMoving), it is no longer a stationary obstacle.
             var otherQueue = GetQueueOccupying(curr, queue);
             if (otherQueue != null && (group == null || !group.Contains(otherQueue)))
             {
@@ -1134,28 +1135,9 @@ public class BoardManager : MonoBehaviour
                 return false;
             }
 
-            // 3. Moving into reserved route cell of another moving queue?
-            if (reservedRouteCells.Contains(curr))
-            {
-                blockedReason = "ReservedByMovingRoute";
-                return false;
-            }
-
-            // Check if cell is occupied by any active moving queue
-            if (movingQueues != null)
-            {
-                foreach (var mq in movingQueues)
-                {
-                    if (mq != null && mq != queue && (group == null || !group.Contains(mq)))
-                    {
-                        if (mq.Occupies(curr))
-                        {
-                            blockedReason = "OccupiedByMovingQueue";
-                            return false;
-                        }
-                    }
-                }
-            }
+            // Confirmed gameplay rule: Once queues have started moving, they do not collide with each other.
+            // Moving queues may overlap, cross, or follow the exact same path.
+            // Such overlap does not block movement, cancel rescue, or lose lives.
 
             // 4. Hit a Hole?
             HoleController h = GetHoleAt(curr);
@@ -1237,9 +1219,10 @@ public class BoardManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Generates a straight continuous world-space trajectory across open floor from the queue's head to the destination hole.
-    /// Strictly moves in forwardDir without any waypoint navigation or A* route generation.
-    /// Supports side-by-side parallel approach and parallel hole entry for queues sharing the same hole.
+    /// <summary>
+    /// Generates a strictly straight world-space trajectory across open floor from the queue's head to the destination hole.
+    /// The leader continues strictly along its original cardinal direction with ZERO lateral displacement.
+    /// Preserves hole-entry descent into the pit without lateral steering.
     /// </summary>
     public List<Vector3> GenerateStraightFreeWorldPath(AntQueueController queue, Vector2Int forwardDir, HoleController targetHole, Vector2Int entranceCell)
     {
@@ -1249,79 +1232,42 @@ public class BoardManager : MonoBehaviour
 
         float cs = cellSize > 0 ? cellSize : 1.0f;
         Vector3 entryForward = new Vector3(forwardDir.x, 0f, forwardDir.y).normalized;
-        Vector3 entryRight = Vector3.Cross(Vector3.up, entryForward).normalized;
 
         Vector3 entrancePos = GridToWorldPosition(entranceCell);
         entrancePos.y = headWorldPos.y;
 
-        Vector3 entryPoint = targetHole != null 
-            ? targetHole.GetHoleEntryPoint(entranceCell, forwardDir, queue) 
-            : (entrancePos - entryForward * (0.50f * cs));
+        // Mechanically straight along entryForward: project entrancePos onto queue's ray to find rim arrival
+        float totalForwardDist = Vector3.Dot(entrancePos - headWorldPos, entryForward);
+        float distToRim = Mathf.Max(0.05f * cs, totalForwardDist - 0.50f * cs);
+
+        Vector3 entryPoint = headWorldPos + entryForward * distToRim;
         entryPoint.y = headWorldPos.y;
 
         float leaderVisualLength = (queue != null && queue.Units.Count > 0 && queue.Units[0] != null) ? queue.Units[0].VisualLength : AntVisualConfig.Instance.LeaderVisualLength;
-        Vector3 despawnPoint = targetHole != null 
-            ? targetHole.GetHoleDespawnPoint(entranceCell, forwardDir, leaderVisualLength * cs, queue) 
-            : (entryPoint + entryForward * (1.10f * cs));
+        float minDespawnDist = leaderVisualLength * cs + 0.25f * cs;
+        Vector3 despawnPoint = entryPoint + entryForward * minDespawnDist;
+        despawnPoint.y = (targetHole != null ? targetHole.transform.position.y : headWorldPos.y) - 0.20f;
 
         List<Vector3> denseRoute = new List<Vector3>();
         float stepSize = 0.04f;
 
-        // 1. Calculate approach geometry
-        // Parallel entry zone: A dedicated straight channel of length `approachZoneLength` directly in front of the hole rim.
-        float totalForwardDist = Vector3.Dot(entryPoint - headWorldPos, entryForward);
-        float approachZoneLength = 1.35f * cs;
-
-        Vector3 approachStartPos;
-        float alignForwardDist;
-
-        if (totalForwardDist > approachZoneLength + 0.1f * cs)
+        // 1. Straight approach phase: strictly along cardinal forwardDir to the rim with ZERO lateral displacement
+        int approachSteps = Mathf.Max(1, Mathf.RoundToInt(distToRim / stepSize));
+        for (int s = 0; s < approachSteps; s++)
         {
-            approachStartPos = entryPoint - entryForward * approachZoneLength;
-            alignForwardDist = totalForwardDist - approachZoneLength;
-        }
-        else
-        {
-            // If already within approach zone, dedicate first 35% to smooth lateral alignment and the rest to parallel approach
-            alignForwardDist = Mathf.Max(0.05f * cs, totalForwardDist * 0.35f);
-            approachStartPos = entryPoint - entryForward * (totalForwardDist - alignForwardDist);
-        }
-
-        // 2. Smooth lane alignment phase: from headWorldPos to approachStartPos
-        // Uses smooth cubic Hermite easing (3t^2 - 2t^3) so start and end tangents are entryForward (0 sideways jerk, 0 snap)
-        int alignSteps = Mathf.Max(1, Mathf.RoundToInt(alignForwardDist / stepSize));
-        Vector3 lateralDeltaVec = Vector3.Project(headWorldPos - approachStartPos, entryRight);
-
-        for (int s = 0; s < alignSteps; s++)
-        {
-            float t = (float)s / alignSteps;
-            float smoothT = t * t * (3f - 2f * t); // S-curve easing
-            Vector3 forwardProgression = Vector3.Lerp(headWorldPos, headWorldPos + entryForward * alignForwardDist, t);
-            Vector3 pt = forwardProgression - lateralDeltaVec * smoothT;
+            float t = (float)s / approachSteps;
+            Vector3 pt = Vector3.Lerp(headWorldPos, entryPoint, t);
             pt.y = headWorldPos.y;
             denseRoute.Add(pt);
         }
 
-        // 3. Parallel approach phase: from approachStartPos to entryPoint
-        // 100% strictly parallel to entryForward, perfectly aligned with assigned lane, 0 degree angle between queues
-        float parallelDist = Vector3.Distance(approachStartPos, entryPoint);
-        int parallelSteps = Mathf.Max(1, Mathf.RoundToInt(parallelDist / stepSize));
-        for (int s = 0; s < parallelSteps; s++)
-        {
-            float t = (float)s / parallelSteps;
-            Vector3 pt = Vector3.Lerp(approachStartPos, entryPoint, t);
-            pt.y = headWorldPos.y;
-            denseRoute.Add(pt);
-        }
-
-        // 4. Parallel entry and swallowing phase: from entryPoint into deep despawnPoint
-        // Continues strictly on the same lane inward into the recessed pit
-        float despawnDist = Vector3.Distance(entryPoint, despawnPoint);
-        int despawnSteps = Mathf.Max(1, Mathf.RoundToInt(despawnDist / stepSize));
+        // 2. Hole-entry descent phase: continues strictly in cardinal forwardDir, descending in Y into pit
+        int despawnSteps = Mathf.Max(1, Mathf.RoundToInt(minDespawnDist / stepSize));
         for (int s = 0; s <= despawnSteps; s++)
         {
             float t = (float)s / despawnSteps;
-            denseRoute.Add(Vector3.Lerp(entryPoint, despawnPoint, t));
+            Vector3 pt = Vector3.Lerp(entryPoint, despawnPoint, t);
+            denseRoute.Add(pt);
         }
 
         return denseRoute;
@@ -1340,7 +1286,7 @@ public class BoardManager : MonoBehaviour
         float stepSize = 0.04f;
         List<Vector3> denseRoute = new List<Vector3>();
 
-        // 1. From headWorldPos to pipe entrance
+        // 1. From headWorldPos to pipe entrance (strictly along forwardDir)
         Vector3 pipeEntrancePos = GridToWorldPosition(pipe.EntranceCell);
         pipeEntrancePos.y = headWorldPos.y;
         float distToPipe = Vector3.Distance(headWorldPos, pipeEntrancePos);
@@ -1353,13 +1299,14 @@ public class BoardManager : MonoBehaviour
             denseRoute.Add(pt);
         }
 
-        // 2. Along pipe centerline cells
-        if (pipe.Cells != null && pipe.Cells.Count >= 2)
+        // 2. Along pipe centerline waypoints (including smooth curved elbow geometry at corners)
+        List<Vector3> pipeWaypoints = pipe != null ? pipe.GetCenterlineWaypoints(headWorldPos.y) : null;
+        if (pipeWaypoints != null && pipeWaypoints.Count >= 2)
         {
-            for (int i = 0; i < pipe.Cells.Count - 1; i++)
+            for (int i = 0; i < pipeWaypoints.Count - 1; i++)
             {
-                Vector3 p0 = GridToWorldPosition(pipe.Cells[i]);
-                Vector3 p1 = GridToWorldPosition(pipe.Cells[i + 1]);
+                Vector3 p0 = pipeWaypoints[i];
+                Vector3 p1 = pipeWaypoints[i + 1];
                 p0.y = headWorldPos.y;
                 p1.y = headWorldPos.y;
                 float segDist = Vector3.Distance(p0, p1);
@@ -1374,7 +1321,7 @@ public class BoardManager : MonoBehaviour
             }
         }
 
-        // 3. From pipe exit to hole
+        // 3. From pipe exit to hole (strictly straight in exitForward with zero lateral shift)
         Vector2Int exitDir = pipe.ExitDirection;
         Vector3 exitForward = new Vector3(exitDir.x, 0f, exitDir.y).normalized;
         Vector3 pipeExitPos = GridToWorldPosition(pipe.ExitCell);
@@ -1383,18 +1330,18 @@ public class BoardManager : MonoBehaviour
         Vector3 entrancePos = GridToWorldPosition(entranceCell);
         entrancePos.y = headWorldPos.y;
 
-        Vector3 entryPoint = targetHole != null 
-            ? targetHole.GetHoleEntryPoint(entranceCell, exitDir, queue) 
-            : (entrancePos - exitForward * (0.50f * cs));
+        float totalExitDist = Vector3.Dot(entrancePos - pipeExitPos, exitForward);
+        float distToRim = Mathf.Max(0.05f * cs, totalExitDist - 0.50f * cs);
+
+        Vector3 entryPoint = pipeExitPos + exitForward * distToRim;
         entryPoint.y = headWorldPos.y;
 
         float leaderVisualLength = (queue != null && queue.Units.Count > 0 && queue.Units[0] != null) ? queue.Units[0].VisualLength : AntVisualConfig.Instance.LeaderVisualLength;
-        Vector3 despawnPoint = targetHole != null 
-            ? targetHole.GetHoleDespawnPoint(entranceCell, exitDir, leaderVisualLength * cs, queue) 
-            : (entryPoint + exitForward * (1.10f * cs));
+        float minDespawnDist = leaderVisualLength * cs + 0.25f * cs;
+        Vector3 despawnPoint = entryPoint + exitForward * minDespawnDist;
+        despawnPoint.y = (targetHole != null ? targetHole.transform.position.y : headWorldPos.y) - 0.20f;
 
-        float distToHole = Vector3.Distance(pipeExitPos, entryPoint);
-        int stepsToHole = Mathf.Max(1, Mathf.RoundToInt(distToHole / stepSize));
+        int stepsToHole = Mathf.Max(1, Mathf.RoundToInt(distToRim / stepSize));
         for (int s = 0; s < stepsToHole; s++)
         {
             float t = (float)s / stepsToHole;
@@ -1403,13 +1350,13 @@ public class BoardManager : MonoBehaviour
             denseRoute.Add(pt);
         }
 
-        // 4. Hole swallowing into pit
-        float despawnDist = Vector3.Distance(entryPoint, despawnPoint);
-        int despawnSteps = Mathf.Max(1, Mathf.RoundToInt(despawnDist / stepSize));
+        // 4. Hole swallowing into pit (strictly continuing along exitForward, descending in Y)
+        int despawnSteps = Mathf.Max(1, Mathf.RoundToInt(minDespawnDist / stepSize));
         for (int s = 0; s <= despawnSteps; s++)
         {
             float t = (float)s / despawnSteps;
-            denseRoute.Add(Vector3.Lerp(entryPoint, despawnPoint, t));
+            Vector3 pt = Vector3.Lerp(entryPoint, despawnPoint, t);
+            denseRoute.Add(pt);
         }
 
         return denseRoute;
@@ -1510,28 +1457,8 @@ public class BoardManager : MonoBehaviour
                 }
             }
 
-            // Validate that routes in the group do not cross each other
-            if (allValid && group.Count > 1)
-            {
-                HashSet<Vector2Int> claimedCells = new HashSet<Vector2Int>();
-                foreach (var member in group)
-                {
-                    var rCells = groupRouteCells[member];
-                    var entrance = groupEntranceCells[member];
-                    foreach (var c in rCells)
-                    {
-                        if (c != entrance && claimedCells.Contains(c))
-                        {
-                            allValid = false;
-                            firstBlockedMember = member;
-                            failureReason = "GroupRoutesCross";
-                            break;
-                        }
-                        claimedCells.Add(c);
-                    }
-                    if (!allValid) break;
-                }
-            }
+            // Confirmed gameplay rule: Linked queues may cross, overlap, or share routes.
+            // (GroupRoutesCross rejection removed per confirmed movement rules)
 
             if (!allValid)
             {
@@ -1827,19 +1754,7 @@ public class BoardManager : MonoBehaviour
             }
         }
 
-        foreach (var kvp in queuesByHole)
-        {
-            if (kvp.Value.Count >= 2)
-            {
-                foreach (var q in kvp.Value)
-                {
-                    if (!q.IsConnected)
-                    {
-                        q.EnableParallelRope();
-                    }
-                }
-            }
-        }
+        // Parallel same-hole queue lengthwise rope removed per user specification
     }
 
     /// <summary>
@@ -1978,8 +1893,16 @@ public class BoardManager : MonoBehaviour
                 activeQueues.Remove(queue);
 
                 // Destination hole is notified by AntQueueController.OnEntireQueueEnteredHole()
-                // when the tail finishes its swallow animation. Fallback here only if queue.DestinationHole was null:
-                if (queue.DestinationHole == null)
+                // when the tail finishes its swallow animation. Ensure destination hole swallows queue
+                // if it hasn't already (e.g. in tests, instantaneous moves, or null fallback):
+                if (queue.DestinationHole != null)
+                {
+                    if (queue.DestinationHole.HasReservation(queue))
+                    {
+                        queue.DestinationHole.OnEntireQueueEnteredHole(queue);
+                    }
+                }
+                else
                 {
                     HoleController targetHole = null;
                     if (queue.CurrentBodyCoordinates != null && queue.CurrentBodyCoordinates.Count > 0)

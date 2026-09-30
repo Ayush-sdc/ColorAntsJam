@@ -67,6 +67,7 @@ public class HoleController : MonoBehaviour
     public bool HasAvailableCapacity => !isCompleted && AvailableCapacity > 0;
     public bool IsFull => isCompleted || AvailableCapacity <= 0;
     public int EnteringQueueCount => enteringQueues.Count;
+    public bool HasReservation(AntQueueController queue) => queue != null && reservedQueues.Contains(queue);
 
     public bool TryReserveSlot(AntQueueController queue = null)
     {
@@ -142,39 +143,13 @@ public class HoleController : MonoBehaviour
 
     public float GetLaneOffset(AntQueueController queue, float cs)
     {
-        if (queue == null) return 0f;
-        if (!queueLaneIndices.TryGetValue(queue, out int lane))
-        {
-            lane = (nextLaneCounter++) % 4;
-            queueLaneIndices[queue] = lane;
-        }
-
-        float spacing = laneSpacing * cs;
-
-        // When capacity is 1, single center lane
-        if (initialCapacity <= 1 && reservedQueues.Count <= 1 && queueLaneIndices.Count <= 1)
-        {
-            return 0f;
-        }
-
-        // Deterministic symmetric parallel lanes:
-        // Lane 0: Left lane  (-0.5 * laneSpacing)
-        // Lane 1: Right lane (+0.5 * laneSpacing)
-        // Lane 2: Outer Left (-1.15 * laneSpacing) for 3/4 queue capacity
-        // Lane 3: Outer Right (+1.15 * laneSpacing) for 3/4 queue capacity
-        switch (lane)
-        {
-            case 0: return -0.5f * spacing;
-            case 1: return  0.5f * spacing;
-            case 2: return -1.15f * spacing;
-            case 3: return  1.15f * spacing;
-            default: return 0f;
-        }
+        // Mechanically straight movement: preserve original approach lane with 0 lateral offset
+        return 0f;
     }
 
     /// <summary>
     /// Calculates the point where an ant begins entering the hole (outer rim boundary along approach direction).
-    /// Uses board-plane entryForward and entryRight to position the parallel entry lane accurately.
+    /// Preserves the queue's exact approach lane along entryForward with zero lateral displacement.
     /// </summary>
     public Vector3 GetHoleEntryPoint(Vector2Int entranceCell, Vector2Int approachDir, AntQueueController queue = null)
     {
@@ -183,17 +158,15 @@ public class HoleController : MonoBehaviour
             : transform.position;
         float cs = BoardManager.Instance != null ? BoardManager.Instance.CellSize : 1.0f;
         Vector3 entryForward = new Vector3(approachDir.x, 0f, approachDir.y).normalized;
-        Vector3 entryRight = Vector3.Cross(Vector3.up, entryForward).normalized;
 
-        float lateralOffset = GetLaneOffset(queue, cs);
-        Vector3 point = cellCenter - entryForward * (0.50f * cs) + entryRight * lateralOffset;
+        Vector3 point = cellCenter - entryForward * (0.50f * cs);
         point.y = transform.position.y;
         return point;
     }
 
     /// <summary>
-    /// Calculates the deep despawn point inside the hole, past the point where the COMPLETE ant has cleared the visible opening.
-    /// Preserves the exact same parallel lane lateral offset so ants remain side-by-side inside the pit.
+    /// Calculates the deep despawn point inside the hole along the straight entry forward direction.
+    /// Preserves the exact same approach lane without lateral steering.
     /// </summary>
     public Vector3 GetHoleDespawnPoint(Vector2Int entranceCell, Vector2Int approachDir, float antVisualLength = 0.85f, AntQueueController queue = null)
     {
@@ -565,7 +538,7 @@ public class HoleController : MonoBehaviour
         countTextMesh.fontSize = 64;
         countTextMesh.characterSize = (remainingCount >= 10) ? 0.034f : 0.035f;
         countTextMesh.fontStyle = FontStyle.Bold;
-        countTextMesh.color = UnityEngine.Color.white;
+        countTextMesh.color = GetBadgeTextColor();
         countTextMesh.text = remainingCount.ToString();
     }
 
@@ -862,13 +835,25 @@ public class HoleController : MonoBehaviour
         return CreateRoundedRectFilledMesh(w, h, r, yOffset, 8, "StadiumBadgeTabMesh");
     }
 
+    public UnityEngine.Color GetBadgeTextColor()
+    {
+        // High contrast dark charcoal text for white/light hole badges to ensure clear readability
+        if (holeColor == AntColor.White)
+        {
+            return remainingCount > 0 
+                ? new UnityEngine.Color(0.12f, 0.12f, 0.14f, 1f) 
+                : new UnityEngine.Color(0.12f, 0.12f, 0.14f, 0.85f);
+        }
+        return remainingCount > 0 ? UnityEngine.Color.white : new UnityEngine.Color(1f, 1f, 1f, 0.85f);
+    }
+
     private void UpdateBadgeDisplay()
     {
         if (countTextMesh == null) return;
 
         countTextMesh.text = remainingCount.ToString();
         countTextMesh.characterSize = (remainingCount >= 10) ? 0.034f : 0.035f;
-        countTextMesh.color = remainingCount > 0 ? UnityEngine.Color.white : new UnityEngine.Color(1f, 1f, 1f, 0.85f);
+        countTextMesh.color = GetBadgeTextColor();
     }
 
     public void OnAntEnteredHole()

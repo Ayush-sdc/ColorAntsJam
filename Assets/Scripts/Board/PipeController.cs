@@ -83,11 +83,10 @@ public class PipeController : MonoBehaviour
     /// <summary>
     /// Attempts to reserve one usage slot for an ant queue traversing this pipe.
     /// Prevents concurrent queues from exceeding the remaining capacity of the pipe.
-    /// Note: PipeCount conversion and entrance direction are reference assumptions until verified from reference footage.
     /// </summary>
     public bool TryReserveUse()
     {
-        if (IsExhausted || isPipeInUse || (remainingUses - activeReservations <= 0))
+        if (IsExhausted || (remainingUses - activeReservations <= 0))
         {
             return false;
         }
@@ -101,6 +100,10 @@ public class PipeController : MonoBehaviour
     public void ReleaseReservedUse()
     {
         activeReservations = Mathf.Max(0, activeReservations - 1);
+        if (remainingUses <= 0 && activeReservations <= 0)
+        {
+            PlayExhaustedAndDestroy();
+        }
     }
 
     /// <summary>
@@ -109,7 +112,7 @@ public class PipeController : MonoBehaviour
     /// </summary>
     public bool CanEnterFrom(Vector2Int targetCell, Vector2Int forwardDir)
     {
-        if (IsExhausted || isPipeInUse || (remainingUses - activeReservations <= 0)) return false;
+        if (IsExhausted || (remainingUses - activeReservations <= 0)) return false;
         return targetCell == EntranceCell && forwardDir == EntryDirection;
     }
 
@@ -123,7 +126,7 @@ public class PipeController : MonoBehaviour
 
     /// <summary>
     /// Decreases usage by 1 after successful passage. If exhausted, removes pipe.
-    /// Blocked taps do not consume uses.
+    /// Blocked taps do not consume uses. Does not destroy pipe if another queue is actively traversing.
     /// </summary>
     public void ConsumeUse()
     {
@@ -132,11 +135,11 @@ public class PipeController : MonoBehaviour
         {
             remainingUses--;
             UpdateBadgeUI(animate: true);
+        }
 
-            if (remainingUses <= 0)
-            {
-                PlayExhaustedAndDestroy();
-            }
+        if (remainingUses <= 0 && activeReservations <= 0)
+        {
+            PlayExhaustedAndDestroy();
         }
     }
 
@@ -157,7 +160,7 @@ public class PipeController : MonoBehaviour
 
     private void PlayExhaustedAndDestroy()
     {
-        // Unregister cells from board immediately
+        // Unregister cells from board immediately so footprints are not left as obstacles
         if (BoardManager.Instance != null)
         {
             BoardManager.Instance.RemovePipe(this);
@@ -175,6 +178,72 @@ public class PipeController : MonoBehaviour
             });
     }
 
+    /// <summary>
+    /// Returns the continuous world-space centerline waypoints with smooth circular elbow curves at corners.
+    /// Used both for procedural tube mesh generation and for ant path generation.
+    /// </summary>
+    public List<Vector3> GetCenterlineWaypoints(float yOffset = 0f)
+    {
+        List<Vector3> points = new List<Vector3>();
+        if (cells == null || cells.Count < 2) return points;
+
+        float cs = 1.0f;
+        if (BoardManager.Instance != null && BoardManager.Instance.CellSize > 0)
+        {
+            cs = BoardManager.Instance.CellSize;
+        }
+
+        float rElbow = 0.40f * cs;
+        int arcSubdivisions = 8;
+
+        List<Vector3> gridWorldPoints = new List<Vector3>();
+        for (int i = 0; i < cells.Count; i++)
+        {
+            Vector3 w = BoardManager.Instance != null
+                ? BoardManager.Instance.GridToWorldPosition(cells[i], yOffset)
+                : new Vector3(cells[i].x, yOffset, cells[i].y);
+            gridWorldPoints.Add(w);
+        }
+
+        points.Add(gridWorldPoints[0]);
+
+        for (int i = 1; i < gridWorldPoints.Count - 1; i++)
+        {
+            Vector3 prev = gridWorldPoints[i - 1];
+            Vector3 curr = gridWorldPoints[i];
+            Vector3 next = gridWorldPoints[i + 1];
+
+            Vector3 u = (curr - prev).normalized;
+            Vector3 v = (next - curr).normalized;
+
+            if (Vector3.Dot(u, v) > 0.99f)
+            {
+                // Straight segment continues through cell center
+                points.Add(curr);
+            }
+            else
+            {
+                // 90-degree corner elbow
+                Vector3 pStart = curr - u * rElbow;
+                Vector3 pEnd = curr + v * rElbow;
+                Vector3 cArc = curr - u * rElbow + v * rElbow;
+
+                points.Add(pStart);
+                for (int step = 1; step < arcSubdivisions; step++)
+                {
+                    float theta = (float)step / arcSubdivisions * (Mathf.PI * 0.5f);
+                    Vector3 pt = cArc - v * (rElbow * Mathf.Cos(theta)) + u * (rElbow * Mathf.Sin(theta));
+                    pt.y = gridWorldPoints[0].y;
+                    points.Add(pt);
+                }
+                points.Add(pEnd);
+            }
+        }
+
+        points.Add(gridWorldPoints[gridWorldPoints.Count - 1]);
+        return points;
+    }
+
     private void BuildPipeMesh()
     {
         if (cells == null || cells.Count < 2) return;
@@ -185,15 +254,15 @@ public class PipeController : MonoBehaviour
         meshRenderer = GetComponent<MeshRenderer>();
         if (meshRenderer == null) meshRenderer = gameObject.AddComponent<MeshRenderer>();
 
-        // Material: Glossy blue URP Lit
+        // Material: Consistent glossy cyan material
         Shader litShader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
         Material pipeMat = new Material(litShader);
-        pipeMat.color = new Color(0.12f, 0.58f, 0.95f, 1f); // Vibrant cyan-blue
-        if (pipeMat.HasProperty("_Smoothness")) pipeMat.SetFloat("_Smoothness", 0.85f);
-        if (pipeMat.HasProperty("_Metallic")) pipeMat.SetFloat("_Metallic", 0.25f);
+        pipeMat.color = new Color(0.08f, 0.72f, 0.92f, 1f); // Glossy cyan
+        if (pipeMat.HasProperty("_Smoothness")) pipeMat.SetFloat("_Smoothness", 0.90f);
+        if (pipeMat.HasProperty("_Metallic")) pipeMat.SetFloat("_Metallic", 0.20f);
         meshRenderer.sharedMaterial = pipeMat;
 
-        // Generate procedural tube mesh along centerline
+        // Generate procedural swept tube mesh along curved centerline waypoints
         Mesh mesh = new Mesh { name = "ProceduralPipeMesh" };
 
         List<Vector3> vertices = new List<Vector3>();
@@ -201,38 +270,44 @@ public class PipeController : MonoBehaviour
         List<Vector2> uvs = new List<Vector2>();
         List<int> triangles = new List<int>();
 
-        int radialSegments = 16;
+        int radialSegments = 20;
         float radius = pipeRadius;
 
-        // Convert grid cells to local points relative to pipe root
         Vector3 rootWorldPos = BoardManager.Instance != null
             ? BoardManager.Instance.GridToWorldPosition(cells[0])
             : new Vector3(cells[0].x, 0f, cells[0].y);
 
         transform.position = rootWorldPos;
 
-        List<Vector3> centerPoints = new List<Vector3>();
-        for (int i = 0; i < cells.Count; i++)
+        List<Vector3> worldPoints = GetCenterlineWaypoints(yOffset: 0.22f);
+        if (worldPoints == null || worldPoints.Count < 2) return;
+
+        List<Vector3> localPoints = new List<Vector3>(worldPoints.Count);
+        for (int i = 0; i < worldPoints.Count; i++)
         {
-            Vector3 worldPt = BoardManager.Instance != null
-                ? BoardManager.Instance.GridToWorldPosition(cells[i], yOffset: 0.22f)
-                : new Vector3(cells[i].x, 0.22f, cells[i].y);
-            centerPoints.Add(worldPt - rootWorldPos);
+            localPoints.Add(worldPoints[i] - rootWorldPos);
         }
 
-        // Generate rings along centerline
-        for (int i = 0; i < centerPoints.Count; i++)
+        // Compute cumulative distances for UV mapping
+        float[] cumDist = new float[localPoints.Count];
+        cumDist[0] = 0f;
+        for (int i = 1; i < localPoints.Count; i++)
         {
-            Vector3 pt = centerPoints[i];
+            cumDist[i] = cumDist[i - 1] + Vector3.Distance(localPoints[i], localPoints[i - 1]);
+        }
+        float totalDist = cumDist[cumDist.Length - 1] > 0.001f ? cumDist[cumDist.Length - 1] : 1f;
+
+        // Generate rings along swept path
+        for (int i = 0; i < localPoints.Count; i++)
+        {
+            Vector3 pt = localPoints[i];
             Vector3 fwd;
-            if (i < centerPoints.Count - 1)
-            {
-                fwd = (centerPoints[i + 1] - pt).normalized;
-            }
+            if (i == 0)
+                fwd = (localPoints[1] - pt).normalized;
+            else if (i == localPoints.Count - 1)
+                fwd = (pt - localPoints[i - 1]).normalized;
             else
-            {
-                fwd = (pt - centerPoints[i - 1]).normalized;
-            }
+                fwd = (localPoints[i + 1] - localPoints[i - 1]).normalized;
 
             Vector3 up = Vector3.up;
             Vector3 right = Vector3.Cross(up, fwd).normalized;
@@ -246,15 +321,18 @@ public class PipeController : MonoBehaviour
                 up = Vector3.Cross(fwd, right).normalized;
             }
 
+            // At entrance (i == 0) and exit (i == localPoints.Count - 1), subtle rim collar
+            float ringRadius = (i == 0 || i == localPoints.Count - 1) ? radius * 1.08f : radius;
+
             for (int r = 0; r <= radialSegments; r++)
             {
                 float angle = (float)r / radialSegments * Mathf.PI * 2f;
-                Vector3 offsetDir = (right * Mathf.Cos(angle) + up * Mathf.Sin(angle));
-                Vector3 vert = pt + offsetDir * radius;
+                Vector3 radialDir = (right * Mathf.Cos(angle) + up * Mathf.Sin(angle));
+                Vector3 vert = pt + radialDir * ringRadius;
 
                 vertices.Add(vert);
-                normals.Add(offsetDir.normalized);
-                uvs.Add(new Vector2((float)r / radialSegments, (float)i / (centerPoints.Count - 1)));
+                normals.Add(radialDir.normalized);
+                uvs.Add(new Vector2((float)r / radialSegments, cumDist[i] / totalDist));
             }
 
             if (i > 0)

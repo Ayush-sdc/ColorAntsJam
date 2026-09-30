@@ -111,18 +111,24 @@ namespace AntsJam.Ropes
             if (queue == null) return true;
             if (!queue.gameObject.activeInHierarchy) return true;
 
-            // If head unit is inactive (already swallowed into hole)
+            // Only moving queues can enter a hole. While waiting at rest, leaders are NEVER in a hole.
+            if (!queue.IsMoving)
+            {
+                return false;
+            }
+
+            // If head unit is inactive or descending into the hole pit below floor level
             if (queue.Units != null && queue.Units.Count > 0)
             {
                 var headUnit = queue.Units[0];
-                if (headUnit == null || !headUnit.gameObject.activeInHierarchy)
+                if (headUnit == null || !headUnit.gameObject.activeInHierarchy || headUnit.transform.position.y < -0.10f)
                 {
                     return true;
                 }
             }
 
-            // If queue was moving and completed
-            if (!queue.IsMoving && queue.Units.Count == 0)
+            // If queue completed or all units swallowed
+            if (queue.Units == null || queue.Units.Count == 0)
             {
                 return true;
             }

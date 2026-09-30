@@ -17,6 +17,9 @@ public class SoundManager : MonoBehaviour
     private AudioClip winClip;
     private AudioClip loseClip;
 
+    private const string SoundMutedKey = "SoundMuted";
+    private const string MusicMutedKey = "MusicMuted";
+
     public bool IsMuted => isMuted;
     public bool IsMusicMuted => isMusicMuted;
 
@@ -28,6 +31,9 @@ public class SoundManager : MonoBehaviour
             return;
         }
         Instance = this;
+
+        isMuted = PlayerPrefs.GetInt(SoundMutedKey, 0) == 1;
+        isMusicMuted = PlayerPrefs.GetInt(MusicMutedKey, 0) == 1;
 
         sfxSource = gameObject.AddComponent<AudioSource>();
         sfxSource.playOnAwake = false;
@@ -70,22 +76,26 @@ public class SoundManager : MonoBehaviour
 
     public void ToggleMute()
     {
-        isMuted = !isMuted;
+        SetMuted(!isMuted);
     }
 
     public void ToggleMusic()
     {
-        isMusicMuted = !isMusicMuted;
+        SetMusicMuted(!isMusicMuted);
     }
 
     public void SetMuted(bool muted)
     {
         isMuted = muted;
+        PlayerPrefs.SetInt(SoundMutedKey, isMuted ? 1 : 0);
+        PlayerPrefs.Save();
     }
 
     public void SetMusicMuted(bool muted)
     {
         isMusicMuted = muted;
+        PlayerPrefs.SetInt(MusicMutedKey, isMusicMuted ? 1 : 0);
+        PlayerPrefs.Save();
     }
 
     public void PlayTap()

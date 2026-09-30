@@ -64,25 +64,13 @@ namespace AntsJam.Ropes
         }
 
         /// <summary>
-        /// Activates the GoldenRope visual for parallel movement toward destinationHole.
+        /// Deprecated/Disabled: Lengthwise ropes along individual queues have been removed per user specification.
+        /// Only ropes connecting leaders of separate linked queues (LinkedAntsRopeVisual) are retained.
         /// </summary>
         public void EnableParallelRope(HoleController hole, Vector2Int forwardDir)
         {
-            if (isRopeActive) return;
-            if (hole == null || ownerQueue == null) return;
-
-            destinationHole = hole;
-            entryForward = new Vector3(forwardDir.x, 0f, forwardDir.y).normalized;
-            if (entryForward.sqrMagnitude < 0.001f)
-            {
-                entryForward = ownerQueue.transform.forward;
-                entryForward.y = 0f;
-                entryForward.Normalize();
-            }
-
-            SpawnRopePrefab();
-            isRopeActive = true;
-            UpdateRopeTransform();
+            // Strictly disabled to eliminate unwanted lengthwise queue ropes
+            Cleanup();
         }
 
         private void SpawnRopePrefab()

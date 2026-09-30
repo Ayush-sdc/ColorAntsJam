@@ -104,10 +104,37 @@ def validate_levels():
             if q[3]: # stacked second color
                 expected_per_color[q[4]] = expected_per_color.get(q[4], 0) + 1
 
-        # Check capacity sufficiency per color
+        # Check capacity sufficiency per color using runtime adapter simulation
         holes_by_color = {}
         for h in holes:
             holes_by_color.setdefault(h[1], []).append(h)
+
+        cell_to_hole = {}
+        for h in holes:
+            for c in h[2]:
+                cell_to_hole[c] = h
+
+        def trace_to_hole(head, neck, target_color):
+            dx = head[0] - neck[0]
+            dy = head[1] - neck[1]
+            cur = (head[0] + dx, head[1] + dy)
+            steps = 0
+            while 0 <= cur[0] < grid_w and 0 <= cur[1] < grid_h and steps < 60:
+                steps += 1
+                if cur in cell_to_hole:
+                    h_target = cell_to_hole[cur]
+                    if h_target[1] == target_color:
+                        return h_target
+                pipe_hit = [p for p in pipes if p[1][0] == cur and (p[1][1][0]-p[1][0][0], p[1][1][1]-p[1][0][1]) == (dx, dy)]
+                if pipe_hit:
+                    p = pipe_hit[0]
+                    exit_c = p[1][-1]
+                    exit_d = (p[1][-1][0] - p[1][-2][0], p[1][-1][1] - p[1][-2][1])
+                    cur = (exit_c[0] + exit_d[0], exit_c[1] + exit_d[1])
+                    dx, dy = exit_d
+                    continue
+                cur = (cur[0] + dx, cur[1] + dy)
+            return None
 
         capacity_issues = []
         for cid, exp in expected_per_color.items():
@@ -116,16 +143,24 @@ def validate_levels():
                 continue
 
             color_holes = holes_by_color[cid]
-            explicit_caps = [h[3] for h in color_holes if h[3] > 0]
-            if len(explicit_caps) == len(color_holes):
-                # All holes have explicit capacity
-                total_cap = sum(explicit_caps)
-                if total_cap < exp:
-                    capacity_issues.append(f"Color {cid}: Explicit capacity sum {total_cap} < {exp} expected queues (DEFICIT of {exp - total_cap})")
+            if len(color_holes) == 1:
+                assigned_cap = max(1, exp)
+                if assigned_cap < exp:
+                    capacity_issues.append(f"Color {cid}: Capacity deficit (assigned {assigned_cap} < {exp} needed)")
             else:
-                # Inferred capacity: adapter ensures total capacity satisfies exp queues
-                # Verify that each hole gets at least 1 and sum >= exp
-                pass
+                f_counts = {h[0]: 0 for h in color_holes}
+                for q in queues:
+                    if q[1] == cid:
+                        h_found = trace_to_hole(q[2][0], q[2][1], cid)
+                        if h_found and h_found[0] in f_counts:
+                            f_counts[h_found[0]] += 1
+                    if q[3] and q[4] == cid:
+                        h_found = trace_to_hole(q[2][0], q[2][1], cid)
+                        if h_found and h_found[0] in f_counts:
+                            f_counts[h_found[0]] += 1
+                total_alloc = sum(max(1, f_counts[h[0]]) for h in color_holes)
+                if total_alloc < exp:
+                    capacity_issues.append(f"Color {cid}: Inferred multi-hole capacity {total_alloc} < {exp} needed")
 
         if capacity_issues:
             for c_iss in capacity_issues:

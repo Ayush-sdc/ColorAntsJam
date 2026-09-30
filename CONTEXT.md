@@ -53,34 +53,45 @@
 - [SoundManager.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Core/SoundManager.cs): Procedural audio synthesizer creating 6 SFX clips (`tap`, `hop`, `swallow`, `blocked`, `win`, `lose`) via mathematical waveforms.
 
 ### B. UI Scripts
-- [GameUIManager.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/UI/GameUIManager.cs): Manages HUD timer, level number, 3 heart icons, settings modal (sound/music toggles), win popup, fail popup animation, and Level 1 tutorial overlay.
+- [GameUIManager.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/UI/GameUIManager.cs): Orchestrates full modal sequence, gating board input and pausing timer; manages HUD, settings, win/fail popups, hard intros, and feature tutorials.
+- [LevelCompletedOverlay.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/UI/LevelCompletedOverlay.cs): Level completed screen matching reference composition with animated progress bar, percentage text, upcoming feature icon with blue glow, and double-tap guarded NEXT button.
+- [FeatureTutorialModal.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/UI/FeatureTutorialModal.cs): Reusable feature tutorial modal with rotating radial light rays, 3D ant illustrations, dark blue rounded description panel, and green OK button.
+- [HardLevelIntroOverlay.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/UI/HardLevelIntroOverlay.cs): Hard level entrance overlay with red horned skull emblem, "Hard Level" text, pop-in/hold/fade-out animation driven by level difficulty metadata.
 - [FailScreenSetup.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Editor/FailScreenSetup.cs): Editor setup utility constructing the polished fail screen popup hierarchy.
+- [UIOverlaysSetup.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Editor/UIOverlaysSetup.cs): Editor automation configuring sprites, creating `FeatureProgressionConfig` asset, assembling scene overlays, and exporting reusable prefabs.
+- [FeatureUIPlayModeTests.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Editor/FeatureUIPlayModeTests.cs): Automated verification suite covering progression math, anti-farming guards, tutorial acknowledgement, rope removal, and screenshot rendering.
 
 ### C. Level Data & Progression Scripts
+- [FeatureProgressionConfig.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Progression/FeatureProgressionConfig.cs): ScriptableObject configuration managing feature unlock milestones, progress calculation, tutorial seen states, and pending tutorial queues.
+- [FeatureDefinition.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Progression/FeatureDefinition.cs): Data model defining feature ID, display name, start milestone, introduction level, preview icon, tutorial artwork, title, and description.
 - [Level.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/LevelSystem/Level.cs): ScriptableObject schema representing a level (metadata, grid dimensions, disabled cells, cell info, holes, ant queues).
 - [AntQueueData.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/LevelSystem/AntQueueData.cs): Serialized data classes `AntQueueData`, `HoleData`, and `CellInfo`.
 - [LevelDatabase.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/LevelSystem/LevelDatabase.cs): ScriptableObject containing ordered array of `Level` assets.
-- [LevelManager.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/LevelSystem/LevelManager.cs): Progression manager reading/writing `PlayerPrefs` key `"CurrentLevel"`, loading level assets, handling next/previous level.
+- [LevelManager.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/LevelSystem/LevelManager.cs): Progression manager tracking `HighestCompletedLevel` to guard against replay farming, loading level assets, handling next/previous level, and graceful campaign completion loop.
 - [ReferenceLevelRuntimeAdapter.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/LevelSystem/ReferenceLevelRuntimeAdapter.cs): Runtime translator converting raw immutable reference levels (`HolderType 0` holes, `HolderType 1` queues) into playable board objects with color-grouped hole capacity.
 - [ReferenceLevelImporter.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Editor/ReferenceLevelImporter.cs): Editor menu tool importing `Level_001.json` through `Level_045.json` into ScriptableObject assets while preserving difficulty and metadata.
 
-### D. Key Prefab Locations
-- Ant Queues & Units:
-  - `Assets/Prefabs/AntQueue.prefab` (Root queue container)
-  - `Assets/Prefabs/AntUnit.prefab` (Logical unit segment container)
-  - `Assets/WorkerAnt/Prefabs/WorkerAnt_*.prefab` (Worker follower models across 8 colors + rope variants)
-  - `Assets/Resources/Ants/Prefabs/WorkerAnt.prefab`, `ArcherAnt.prefab`, `FireAnt.prefab`
-- Holes & Holders:
-  - `Assets/Prefabs/Hole_Stadium.prefab`, `Hole.prefab`, `Hole_new.prefab`, `HOLEE.prefab`
-- Rope Connectors:
-  - `Assets/GoldenRope/Prefabs/GoldenRope_2Cells.prefab`, `3Cells.prefab`, `4Cells.prefab`, `5Cells.prefab`
-  - `Assets/Resources/GoldenRope/GoldenRope_*.prefab`
-- VFX:
-  - `Assets/Prefabs/VFX/ant_dis.prefab` (Particle burst when ant enters hole)
-  - `Assets/Prefabs/VFX/antarrow.prefab` (Directional indicator arrow)
-- UI:
-  - `Assets/UI/FailScreen/LevelFailed_Title.png`, `LevelFailed_Heart.png`, `LevelFailed_RestartButton.png`
-  - Root texture assets: `Hard_level.png`, `Hardleveloverlay.png`, `level failed.png`, `Linked_ants.png`
+### D. Key Prefab & Asset Locations
+- UI Prefabs:
+  - `Assets/Prefabs/UI/LevelCompletedOverlay.prefab` (Saved reusable level completion modal)
+  - `Assets/Prefabs/UI/FeatureTutorialModal.prefab` (Saved reusable feature tutorial modal)
+  - `Assets/Prefabs/UI/HardLevelIntroOverlay.prefab` (Saved reusable hard level intro overlay)
+- Progression Asset:
+  - `Assets/Data/Progression/FeatureProgressionConfig.asset` (Configured ScriptableObject asset)
+- UI Sprites & Illustrations:
+  - `Assets/UI/Sprites/HardLevel/HardLevel_Overlay.png` (Transparent horned skull emblem + Hard Level text)
+  - `Assets/UI/Sprites/LevelCompleted/LevelCompleted_Title.png`, `Next_Button.png`, `ProgressBar_Bg.png`, `ProgressBar_Fill.png`, `Icon_Glow.png`
+  - `Assets/UI/Sprites/Tutorials/Tutorial_RadialRays.png`, `Tutorial_Panel.png`, `Tutorial_OkButton.png`
+  - `Assets/UI/Sprites/Features/Illustration_LinkedAnts.png`, `Illustration_StackedAnts.png`, `Illustration_Pipe.png`, `Illustration_LockedAnts.png`
+  - `Assets/UI/Sprites/Features/Icon_LinkedAnts.png`, `Icon_StackedAnts.png`, `Icon_Pipe.png`, `Icon_LockedAnts.png`, `Icon_AllFeaturesCompleted.png`
+- Test Evidence Screenshots:
+  - `Assets/TestEvidence/Screenshots/LevelCompleted_NextFeatureProgress.png`
+  - `Assets/TestEvidence/Screenshots/HardLevel_Overlay.png`
+  - `Assets/TestEvidence/Screenshots/Tutorial_LinkedAnts.png`
+  - `Assets/TestEvidence/Screenshots/Tutorial_StackedAnts.png`
+  - `Assets/TestEvidence/Screenshots/Tutorial_Pipes.png`
+  - `Assets/TestEvidence/Screenshots/Tutorial_LockedAnts.png`
+  - `Assets/TestEvidence/Screenshots/Board_RopeFix_CleanQueues.png`
 
 ---
 

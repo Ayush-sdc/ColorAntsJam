@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55398ebffd263834d9d16ca32eb62b85, type: 3}
+  m_Name: FeatureProgressionConfig
+  m_EditorClassIdentifier: SlitherAnts.Runtime::AntsJam.Progression.FeatureProgressionConfig
+  features:
+  - featureId: linked_ants
+    displayName: Linked Ants
+    introductionLevel: 7
+    startMilestoneLevel: 1
+    displayOrder: 1
+    previewIcon: {fileID: 21300000, guid: a944b5ce36ff40941909aa0d1c8604b2, type: 3}
+    tutorialArtwork: {fileID: 21300000, guid: 51ae43b4968747f45994df45936b89e1, type: 3}
+    tutorialPrefab: {fileID: 0}
+    tutorialTitle: Linked Ants!
+    tutorialDescription: Linked ant queues move together.
+  - featureId: stacked_ants
+    displayName: Stacked Ants
+    introductionLevel: 15
+    startMilestoneLevel: 7
+    displayOrder: 2
+    previewIcon: {fileID: 21300000, guid: 976d586fdfa3a994faaa9377dc5d2a69, type: 3}
+    tutorialArtwork: {fileID: 21300000, guid: 34b59c775ba12294bb9daca9f864058d, type: 3}
+    tutorialPrefab: {fileID: 0}
+    tutorialTitle: Stacked Ants!
+    tutorialDescription: Send stacked ant queues to the holes in order.
+  - featureId: pipes
+    displayName: Pipes
+    introductionLevel: 21
+    startMilestoneLevel: 15
+    displayOrder: 3
+    previewIcon: {fileID: 21300000, guid: 2bc1d5db0ae776546b756a936f4f09fc, type: 3}
+    tutorialArtwork: {fileID: 21300000, guid: b5681727fde93584aa54ab259db7dd40, type: 3}
+    tutorialPrefab: {fileID: 0}
+    tutorialTitle: Pipe!
+    tutorialDescription: Pass ant queues through the pipe to break it.
+  - featureId: locked_ants
+    displayName: Locked Ants
+    introductionLevel: 30
+    startMilestoneLevel: 21
+    displayOrder: 4
+    previewIcon: {fileID: 21300000, guid: 5f0531eb97a5c014c97eec97fed4b241, type: 3}
+    tutorialArtwork: {fileID: 21300000, guid: bd4df176cf259714fbce60a79b31595f, type: 3}
+    tutorialPrefab: {fileID: 0}
+    tutorialTitle: Locked Ants!
+    tutorialDescription: Rescue the required number of ant queues to unlock it.
+  allFeaturesCompletedIcon: {fileID: 21300000, guid: d1575c920407a8a4d84bea4d75c5b459, type: 3}
+  allFeaturesCompletedTitle: All Features Unlocked!
