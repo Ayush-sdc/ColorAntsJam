@@ -79,11 +79,24 @@ git lfs pull
 - To reset player progression back to Level 1, in the top Unity menu select:
   `Tools` -> `Slither Ants Jam` -> `Progression` -> `Reset Progression to Level 1`.
 
-### Importing / Re-importing Reference Levels:
+### Importing / Exporting Reference Levels:
 - The authoritative 45 levels are stored as raw JSON files in:
   `Assets/Data/ReferenceLevelJSON/Level_001.json` ... `Level_045.json`.
 - To re-import all 45 levels into ScriptableObjects, select:
   `Tools` -> `Slither Ants Jam` -> `Import Reference Levels`.
+- To export all 45 levels back to JSON, select:
+  `Tools` -> `Slither Ants Jam` -> `Export Reference Levels to JSON`.
+
+### Automated Level Validation:
+- Run the standalone 45-level validation suite from terminal:
+  ```bash
+  python validate_all_levels.py
+  ```
+
+### Running Unit & Edit Mode Tests:
+- In Unity Editor, open the Test Runner window:
+  `Window` -> `General` -> `Test Runner`.
+- Select the **EditMode** tab and click **Run All** to execute test suites for locked ants, stacked ants, directional pipes, linked groups, and JSON validation.
 
 ### Rebuilding Fail Screen UI:
 - To rebuild or inspect the Level Failed popup hierarchy:

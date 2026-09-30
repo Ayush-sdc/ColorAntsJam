@@ -153,6 +153,69 @@ public static class ReferenceLevelImporter
         Debug.Log($"[ReferenceLevelImporter] Completed: {importedCount}/45 reference levels imported into {OutputFolder}. (Failed: {failedCount})");
     }
 
+    [MenuItem("Tools/Slither Ants Jam/Export Reference Levels to JSON")]
+    public static void ExportReferenceLevels()
+    {
+        EnsureFolder(JsonFolder);
+        int exported = 0;
+
+        for (int i = 1; i <= 45; i++)
+        {
+            string levelName = $"Level_{i:000}";
+            string assetPath = $"{OutputFolder}/{levelName}.asset";
+            string jsonPath = $"{JsonFolder}/{levelName}.json";
+
+            Level level = AssetDatabase.LoadAssetAtPath<Level>(assetPath);
+            if (level == null) continue;
+
+            RawReferenceLevelJSON raw = new RawReferenceLevelJSON();
+            raw.GridSize = level.GridSize;
+            raw.Duration = level.RawDuration > 0f ? level.RawDuration : level.Duration;
+            raw.LevelDifficulty = level.LevelDifficulty;
+            raw.MaxCapacity = level.MaxCapacity;
+            raw.DisabledGridCells = new List<Vector2Int>(level.DisabledGridCells);
+
+            if (level.CellInfo != null)
+            {
+                foreach (var ci in level.CellInfo)
+                {
+                    raw.CellInfo.Add(new RawCellInfoJSON
+                    {
+                        Position = ci.Position,
+                        IsForcedDisabledCell = ci.IsForcedDisabledCell
+                    });
+                }
+            }
+
+            if (level.AntQueues != null)
+            {
+                foreach (var q in level.AntQueues)
+                {
+                    raw.snakes.Add(new RawSnakeJSON
+                    {
+                        Cells = new List<Vector2Int>(q.Cells),
+                        ColorID = q.ColorID,
+                        HolderType = q.HolderType,
+                        IsConnected = q.IsConnected,
+                        ConnectedIndex = q.ConnectedIndex,
+                        IsSecondColor = q.IsSecondColor,
+                        SecondColor = q.SecondColor,
+                        PipeCount = q.PipeCount,
+                        IsLocked = q.IsLocked,
+                        LockAmount = q.LockAmount
+                    });
+                }
+            }
+
+            string json = JsonUtility.ToJson(raw, true);
+            File.WriteAllText(jsonPath, json);
+            exported++;
+        }
+
+        AssetDatabase.Refresh();
+        Debug.Log($"[ReferenceLevelImporter] Exported {exported} reference levels to {JsonFolder}");
+    }
+
     [MenuItem("Tools/Slither Ants Jam/Validate Reference Levels")]
     public static void ValidateReferenceLevels()
     {
@@ -377,11 +440,52 @@ public static class ReferenceLevelImporter
         Debug.Log($"========================================");
         Debug.Log($"Final: {passedLevels}/45 PASS (Failed: {failedLevels})");
         Debug.Log($"========================================");
+    }
 
-        if (errorMessages.Count > 0)
+    [MenuItem("Tools/Slither Ants Jam/Sanitize Main Scene")]
+    public static void SanitizeMainScene()
+    {
+        string scenePath = "Assets/Scenes/main.unity";
+        var scene = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene();
+        if (scene.path != scenePath)
         {
-            Debug.LogError($"Validation Errors ({errorMessages.Count}):\n" + string.Join("\n", errorMessages));
+            scene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene(scenePath, UnityEditor.SceneManagement.OpenSceneMode.Single);
         }
+
+        GameObject[] rootObjects = scene.GetRootGameObjects();
+        int destroyedCount = 0;
+        List<GameObject> toDestroy = new List<GameObject>();
+
+        foreach (var go in rootObjects)
+        {
+            if (go == null) continue;
+            string name = go.name;
+            if (name.Contains("(Clone)") || 
+                name == "Nest FX" || 
+                name.StartsWith("ant_dis") ||
+                name.StartsWith("Ant_Record_") ||
+                (name.StartsWith("Hole_") && go.transform.parent == null))
+            {
+                toDestroy.Add(go);
+            }
+            else if (name == "Ants" || name == "FoodBoxes")
+            {
+                for (int c = go.transform.childCount - 1; c >= 0; c--)
+                {
+                    toDestroy.Add(go.transform.GetChild(c).gameObject);
+                }
+            }
+        }
+
+        foreach (var go in toDestroy)
+        {
+            destroyedCount++;
+            UnityEngine.Object.DestroyImmediate(go);
+        }
+
+        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+        bool saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene);
+        Debug.Log($"[SceneSanitizer] Removed {destroyedCount} leaked runtime clones from {scenePath}. Saved: {saved}. Remaining root objects: {scene.rootCount}");
     }
 
     private static void EnsureJsonFilesExist()

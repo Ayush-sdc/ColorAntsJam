@@ -38,11 +38,23 @@ public class Level : ScriptableObject
 
     [Tooltip("All ant queues positioned on the grid for this level.")]
     [SerializeField] private List<AntQueueData> antQueues = new List<AntQueueData>();
+    [Header("Presentation & Difficulty")]
+    [SerializeField] private int levelDifficulty = 0;
+    [SerializeField] private bool showHardIntro = false;
+    [SerializeField] private int tutorialFlags = 0;
+
+    [Header("Capacity Settings")]
+    [SerializeField] private int holeCapacity = 0;
 
     // Public Properties
     public int LevelNumber => levelNumber;
     public string LevelName => levelName;
     public string Difficulty => difficulty;
+    public int LevelDifficulty => levelDifficulty;
+    public bool ShowHardIntro => showHardIntro || levelDifficulty >= 2 || difficulty == "2" || difficulty == "Hard";
+    public int TutorialFlags => tutorialFlags;
+    public int ExplicitHoleCapacity => holeCapacity;
+    public float RawDuration => duration;
     public float Duration => duration > 0f ? duration : 120f;
     public float TimeLimitInSeconds => Duration;
 
@@ -149,11 +161,18 @@ public class Level : ScriptableObject
         List<CellInfo> cellsInfoList,
         List<AntQueueData> queueList,
         List<HoleData> holeList = null,
-        float cell = 1.0f)
+        float cell = 1.0f,
+        int difficultyInt = 0,
+        int flags = 0,
+        int explicitHoleCap = 0)
     {
         levelNumber = number;
         levelName = name;
         difficulty = diff;
+        levelDifficulty = difficultyInt;
+        tutorialFlags = flags;
+        holeCapacity = explicitHoleCap;
+        showHardIntro = difficultyInt >= 2 || diff == "2" || diff == "Hard";
         duration = durationSeconds;
         gridSize = size;
         gridWidth = size.x;

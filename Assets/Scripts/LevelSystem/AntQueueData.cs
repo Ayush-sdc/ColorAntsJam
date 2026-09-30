@@ -70,6 +70,7 @@ public class AntQueueData
     [SerializeField] private int pipeCount = 0;
     [SerializeField] private bool isLocked = false;
     [SerializeField] private int lockAmount = 0;
+    [SerializeField] private int holeCapacity = 0;
 
     // Public Properties
     public string QueueId => queueId;
@@ -89,6 +90,7 @@ public class AntQueueData
     public int PipeCount => pipeCount;
     public bool IsLocked => isLocked;
     public int LockAmount => lockAmount;
+    public int HoleCapacity => holeCapacity;
 
     public AntQueueData() { }
 
@@ -123,7 +125,8 @@ public class AntQueueData
         int pipeCount,
         bool isLocked,
         int lockAmount,
-        List<Vector2Int> fullPath = null)
+        List<Vector2Int> fullPath = null,
+        int holeCapacity = 0)
     {
         this.queueId = queueId;
         this.colorId = colorId;
@@ -138,6 +141,7 @@ public class AntQueueData
         this.isLocked = isLocked;
         this.lockAmount = lockAmount;
         this.fullPathToHole = fullPath != null ? new List<Vector2Int>(fullPath) : new List<Vector2Int>();
+        this.holeCapacity = holeCapacity;
     }
 }
 

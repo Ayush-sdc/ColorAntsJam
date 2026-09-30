@@ -4996,6 +4996,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_1_10
     colorId: 10
     holderType: 1
@@ -5066,6 +5067,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_2_10
     colorId: 10
     holderType: 0
@@ -5083,6 +5085,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_3_6
     colorId: 6
     holderType: 0
@@ -5100,6 +5103,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_4_2
     colorId: 2
     holderType: 1
@@ -5121,6 +5125,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_5_2
     colorId: 2
     holderType: 0
@@ -5136,6 +5141,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_6_5
     colorId: 5
     holderType: 1
@@ -5156,6 +5162,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_7_5
     colorId: 5
     holderType: 0
@@ -5173,6 +5180,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_8_8
     colorId: 8
     holderType: 0
@@ -5190,6 +5198,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_9_1
     colorId: 1
     holderType: 0
@@ -5205,6 +5214,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_10_2
     colorId: 2
     holderType: 1
@@ -5232,6 +5242,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_11_1
     colorId: 1
     holderType: 1
@@ -5251,6 +5262,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_12_4
     colorId: 4
     holderType: 0
@@ -5266,6 +5278,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_13_0
     colorId: 0
     holderType: 0
@@ -5281,6 +5294,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_14_0
     colorId: 0
     holderType: 1
@@ -5298,6 +5312,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_15_8
     colorId: 8
     holderType: 1
@@ -5323,6 +5338,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_16_8
     colorId: 8
     holderType: 1
@@ -5343,6 +5359,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_17_8
     colorId: 8
     holderType: 0
@@ -5360,6 +5377,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_18_9
     colorId: 9
     holderType: 0
@@ -5375,6 +5393,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_19_12
     colorId: 12
     holderType: 0
@@ -5392,6 +5411,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_20_12
     colorId: 12
     holderType: 1
@@ -5413,6 +5433,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_21_7
     colorId: 7
     holderType: 0
@@ -5428,6 +5449,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_22_11
     colorId: 11
     holderType: 0
@@ -5443,6 +5465,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_23_3
     colorId: 3
     holderType: 0
@@ -5460,6 +5483,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_24_7
     colorId: 7
     holderType: 0
@@ -5475,6 +5499,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_25_8
     colorId: 8
     holderType: 1
@@ -5492,6 +5517,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_26_8
     colorId: 8
     holderType: 1
@@ -5509,6 +5535,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_27_0
     colorId: 0
     holderType: 1
@@ -5528,6 +5555,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_28_0
     colorId: 0
     holderType: 0
@@ -5545,6 +5573,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_29_5
     colorId: 5
     holderType: 0
@@ -5560,6 +5589,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_30_9
     colorId: 9
     holderType: 1
@@ -5580,6 +5610,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_31_9
     colorId: 9
     holderType: 0
@@ -5597,6 +5628,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_32_10
     colorId: 10
     holderType: 0
@@ -5613,6 +5645,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_33_8
     colorId: 8
     holderType: 1
@@ -5629,6 +5662,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_34_8
     colorId: 8
     holderType: 1
@@ -5645,6 +5679,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_35_11
     colorId: 11
     holderType: 1
@@ -5666,6 +5701,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_36_12
     colorId: 12
     holderType: 0
@@ -5680,6 +5716,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_37_4
     colorId: 4
     holderType: 0
@@ -5697,6 +5734,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_38_5
     colorId: 5
     holderType: 0
@@ -5714,6 +5752,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_39_3
     colorId: 3
     holderType: 1
@@ -5735,6 +5774,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_40_3
     colorId: 3
     holderType: 0
@@ -5752,6 +5792,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_41_2
     colorId: 2
     holderType: 0
@@ -5767,6 +5808,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_42_2
     colorId: 2
     holderType: 1
@@ -5787,6 +5829,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_43_10
     colorId: 10
     holderType: 1
@@ -5802,6 +5845,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_44_5
     colorId: 5
     holderType: 1
@@ -5825,6 +5869,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_45_0
     colorId: 0
     holderType: 1
@@ -5840,6 +5885,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_46_4
     colorId: 4
     holderType: 1
@@ -5859,6 +5905,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_47_7
     colorId: 7
     holderType: 0
@@ -5876,6 +5923,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_48_7
     colorId: 7
     holderType: 1
@@ -5899,6 +5947,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_49_5
     colorId: 5
     holderType: 1
@@ -5915,6 +5964,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_50_5
     colorId: 5
     holderType: 0
@@ -5930,6 +5980,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_51_9
     colorId: 9
     holderType: 0
@@ -5945,6 +5996,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_52_8
     colorId: 8
     holderType: 1
@@ -5966,6 +6018,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_53_0
     colorId: 0
     holderType: 1
@@ -5982,6 +6035,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_54_0
     colorId: 0
     holderType: 1
@@ -5997,6 +6051,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_55_5
     colorId: 5
     holderType: 1
@@ -6012,6 +6067,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_56_10
     colorId: 10
     holderType: 0
@@ -6029,6 +6085,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_57_9
     colorId: 9
     holderType: 1
@@ -6050,6 +6107,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_58_5
     colorId: 5
     holderType: 1
@@ -6067,6 +6125,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_59_9
     colorId: 9
     holderType: 1
@@ -6089,6 +6148,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_60_3
     colorId: 3
     holderType: 1
@@ -6110,6 +6170,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_61_6
     colorId: 6
     holderType: 1
@@ -6132,6 +6193,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_62_2
     colorId: 2
     holderType: 1
@@ -6148,6 +6210,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_63_2
     colorId: 2
     holderType: 0
@@ -6163,6 +6226,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_64_8
     colorId: 8
     holderType: 1
@@ -6179,6 +6243,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_65_3
     colorId: 3
     holderType: 1
@@ -6199,6 +6264,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_66_4
     colorId: 4
     holderType: 1
@@ -6219,6 +6285,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_67_8
     colorId: 8
     holderType: 1
@@ -6238,6 +6305,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_68_3
     colorId: 3
     holderType: 1
@@ -6254,6 +6322,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_69_7
     colorId: 7
     holderType: 1
@@ -6270,6 +6339,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_70_11
     colorId: 11
     holderType: 0
@@ -6285,6 +6355,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_71_11
     colorId: 11
     holderType: 1
@@ -6304,6 +6375,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_72_10
     colorId: 10
     holderType: 1
@@ -6320,6 +6392,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_73_7
     colorId: 7
     holderType: 1
@@ -6347,6 +6420,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_74_4
     colorId: 4
     holderType: 1
@@ -6362,6 +6436,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_75_4
     colorId: 4
     holderType: 1
@@ -6377,6 +6452,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_76_12
     colorId: 12
     holderType: 1
@@ -6397,6 +6473,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_77_11
     colorId: 11
     holderType: 1
@@ -6418,6 +6495,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_78_10
     colorId: 10
     holderType: 1
@@ -6434,6 +6512,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_79_2
     colorId: 2
     holderType: 1
@@ -6453,3 +6532,8 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
+  levelDifficulty: 0
+  showHardIntro: 1
+  tutorialFlags: 0
+  holeCapacity: 0

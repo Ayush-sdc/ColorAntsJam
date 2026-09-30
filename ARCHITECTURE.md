@@ -224,11 +224,11 @@
 | `fullPathToHole` | `List<Vector2Int>` | Precalculated path to target hole | `[(1,0), (5,0)]` | **No** (Dynamic forward raycast used instead) |
 | `isConnected` | `bool` | Flag indicating queue is roped to another | `true` | **Yes** (Atomic group movement & rope visual) |
 | `connectedIndex` | `int` | Group ID shared by linked queues | `3` | **Yes** (Groups queues into atomic sets) |
-| `isSecondColor` | `bool` | Flag indicating stacked/secondary color | `true` | **NO [UNSUPPORTED]** (Ignored by controller) |
-| `secondColor` | `int` | Raw color ID of secondary layer | `2` (Yellow) | **NO [UNSUPPORTED]** (Ignored by controller) |
-| `pipeCount` | `int` | Number of pipe redirection uses | `2` | **NO [UNSUPPORTED]** (Ignored by controller) |
-| `isLocked` | `bool` | Flag indicating queue is locked behind counter | `true` | **NO [UNSUPPORTED]** (Ignored by controller) |
-| `lockAmount` | `int` | Counter of queues to rescue before unlocking | `3` | **NO [UNSUPPORTED]** (Ignored by controller) |
+| `isSecondColor` | `bool` | Flag indicating stacked/secondary color | `true` | **Yes** (Stacked dominant layer & dormant lower spawn) |
+| `secondColor` | `int` | Raw color ID of secondary layer | `2` (Yellow) | **Yes** (Lower dormant layer color mapping) |
+| `pipeCount` | `int` | Number of pipe redirection uses | `2` | **Yes** (Directional pipe remaining-use counter) |
+| `isLocked` | `bool` | Flag indicating queue is locked behind counter | `true` | **Yes** (AntLockBadge padlock & movement gating) |
+| `lockAmount` | `int` | Counter of queues to rescue before unlocking | `3` | **Yes** (Countdown to unlock on matching arrivals) |
 
 ### C. Class: `HoleData.cs` (Used in Handmade Levels)
 | Field Name | Type | Meaning | Example Value | Used at Runtime? |

@@ -29,26 +29,29 @@ public static class ReferenceLevelRuntimeAdapter
     /// <summary>
     /// Extracts runtime Hole definitions from raw reference Level data (HolderType == 0).
     /// Uses complete ordered Cells list to determine physical tray shape, entrance cell, and orientation.
+    /// Accurately counts stacked layers (second color) and queues routed through pipes.
     /// </summary>
     public static List<RuntimeReferenceHole> ExtractHoles(Level level)
     {
         var holes = new List<RuntimeReferenceHole>();
         if (level == null || level.AntQueues == null) return holes;
 
-        // Count active HolderType 1 playable queues per ColorID
+        // Count active playable queues per ColorID (including second color of stacked ants)
         var matchingQueueCounts = new Dictionary<int, int>();
         foreach (var q in level.AntQueues)
         {
             if (q.HolderType == 1)
             {
                 int cId = q.ColorID;
-                if (matchingQueueCounts.ContainsKey(cId))
+                if (!matchingQueueCounts.ContainsKey(cId)) matchingQueueCounts[cId] = 0;
+                matchingQueueCounts[cId]++;
+
+                // Stacked layer also requires hole capacity!
+                if (q.IsSecondColor)
                 {
-                    matchingQueueCounts[cId]++;
-                }
-                else
-                {
-                    matchingQueueCounts[cId] = 1;
+                    int sId = q.SecondColor;
+                    if (!matchingQueueCounts.ContainsKey(sId)) matchingQueueCounts[sId] = 0;
+                    matchingQueueCounts[sId]++;
                 }
             }
         }
@@ -62,6 +65,7 @@ public static class ReferenceLevelRuntimeAdapter
                     ColorID = record.ColorID,
                     AntColor = ReferenceColorMapper.ToAntColor(record.ColorID),
                     OccupiedCells = record.Cells != null ? new List<Vector2Int>(record.Cells) : new List<Vector2Int>(),
+                    ExplicitCapacity = record.HoleCapacity
                 };
 
                 ReferenceColorMapper.LogColorMappingOnce(record.ColorID);
@@ -108,7 +112,10 @@ public static class ReferenceLevelRuntimeAdapter
             }
         }
 
-        // Count queues whose forward direction directly faces each hole
+        // Extract pipes for routing calculations
+        var rawPipes = ExtractPipes(level);
+
+        // Count queues whose forward direction (or pipe route) reaches each hole
         var forwardCounts = new Dictionary<RuntimeReferenceHole, int>();
         foreach (var h in holes) forwardCounts[h] = 0;
 
@@ -119,46 +126,98 @@ public static class ReferenceLevelRuntimeAdapter
         {
             if (q.HolderType == 1 && q.Cells != null && q.Cells.Count >= 2)
             {
-                Vector2Int head = q.Cells[0];
-                Vector2Int neck = q.Cells[1];
-                Vector2Int dir = head - neck;
-                if (dir == Vector2Int.right || dir == Vector2Int.left || dir == Vector2Int.up || dir == Vector2Int.down)
+                // Trace primary color
+                TraceQueueToHole(q.Cells[0], q.Cells[1], q.ColorID, rawPipes, cellToHole, forwardCounts, gridW, gridH);
+
+                // Trace stacked second color
+                if (q.IsSecondColor)
                 {
-                    Vector2Int cur = head + dir;
-                    while (cur.x >= 0 && cur.x < gridW && cur.y >= 0 && cur.y < gridH)
-                    {
-                        if (cellToHole.TryGetValue(cur, out var targetHole))
-                        {
-                            if (targetHole.ColorID == q.ColorID)
-                            {
-                                forwardCounts[targetHole]++;
-                                break;
-                            }
-                        }
-                        cur += dir;
-                    }
+                    TraceQueueToHole(q.Cells[0], q.Cells[1], q.SecondColor, rawPipes, cellToHole, forwardCounts, gridW, gridH);
                 }
             }
         }
 
-        // Assign capacity: if forward-facing queues were found, use that count; otherwise fallback to total color count
+        // Assign capacity: if explicit capacity exists, use it; otherwise infer and warn
         foreach (var h in holes)
         {
-            if (forwardCounts.TryGetValue(h, out int count) && count > 0)
+            bool wasInferred = false;
+            int assigned = 0;
+
+            if (h.ExplicitCapacity > 0)
             {
-                h.Capacity = count;
+                assigned = h.ExplicitCapacity;
+            }
+            else if (forwardCounts.TryGetValue(h, out int count) && count > 0)
+            {
+                assigned = count;
+                wasInferred = true;
             }
             else if (matchingQueueCounts.TryGetValue(h.ColorID, out int totalCount) && totalCount > 0)
             {
-                h.Capacity = totalCount;
+                assigned = totalCount;
+                wasInferred = true;
             }
             else
             {
-                h.Capacity = 1;
+                assigned = 1;
+                wasInferred = true;
+            }
+
+            h.Capacity = assigned;
+
+            if (wasInferred)
+            {
+                int exp = matchingQueueCounts.TryGetValue(h.ColorID, out int val) ? val : 0;
+                Debug.LogWarning($"[HoleCapacity] Level {level.LevelNumber} Hole ColorID {h.ColorID}: Inferred capacity {assigned} from {exp} expected queues (including stacked/piped).");
             }
         }
 
         return holes;
+    }
+
+    private static void TraceQueueToHole(
+        Vector2Int head,
+        Vector2Int neck,
+        int targetColorId,
+        List<RuntimeReferencePipe> pipes,
+        Dictionary<Vector2Int, RuntimeReferenceHole> cellToHole,
+        Dictionary<RuntimeReferenceHole, int> forwardCounts,
+        int gridW,
+        int gridH)
+    {
+        Vector2Int dir = head - neck;
+        if (dir != Vector2Int.right && dir != Vector2Int.left && dir != Vector2Int.up && dir != Vector2Int.down) return;
+
+        Vector2Int cur = head + dir;
+        int maxSteps = 100;
+        int steps = 0;
+
+        while (cur.x >= 0 && cur.x < gridW && cur.y >= 0 && cur.y < gridH && steps++ < maxSteps)
+        {
+            // Direct hole hit
+            if (cellToHole.TryGetValue(cur, out var targetHole))
+            {
+                if (targetHole.ColorID == targetColorId)
+                {
+                    forwardCounts[targetHole]++;
+                }
+                break;
+            }
+
+            // Pipe entrance hit
+            var pipe = pipes.Find(p => p.Cells.Count >= 2 && p.Cells[0] == cur && (p.Cells[1] - p.Cells[0]) == dir);
+            if (pipe != null)
+            {
+                // Follow pipe to exit
+                Vector2Int exitCell = pipe.Cells[pipe.Cells.Count - 1];
+                Vector2Int exitDir = pipe.Cells[pipe.Cells.Count - 1] - pipe.Cells[pipe.Cells.Count - 2];
+                cur = exitCell + exitDir;
+                dir = exitDir;
+                continue;
+            }
+
+            cur += dir;
+        }
     }
 
     /// <summary>
@@ -242,6 +301,29 @@ public static class ReferenceLevelRuntimeAdapter
 
         return queues;
     }
+
+    /// <summary>
+    /// Extracts runtime Pipe definitions from raw reference Level data (HolderType == 2).
+    /// </summary>
+    public static List<RuntimeReferencePipe> ExtractPipes(Level level)
+    {
+        var pipes = new List<RuntimeReferencePipe>();
+        if (level == null || level.AntQueues == null) return pipes;
+
+        foreach (var record in level.AntQueues)
+        {
+            if (record.HolderType == 2 && record.Cells != null && record.Cells.Count >= 2)
+            {
+                pipes.Add(new RuntimeReferencePipe
+                {
+                    Cells = new List<Vector2Int>(record.Cells),
+                    PipeCount = record.PipeCount
+                });
+            }
+        }
+
+        return pipes;
+    }
 }
 
 /// <summary>
@@ -254,6 +336,7 @@ public class RuntimeReferenceHole
     public List<Vector2Int> OccupiedCells = new List<Vector2Int>();
     public Vector2Int EntranceCell;
     public int Capacity;
+    public int ExplicitCapacity = 0;
     public bool IsRightSide;
     public int ParallelRows = 1;
     public int MinX;
@@ -262,6 +345,15 @@ public class RuntimeReferenceHole
     public int MaxY;
     public int WidthCells = 1;
     public int HeightCells = 1;
+}
+
+/// <summary>
+/// Runtime representation of a reference pipe reconstructed dynamically from HolderType = 2 data.
+/// </summary>
+public class RuntimeReferencePipe
+{
+    public List<Vector2Int> Cells = new List<Vector2Int>();
+    public int PipeCount;
 }
 
 /// <summary>

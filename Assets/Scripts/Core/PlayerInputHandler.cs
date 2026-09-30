@@ -130,9 +130,29 @@ public class PlayerInputHandler : MonoBehaviour
             pointerPos = touch.position;
             pointerId = touch.fingerId;
 
-            if (touch.phase == TouchPhase.Began) pointerDown = true;
-            else if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary) pointerHeld = true;
-            else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled) pointerUp = true;
+            if (touch.phase == TouchPhase.Began) 
+            {
+                pointerDown = true;
+            }
+            else if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary) 
+            {
+                pointerHeld = true;
+            }
+            else if (touch.phase == TouchPhase.Ended) 
+            {
+                pointerUp = true;
+            }
+            else if (touch.phase == TouchPhase.Canceled)
+            {
+                // Cancelled Android touches must NEVER trigger taps
+                isPointerDown = false;
+                if (isCameraDragging)
+                {
+                    BoardCameraController.Instance?.OnDragEnd();
+                    isCameraDragging = false;
+                }
+                return;
+            }
         }
         else
         {

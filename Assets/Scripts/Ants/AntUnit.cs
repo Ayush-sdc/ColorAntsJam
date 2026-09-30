@@ -90,6 +90,23 @@ public class AntUnit : MonoBehaviour
         BuildVisuals();
     }
 
+    private float walkTimer = 0f;
+    private float walkCycleFreq = 0f;
+
+    private void Update()
+    {
+        if (IsMoving && visualRoot != null && walkCycleFreq > 0f)
+        {
+            walkTimer += Time.deltaTime;
+            float phase = walkTimer * walkCycleFreq;
+            float yOffset = Mathf.Abs(Mathf.Sin(phase)) * bobHeight;
+            float zTilt = Mathf.Sin(phase * 0.5f) * tiltAngle;
+
+            visualRoot.localPosition = new Vector3(0f, yOffset, 0f);
+            visualRoot.localRotation = Quaternion.Euler(0f, 0f, zTilt);
+        }
+    }
+
     public void StartWalkAnimation(int queueIndex = 0, float moveSpeed = 6.8f)
     {
         KillWalkTween();
@@ -105,45 +122,22 @@ public class AntUnit : MonoBehaviour
         bobHeight = isHead ? config.LeaderBobHeight : config.WorkerBobHeight;
         tiltAngle = isHead ? config.LeaderTiltAngle : config.WorkerTiltAngle;
 
-        // Half-step duration inversely scaled by move speed
         float halfStepDuration = Mathf.Clamp(0.50f / Mathf.Max(1f, moveSpeed), 0.07f, 0.16f);
-        float fullCycle = halfStepDuration * 4f;
-
-        walkSequence = DOTween.Sequence();
-        walkSequence.SetTarget(visualRoot);
-
-        // Step 1: Left Step (Bob up & down on local Y, tilt left on local Z)
-        walkSequence.Append(visualRoot.DOLocalMoveY(bobHeight, halfStepDuration).SetEase(Ease.OutSine));
-        walkSequence.Join(visualRoot.DOLocalRotate(new Vector3(0f, 0f, tiltAngle), halfStepDuration).SetEase(Ease.OutSine));
-
-        walkSequence.Append(visualRoot.DOLocalMoveY(0f, halfStepDuration).SetEase(Ease.InSine));
-        walkSequence.Join(visualRoot.DOLocalRotate(Vector3.zero, halfStepDuration).SetEase(Ease.InSine));
-
-        // Step 2: Right Step (Bob up & down on local Y, tilt right on local Z)
-        walkSequence.Append(visualRoot.DOLocalMoveY(bobHeight, halfStepDuration).SetEase(Ease.OutSine));
-        walkSequence.Join(visualRoot.DOLocalRotate(new Vector3(0f, 0f, -tiltAngle), halfStepDuration).SetEase(Ease.OutSine));
-
-        walkSequence.Append(visualRoot.DOLocalMoveY(0f, halfStepDuration).SetEase(Ease.InSine));
-        walkSequence.Join(visualRoot.DOLocalRotate(Vector3.zero, halfStepDuration).SetEase(Ease.InSine));
-
-        walkSequence.SetLoops(-1, LoopType.Restart);
-
-        // Deterministic staggering based on queue index
-        float phaseOffset = (queueIndex * 0.04f) % fullCycle;
-        if (phaseOffset > 0.001f)
-        {
-            walkSequence.Goto(phaseOffset, true);
-        }
+        walkCycleFreq = (Mathf.PI * 2f) / (halfStepDuration * 4f);
+        walkTimer = (queueIndex * 0.04f);
+        IsMoving = true;
     }
 
     public void StopWalkAnimation()
     {
+        IsMoving = false;
         KillWalkTween();
         ResetWalkVisual();
     }
 
     public void KillWalkTween()
     {
+        IsMoving = false;
         if (walkSequence != null)
         {
             if (walkSequence.IsActive())

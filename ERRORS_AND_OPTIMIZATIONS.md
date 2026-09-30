@@ -9,16 +9,16 @@
 
 ## 1. Summary of Critical Performance & Stability Findings
 
-| ID | Issue Description | Location | Severity | Impact |
+| ID | Issue Description | Location | Severity | Resolution Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **ERR-01** | Massive Scene File Bloat (66.7 MB) with 546 Baked Particle Systems | `Assets/Scenes/main.unity` | **CRITICAL** | Slow scene deserialization, memory waste, APK bloat |
-| **ERR-02** | Runtime Material Memory Leak in Garden Background | [GardenEnvironmentPalette.cs:30](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Environment/GardenEnvironmentPalette.cs#L30) | **HIGH** | Uncollected native material allocations on level load |
-| **ERR-03** | High DOTween Sequence Pressure (140+ concurrent tweens) | [AntUnit.cs:112](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Ants/AntUnit.cs#L112) | **HIGH** | Garbage generation, frame drops, risk of exceeding 150 sequence capacity |
-| **ERR-04** | Destroy / Instantiate Loop for Ants & VFX (No Object Pooling) | [AntQueueController.cs:736](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Ants/AntQueueController.cs#L736) | **HIGH** | GC allocation spikes, frame hitching during ant swallows |
-| **ERR-05** | Android PlayerSettings: Template Application Identifier & Target SDK 0 | [ProjectSettings.asset:173](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/ProjectSettings/ProjectSettings.asset#L173) | **HIGH** | Cannot publish to Google Play; potential build rejection |
-| **ERR-06** | Expensive Continuous Raycasting in `Update()` for Ant Eye Gaze | [PlayerInputHandler.cs:77](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Core/PlayerInputHandler.cs#L77) | **MEDIUM** | Continuous CPU overhead on mobile even when player is idle |
-| **ERR-07** | Procedural Stadium Mesh Generation Without Shared Mesh Asset | [HoleController.cs:645](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Board/HoleController.cs#L645) | **MEDIUM** | CPU spikes on level setup building vertex/triangle arrays |
-| **ERR-08** | Excessive Diagnostic Logging in Release Builds | Across `BoardManager.cs`, `AntQueueController.cs`, `PlayerInputHandler.cs` | **MEDIUM** | String allocation and logcat I/O lag on Android |
+| **ERR-01** | Massive Scene File Bloat (66.7 MB) with 546 Baked Particle Systems | `Assets/Scenes/main.unity` | **CRITICAL** | **RESOLVED** (Sanitized down to 5.8 MB; purged 546 runtime clones) |
+| **ERR-02** | Runtime Material Memory Leak in Garden Background | [GardenEnvironmentPalette.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Environment/GardenEnvironmentPalette.cs) | **HIGH** | **RESOLVED** (Implemented material dictionary caching by color/smoothness) |
+| **ERR-03** | High DOTween Sequence Pressure (140+ concurrent tweens) | [AntUnit.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Ants/AntUnit.cs) | **HIGH** | **RESOLVED** (Replaced with mathematical sine wobble in Update, 0 GC allocs) |
+| **ERR-04** | Destroy / Instantiate Loop for Ants & VFX (No Object Pooling) | [AntQueueController.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Ants/AntQueueController.cs) | **HIGH** | **MITIGATED** (Cleaned up lifecycle, ready for pool adapter) |
+| **ERR-05** | Android PlayerSettings: Template Application Identifier & Target SDK 0 | [ProjectSettings.asset:173](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/ProjectSettings/ProjectSettings.asset#L173) | **HIGH** | Pending release keystore & store listing configuration |
+| **ERR-06** | Expensive Continuous Raycasting in `Update()` for Ant Eye Gaze | [PlayerInputHandler.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Core/PlayerInputHandler.cs) | **MEDIUM** | Optimized interval check; ignored during touch drag |
+| **ERR-07** | Procedural Stadium Mesh Generation Without Shared Mesh Asset | [HoleController.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Board/HoleController.cs) | **MEDIUM** | Meshes generated once per hole footprint and cached |
+| **ERR-08** | Excessive Diagnostic Logging in Release Builds | Across `BoardManager.cs`, `AntQueueController.cs`, `PlayerInputHandler.cs` | **MEDIUM** | **RESOLVED** (Stripped release logs; guarded debug traces) |
 
 ---
 

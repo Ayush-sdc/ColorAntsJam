@@ -6,6 +6,7 @@ public enum GameState
 {
     NotStarted,
     Playing,
+    Paused,
     LevelWon,
     LevelLost
 }
@@ -160,8 +161,8 @@ public class GameManager : MonoBehaviour
         var activeQueues = BoardManager.Instance.ActiveQueues;
         if (activeQueues == null) return;
 
-        // 1. Win condition: No ant queues remain on board
-        if (activeQueues.Count == 0)
+        // 1. Win condition: No ant queues remain on board (including revealed and dormant stacked layers)
+        if (activeQueues.Count == 0 && (BoardManager.Instance.DormantStackedQueues == null || BoardManager.Instance.DormantStackedQueues.Count == 0))
         {
             TriggerWin();
             return;
@@ -218,6 +219,32 @@ public class GameManager : MonoBehaviour
         {
             LevelManager.Instance.LoadPreviousLevel();
         }
+    }
+
+    public void PauseGame()
+    {
+        if (currentState == GameState.Playing)
+        {
+            currentState = GameState.Paused;
+            Debug.Log("[GameManager] Game Paused.");
+            OnGameStateChanged?.Invoke(currentState);
+        }
+    }
+
+    public void ResumeGame()
+    {
+        if (currentState == GameState.Paused)
+        {
+            currentState = GameState.Playing;
+            Debug.Log("[GameManager] Game Resumed.");
+            OnGameStateChanged?.Invoke(currentState);
+        }
+    }
+
+    public void SetPaused(bool paused)
+    {
+        if (paused) PauseGame();
+        else ResumeGame();
     }
 
     public void RestartLevel()

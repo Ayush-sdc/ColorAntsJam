@@ -655,6 +655,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_1_3
     colorId: 3
     holderType: 0
@@ -680,6 +681,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_2_2
     colorId: 2
     holderType: 1
@@ -697,6 +699,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_3_2
     colorId: 2
     holderType: 1
@@ -714,6 +717,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 0
     lockAmount: 0
+    holeCapacity: 0
   - queueId: Record_4_2
     colorId: 2
     holderType: 1
@@ -731,6 +735,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 1
     lockAmount: 2
+    holeCapacity: 0
   - queueId: Record_5_2
     colorId: 2
     holderType: 1
@@ -748,6 +753,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 1
     lockAmount: 3
+    holeCapacity: 0
   - queueId: Record_6_3
     colorId: 3
     holderType: 1
@@ -765,6 +771,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 1
     lockAmount: 7
+    holeCapacity: 0
   - queueId: Record_7_3
     colorId: 3
     holderType: 1
@@ -782,6 +789,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 1
     lockAmount: 8
+    holeCapacity: 0
   - queueId: Record_8_3
     colorId: 3
     holderType: 1
@@ -799,6 +807,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 1
     lockAmount: 9
+    holeCapacity: 0
   - queueId: Record_9_3
     colorId: 3
     holderType: 1
@@ -816,6 +825,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 1
     lockAmount: 10
+    holeCapacity: 0
   - queueId: Record_10_3
     colorId: 3
     holderType: 1
@@ -832,6 +842,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 1
     lockAmount: 4
+    holeCapacity: 0
   - queueId: Record_11_3
     colorId: 3
     holderType: 1
@@ -848,6 +859,7 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 1
     lockAmount: 6
+    holeCapacity: 0
   - queueId: Record_12_2
     colorId: 2
     holderType: 1
@@ -864,3 +876,8 @@ MonoBehaviour:
     pipeCount: 0
     isLocked: 1
     lockAmount: 5
+    holeCapacity: 0
+  levelDifficulty: 0
+  showHardIntro: 0
+  tutorialFlags: 0
+  holeCapacity: 0

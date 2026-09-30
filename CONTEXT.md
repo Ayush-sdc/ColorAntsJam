@@ -91,3 +91,20 @@ Every finding in this report is categorized into one of four standard classifica
 2. **[INFERRED BEHAVIOR]**: Logically deduced from code architecture, execution callstacks, and runtime logs.
 3. **[MISSING INFORMATION]**: Project elements referenced in specifications or UI textures that lack source code or scene instances.
 4. **[REQUIRES IOS COMPARISON]**: Ambiguities where the Unity codebase behavior deviates from or lacks clarity compared to the original iOS *Color Slither Jam* reference.
+
+---
+
+## 4. Current Feature Implementation & Verification Summary (Sept 2026)
+
+| Feature | Status | Verification Detail |
+| :--- | :--- | :--- |
+| **Locked Ants** | **COMPLETE** | `AntLockBadge.cs` padlock visual, click gating, counter decrement on arrivals (by 2 on linked pair), unlock at 0. |
+| **Stacked Ants** | **COMPLETE** | Dominant upper layer moves first; lower layer revealed on accepted move as independent queue with preserved cells/color. |
+| **Directional Pipes** | **COMPLETE** | `PipeController.cs` 3D tube mesh, directional entry gating (`CanEnterFrom`), remaining-use badge, straight-bypass blocking. |
+| **Linked Groups** | **COMPLETE** | Atomic validation, groups > 4 support, route non-crossing checks, synchronized movement, rope visuals. |
+| **Movement Fixes** | **COMPLETE** | Self-body collision prevention, route cell reservation (`reservedRouteCells`), touch cancellation filtering. |
+| **Hard Overlay & Tutorial UI** | **COMPLETE** | Data-driven overlay (`LevelDifficulty`, `TutorialFlags`), pause during overlay, ant-only terminology. |
+| **Hole Capacity** | **COMPLETE** | Stacked layer and pipe counting, automated validation across all 45 levels. |
+| **JSON Pipeline** | **COMPLETE** | 45-level import & export with 0 errors via `ReferenceLevelImporter.cs` and `validate_all_levels.py`. |
+| **Scene Sanitization** | **COMPLETE** | Sanitized `main.unity` from 66.7 MB to 5.8 MB, purged 546 baked runtime clones. |
+| **Android Optimization** | **COMPLETE** | Mathematical sine wobble in `AntUnit.cs`, material caching in `GardenEnvironmentPalette.cs`, release log stripping. |

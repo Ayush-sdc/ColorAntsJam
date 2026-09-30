@@ -95,11 +95,11 @@ The project utilizes a hybrid ScriptableObject and JSON architecture containing 
 | :--- | :--- | :--- | :--- | :--- |
 | **Normal Queues** | `AntQueueController`, `BoardManager`, `HoleController` | `Cells`, `ColorID`, `HolderType=1` | **WORKING** | 45 levels, 2,029 queues fully functional |
 | **Linked Ants** | `BoardManager:638`, `BoardManager:1776`, `LinkedAntsRopeVisual` | `IsConnected`, `ConnectedIndex` | **WORKING** | 21 levels, 283 queues, 126 groups move atomically with GoldenRope visuals |
-| **Locked Ants** | Data in `AntQueueData`, missing in `AntQueueController` | `IsLocked`, `LockAmount` | **INCOMPLETE** | Data imported, but controller ignores lock counter; 6 levels (46 queues) affected |
-| **Stacked Ants** | Data in `AntQueueData`, missing in `AntQueueController` | `IsSecondColor`, `SecondColor` | **INCOMPLETE** | Data imported, but second color layer not spawned; 10 levels (49 queues) affected |
-| **Pipes** | None | `PipeCount` (in HolderType 2) | **INCOMPLETE** | No pipe prefab or 90° deflection logic; Level 45 affected |
-| **Hard Overlay** | None | `LevelDifficulty` | **INCOMPLETE** | Art exists in root (`Hardleveloverlay.png`), but unhooked in UI |
-| **Forward Raycast (Category C)** | `BoardManager:912` | Cardinal raycast `head - neck` | **DEFICIENT** | 61 queues across 9 levels miss matching holes on straight forward rays |
+| **Locked Ants** | `AntLockBadge.cs`, `AntQueueController.cs` | `IsLocked`, `LockAmount` | **COMPLETE** | Padlock badge, move gating, counter decrement on rescues, unlock at 0 |
+| **Stacked Ants** | `AntQueueController.cs`, `BoardManager.cs` | `IsSecondColor`, `SecondColor` | **COMPLETE** | Dominant moves first; lower layer revealed on accepted move as independent queue |
+| **Pipes** | `PipeController.cs`, `BoardManager.cs` | `PipeCount` (in HolderType 2) | **COMPLETE** | 3D glossy tube mesh, directional entry gating, remaining-use badge |
+| **Hard Overlay** | `GameUIManager.cs`, `Level.cs` | `LevelDifficulty` | **COMPLETE** | Pause timer/input during overlay, confirm to start, ant-only terminology |
+| **Forward & Pipe Routing** | `BoardManager.cs` | Forward raycast + directional pipe polyline | **COMPLETE** | Direct straight ray + pipe transit paths; zero missing hole routes |
 
 ---
 
@@ -121,15 +121,12 @@ The project utilizes a hybrid ScriptableObject and JSON architecture containing 
 
 ## 5. Critical Errors and Android Optimization Concerns
 
-1. **Scene File Bloat (`Assets/Scenes/main.unity`)**:
-   - `main.unity` is currently **66.7 MB** because 546 baked instances of `ant_dis(Clone)` particle systems and `Nest FX` objects were saved into the YAML.
-   - **Recommended Fix:** Delete all non-persistent runtime clones from `main.unity`. Clean size will drop to < 150 KB.
-2. **Material Memory Leak in Garden Background**:
-   - [GardenEnvironmentPalette.cs:30](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Environment/GardenEnvironmentPalette.cs#L30) executes `new Material(Shader.Find(...))` without caching. Destroying `environmentHolder` leaves materials leaked in native memory.
-   - **Recommended Fix:** Cache materials by `Color` in a shared dictionary.
-3. **Per-Ant DOTween Sequence Pressure**:
-   - Every moving ant creates a looping sequence with 4 tweens. Concurrently moving 4 queues creates 140+ active tweens, straining the 150-sequence capacity limit.
-   - **Recommended Fix:** Replace per-ant DOTween sequences with math-based sine-wave wobbling (`Mathf.Sin`).
+1. **Scene File Bloat (`Assets/Scenes/main.unity`)** - **[RESOLVED]**:
+   - `main.unity` was sanitized from 66.7 MB down to 5.8 MB, eliminating 546 baked runtime clones and optimizing deserialization time.
+2. **Material Memory Leak in Garden Background** - **[RESOLVED]**:
+   - Implemented `materialCache` dictionary in `GardenEnvironmentPalette.cs` caching materials by color and smoothness tokens.
+3. **Per-Ant DOTween Sequence Pressure** - **[RESOLVED]**:
+   - Replaced looping DOTween sequences in `AntUnit.cs` with direct mathematical sine oscillation in `Update()` (`Mathf.Sin`), eliminating hundreds of active tween allocations on Android.
 4. **Android Package & SDK Settings**:
    - [ProjectSettings.asset:173](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/ProjectSettings/ProjectSettings.asset#L173) still uses template package name `com.UnityTechnologies.com.unity.template.urpblank` and Target SDK 0.
    - Must be updated to a custom bundle identifier and Target API Level 34+ before Google Play release.

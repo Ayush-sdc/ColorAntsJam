@@ -18,6 +18,17 @@ public class AntQueueController : MonoBehaviour
     [SerializeField] private bool isConnected = false;
     [SerializeField] private int connectedIndex = -1;
 
+    [Header("Lock Mechanics")]
+    [SerializeField] private bool isLocked = false;
+    [SerializeField] private int lockAmount = 0;
+    private AntLockBadge lockBadge;
+
+    [Header("Stacked / Second Color")]
+    [SerializeField] private bool isSecondColor = false;
+    [SerializeField] private int secondColor = 0;
+    [SerializeField] private AntQueueController lowerQueueLayer;
+    [SerializeField] private bool isDormantStacked = false;
+
     [Header("Runtime State")]
     [SerializeField] private bool isMoving = false;
     [SerializeField] private List<Vector2Int> currentBodyCoordinates = new List<Vector2Int>();
@@ -40,9 +51,17 @@ public class AntQueueController : MonoBehaviour
     public bool IsConnected => isConnected;
     public int ConnectedIndex => connectedIndex;
     public bool IsMoving => isMoving;
+    public bool IsLocked => isLocked && lockAmount > 0;
+    public int LockAmount => lockAmount;
+    public bool IsSecondColor => isSecondColor;
+    public int SecondColor => secondColor;
+    public AntColor SecondAntColor => ReferenceColorMapper.ToAntColor(secondColor);
+    public AntQueueController LowerQueueLayer => lowerQueueLayer;
+    public bool IsDormantStacked => isDormantStacked;
     public Vector2Int ForwardDirection { get => forwardDirection; set => forwardDirection = value; }
     public Vector2Int HoleEntranceCoordinate { get => holeEntranceCoordinate; set => holeEntranceCoordinate = value; }
     public HoleController DestinationHole { get => destinationHole; set => destinationHole = value; }
+    public PipeController TraversedPipe { get; set; }
     public IReadOnlyList<Vector2Int> CurrentBodyCoordinates => currentBodyCoordinates;
     public IReadOnlyList<Vector2Int> RemainingPath => remainingPath;
     public IReadOnlyList<AntUnit> Units => antUnits;
@@ -112,11 +131,99 @@ public class AntQueueController : MonoBehaviour
         antCount = data.AntCount;
         isConnected = data.IsConnected;
         connectedIndex = data.ConnectedIndex;
+        isSecondColor = data.IsSecondColor;
+        secondColor = data.SecondColor;
+        isLocked = data.IsLocked;
+        lockAmount = data.LockAmount;
 
         currentBodyCoordinates = new List<Vector2Int>(data.InitialBodyCoordinates);
         remainingPath = new List<Vector2Int>(data.FullPathToHole);
 
         SpawnAnts();
+        SetupLockBadge();
+    }
+
+    public void SetupLockBadge()
+    {
+        if (isLocked && lockAmount > 0)
+        {
+            if (lockBadge == null)
+            {
+                Transform targetHead = (antUnits != null && antUnits.Count > 0 && antUnits[0] != null) ? antUnits[0].transform : transform;
+                GameObject badgeObj = new GameObject($"LockBadge_{queueId}");
+                badgeObj.transform.SetParent(transform, false);
+                lockBadge = badgeObj.AddComponent<AntLockBadge>();
+                lockBadge.Initialize(targetHead, lockAmount);
+            }
+            else
+            {
+                lockBadge.UpdateCounter(lockAmount, animate: false);
+            }
+        }
+        else if (lockBadge != null)
+        {
+            lockBadge.PlayUnlockAndDismiss(() => lockBadge = null);
+        }
+    }
+
+    public void SetLock(bool locked, int amount)
+    {
+        this.isLocked = locked;
+        this.lockAmount = amount;
+        SetupLockBadge();
+    }
+
+    public void DecrementLock(int amount)
+    {
+        if (!isLocked || lockAmount <= 0) return;
+
+        lockAmount = Mathf.Max(0, lockAmount - amount);
+        if (lockAmount == 0)
+        {
+            isLocked = false;
+            if (lockBadge != null)
+            {
+                lockBadge.PlayUnlockAndDismiss(() => lockBadge = null);
+            }
+            Debug.Log($"[AntQueueController] Queue {queueId} UNLOCKED!");
+        }
+        else if (lockBadge != null)
+        {
+            lockBadge.UpdateCounter(lockAmount, animate: true);
+        }
+    }
+
+    public void TriggerLockedFeedback()
+    {
+        PlayBlockedShake();
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayBlockedSound();
+        }
+    }
+
+    public void SetLowerQueueLayer(AntQueueController lowerQueue)
+    {
+        this.lowerQueueLayer = lowerQueue;
+        if (lowerQueue != null)
+        {
+            lowerQueue.isDormantStacked = true;
+            lowerQueue.gameObject.SetActive(false);
+        }
+    }
+
+    public void RevealFromStack()
+    {
+        isDormantStacked = false;
+        gameObject.SetActive(true);
+        transform.DOKill();
+        transform.localScale = Vector3.one * 0.8f;
+        transform.DOScale(Vector3.one, 0.25f).SetEase(Ease.OutBack);
+
+        if (BoardManager.Instance != null)
+        {
+            BoardManager.Instance.RegisterActiveQueue(this);
+        }
     }
 
     public void InitializeReference(string id, int rawColorId, AntColor color, List<Vector2Int> bodyCoords, List<Vector2Int> path, bool connected = false, int connIdx = -1)
@@ -285,8 +392,14 @@ public class AntQueueController : MonoBehaviour
     /// </summary>
     public bool TryStartMove()
     {
-        if (isMoving) return false;
+        if (isMoving || isDormantStacked) return false;
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) return false;
+
+        if (IsLocked)
+        {
+            TriggerLockedFeedback();
+            return false;
+        }
 
         if (BoardManager.Instance != null)
         {
@@ -347,6 +460,15 @@ public class AntQueueController : MonoBehaviour
         this.destinationHole = targetHole;
         this.holeEntranceCoordinate = entranceCell;
         this.currentSmoothRoute = (worldPath != null && worldPath.Count > 0) ? new List<Vector3>(worldPath) : new List<Vector3>();
+
+        // Reveal underlying stacked ant layer when dominant layer starts moving
+        if (lowerQueueLayer != null)
+        {
+            var lower = lowerQueueLayer;
+            lowerQueueLayer = null;
+            lower.RevealFromStack();
+        }
+
         StartCoroutine(SmoothFreeMoveRoutine());
     }
 

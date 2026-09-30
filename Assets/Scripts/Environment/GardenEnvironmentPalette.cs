@@ -27,8 +27,16 @@ public static class GardenEnvironmentPalette
     public static readonly Color FlowerPurple = new Color(0.75f, 0.45f, 0.92f);
     public static readonly Color FlowerWhite = new Color(0.96f, 0.96f, 0.98f);
 
+    private static readonly System.Collections.Generic.Dictionary<int, Material> materialCache = new System.Collections.Generic.Dictionary<int, Material>();
+
     public static Material CreateLitMaterial(Color color, float smoothness = 0.2f)
     {
+        int key = color.GetHashCode() ^ (smoothness.GetHashCode() << 2);
+        if (materialCache.TryGetValue(key, out var cached) && cached != null)
+        {
+            return cached;
+        }
+
         Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
         Material mat = new Material(shader)
         {
@@ -40,6 +48,7 @@ public static class GardenEnvironmentPalette
             mat.SetFloat("_Smoothness", smoothness);
         }
 
+        materialCache[key] = mat;
         return mat;
     }
 }

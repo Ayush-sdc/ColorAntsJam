@@ -34,6 +34,10 @@ public class BoardManager : MonoBehaviour
     private readonly Dictionary<Vector2Int, HoleController> holesMap = new Dictionary<Vector2Int, HoleController>();
     private readonly List<AntQueueController> activeQueues = new List<AntQueueController>();
     private readonly List<HoleController> activeHoles = new List<HoleController>();
+    private readonly List<PipeController> activePipes = new List<PipeController>();
+    private readonly List<AntQueueController> dormantStackedQueues = new List<AntQueueController>();
+    private readonly HashSet<Vector2Int> reservedRouteCells = new HashSet<Vector2Int>();
+    private readonly Dictionary<AntQueueController, List<Vector2Int>> queueReservedRouteCells = new Dictionary<AntQueueController, List<Vector2Int>>();
     private readonly HashSet<string> completedHoleIds = new HashSet<string>();
     private int completedHoleCount = 0;
 
@@ -47,11 +51,45 @@ public class BoardManager : MonoBehaviour
     public Level CurrentLevel => currentLevel;
     public IReadOnlyList<AntQueueController> ActiveQueues => activeQueues;
     public IReadOnlyList<HoleController> ActiveHoles => activeHoles;
+    public IReadOnlyList<PipeController> ActivePipes => activePipes;
+    public IReadOnlyList<AntQueueController> DormantStackedQueues => dormantStackedQueues;
+    public IReadOnlyCollection<Vector2Int> ReservedRouteCells => reservedRouteCells;
     public int CompletedHoleCount => completedHoleCount;
     public IReadOnlyCollection<string> CompletedHoleIds => completedHoleIds;
     public IReadOnlyDictionary<Vector2Int, HoleController> HolesMap => holesMap;
     public bool EnableDiagnostics { get => enableDiagnostics; set => enableDiagnostics = value; }
     public bool IsTestInstance => isTestInstance;
+
+    public void RegisterActiveQueue(AntQueueController queue)
+    {
+        if (queue != null)
+        {
+            dormantStackedQueues.Remove(queue);
+            if (!activeQueues.Contains(queue))
+            {
+                activeQueues.Add(queue);
+            }
+        }
+    }
+
+    public void RemovePipe(PipeController pipe)
+    {
+        if (pipe != null)
+        {
+            activePipes.Remove(pipe);
+        }
+    }
+
+    public PipeController GetPipeAt(Vector2Int cell)
+    {
+        for (int i = 0; i < activePipes.Count; i++)
+        {
+            var p = activePipes[i];
+            if (p != null && p.Occupies(cell))
+                return p;
+        }
+        return null;
+    }
 
     private bool isSettingUpBoard = false;
     public bool IsSettingUpBoard => isSettingUpBoard;
@@ -279,10 +317,16 @@ public class BoardManager : MonoBehaviour
     {
         var refHoles = ReferenceLevelRuntimeAdapter.ExtractHoles(level);
         var refQueues = ReferenceLevelRuntimeAdapter.ExtractPlayableQueues(level, refHoles);
+        var refPipes = ReferenceLevelRuntimeAdapter.ExtractPipes(level);
 
         foreach (var rHole in refHoles)
         {
             SpawnReferenceHole(rHole);
+        }
+
+        foreach (var rPipe in refPipes)
+        {
+            SpawnReferencePipe(rPipe);
         }
 
         foreach (var rQueue in refQueues)
@@ -292,6 +336,20 @@ public class BoardManager : MonoBehaviour
 
         ValidateHoleOverlaps();
         SetupLinkedRopes();
+    }
+
+    private void SpawnReferencePipe(RuntimeReferencePipe rPipe)
+    {
+        if (rPipe == null || rPipe.Cells == null || rPipe.Cells.Count < 2) return;
+
+        Transform parentTransform = boardParent != null ? boardParent : transform;
+        GameObject pipeObj = new GameObject($"Pipe_{rPipe.Cells[0].x}_{rPipe.Cells[0].y}");
+        pipeObj.transform.SetParent(parentTransform, false);
+        pipeObj.transform.localPosition = Vector3.zero;
+
+        var pipeController = pipeObj.AddComponent<PipeController>();
+        pipeController.Initialize(rPipe.Cells, rPipe.PipeCount);
+        activePipes.Add(pipeController);
     }
 
     private void SpawnReferenceHole(RuntimeReferenceHole rHole)
@@ -393,6 +451,47 @@ public class BoardManager : MonoBehaviour
 
         controller.Initialize(queueData);
         activeQueues.Add(controller);
+
+        // Stacked ant queue support (IsSecondColor & SecondColor)
+        if (rQueue.IsSecondColor)
+        {
+            GameObject lowerObj;
+            if (antQueuePrefab != null)
+            {
+                lowerObj = Instantiate(antQueuePrefab, Vector3.zero, Quaternion.identity, parentTransform);
+            }
+            else
+            {
+                lowerObj = new GameObject($"Queue_{rQueue.QueueId}_layer2");
+                lowerObj.transform.SetParent(parentTransform, false);
+                lowerObj.transform.localPosition = Vector3.zero;
+            }
+
+            var lowerController = lowerObj.GetComponent<AntQueueController>();
+            if (lowerController == null)
+            {
+                lowerController = lowerObj.AddComponent<AntQueueController>();
+            }
+
+            AntQueueData lowerData = new AntQueueData(
+                $"{rQueue.QueueId}_layer2",
+                rQueue.SecondColor,
+                1,
+                new List<Vector2Int>(rQueue.BodyCoordinates),
+                false,
+                -1,
+                false,
+                0,
+                0,
+                false,
+                0,
+                null
+            );
+
+            lowerController.Initialize(lowerData);
+            controller.SetLowerQueueLayer(lowerController);
+            dormantStackedQueues.Add(lowerController);
+        }
     }
 
     /// <summary>
@@ -918,10 +1017,26 @@ public class BoardManager : MonoBehaviour
         out Vector2Int entranceCell, 
         out string blockedReason)
     {
+        return ValidateForwardMove(queue, group, pendingReservations, out forwardDir, out targetHole, out entranceCell, out blockedReason, out _, out _);
+    }
+
+    public bool ValidateForwardMove(
+        AntQueueController queue, 
+        List<AntQueueController> group,
+        Dictionary<HoleController, int> pendingReservations,
+        out Vector2Int forwardDir, 
+        out HoleController targetHole, 
+        out Vector2Int entranceCell, 
+        out string blockedReason,
+        out PipeController traversedPipe,
+        out List<Vector2Int> routeCells)
+    {
         forwardDir = Vector2Int.zero;
         targetHole = null;
         entranceCell = Vector2Int.zero;
         blockedReason = "None";
+        traversedPipe = null;
+        routeCells = new List<Vector2Int>();
 
         if (queue == null || queue.CurrentBodyCoordinates == null || queue.CurrentBodyCoordinates.Count == 0)
         {
@@ -958,37 +1073,107 @@ public class BoardManager : MonoBehaviour
             return false;
         }
 
-        // First scan forward to see which holder (if any) is encountered first
         HoleController destinationHolder = null;
         Vector2Int entrance = Vector2Int.zero;
-        Vector2Int scan = head + forwardDir;
-        while (IsInBounds(scan))
+        Vector2Int curr = head + forwardDir;
+        Vector2Int currentDir = forwardDir;
+        int maxSteps = (width * height * 2) + 100;
+        int steps = 0;
+
+        while (IsInBounds(curr) && steps++ < maxSteps)
         {
-            HoleController h = GetHoleAt(scan);
+            // 1. Moving into own body?
+            if (queue.Occupies(curr))
+            {
+                blockedReason = "BlockedByOwnBody";
+                return false;
+            }
+
+            // 2. Moving into stationary queue?
+            var otherQueue = GetQueueOccupying(curr, queue);
+            if (otherQueue != null && (group == null || !group.Contains(otherQueue)))
+            {
+                blockedReason = "OccupiedByStationaryQueue";
+                return false;
+            }
+
+            // 3. Moving into reserved route cell of another moving queue?
+            if (reservedRouteCells.Contains(curr))
+            {
+                blockedReason = "ReservedByMovingRoute";
+                return false;
+            }
+
+            // Check if cell is occupied by any active moving queue
+            if (movingQueues != null)
+            {
+                foreach (var mq in movingQueues)
+                {
+                    if (mq != null && mq != queue && (group == null || !group.Contains(mq)))
+                    {
+                        if (mq.Occupies(curr))
+                        {
+                            blockedReason = "OccupiedByMovingQueue";
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            // 4. Hit a Hole?
+            HoleController h = GetHoleAt(curr);
             if (h != null)
             {
                 destinationHolder = h;
-                entrance = scan;
+                entrance = curr;
+                routeCells.Add(curr);
                 break;
             }
-            scan += forwardDir;
+
+            // 5. Hit a Pipe?
+            PipeController p = GetPipeAt(curr);
+            if (p != null)
+            {
+                // Can only enter if entrance matches and direction matches
+                if (traversedPipe != null || !p.CanEnterFrom(curr, currentDir))
+                {
+                    blockedReason = "BlockedByPipeObstacle";
+                    return false;
+                }
+
+                // Legally enters pipe!
+                traversedPipe = p;
+                if (p.Cells != null)
+                {
+                    foreach (var pCell in p.Cells)
+                    {
+                        routeCells.Add(pCell);
+                    }
+                }
+
+                Vector2Int exitCell = p.ExitCell;
+                Vector2Int exitDir = p.ExitDirection;
+                curr = exitCell + exitDir;
+                currentDir = exitDir;
+                continue;
+            }
+
+            routeCells.Add(curr);
+            curr += currentDir;
         }
 
-        // If no holder encountered before falling out of bounds
         if (destinationHolder == null)
         {
             blockedReason = "OutOfBoundsNoHolder";
             return false;
         }
 
-        // Must match queue color
         if (destinationHolder.ColorID != queue.ColorID)
         {
             blockedReason = "WrongColorHolder";
             return false;
         }
 
-        // Check holder capacity
         int alreadyReserved = 0;
         if (pendingReservations != null && pendingReservations.TryGetValue(destinationHolder, out int count))
         {
@@ -1002,59 +1187,6 @@ public class BoardManager : MonoBehaviour
             return false;
         }
 
-        // Now verify path from (head + forwardDir) up to entrance
-        Vector2Int curr = head + forwardDir;
-        while (curr != entrance)
-        {
-            // 1. Check stationary queues (ignore queues in the same connected moving group)
-            var otherQueue = GetQueueOccupying(curr, queue);
-            if (otherQueue != null && (group == null || !group.Contains(otherQueue)))
-            {
-                blockedReason = "OccupiedByStationaryQueue";
-                return false;
-            }
-
-            // 2. Check moving queues and their path reservations
-            if (movingQueues != null)
-            {
-                foreach (var mq in movingQueues)
-                {
-                    if (mq != null && mq != queue && (group == null || !group.Contains(mq)))
-                    {
-                        // EXCEPTION: Two queues that have BOTH validly reserved the SAME destination hole
-                        // must not block each other in the destination entry region.
-                        bool isJointReservationToSameHole = (mq.DestinationHole != null && mq.DestinationHole == destinationHolder);
-                        bool isInDestinationEntryRegion = (curr == entrance - forwardDir || curr == entrance - forwardDir * 2);
-
-                        if (isJointReservationToSameHole && isInDestinationEntryRegion)
-                        {
-                            continue;
-                        }
-
-                        if (mq.Occupies(curr))
-                        {
-                            blockedReason = "OccupiedByMovingQueue";
-                            return false;
-                        }
-                        if (mq.GetReservedPathCells() != null)
-                        {
-                            foreach (var rCell in mq.GetReservedPathCells())
-                            {
-                                if (rCell == curr)
-                                {
-                                    blockedReason = "ReservedByMovingQueue";
-                                    return false;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            curr += forwardDir;
-        }
-
-        // Reached entrance of matching holder with available capacity
         targetHole = destinationHolder;
         entranceCell = entrance;
         blockedReason = "None";
@@ -1153,6 +1285,94 @@ public class BoardManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Generates a continuous world-space trajectory guiding an ant queue through a pipe to its destination hole.
+    /// </summary>
+    public List<Vector3> GeneratePipeFreeWorldPath(AntQueueController queue, Vector2Int forwardDir, PipeController pipe, HoleController targetHole, Vector2Int entranceCell)
+    {
+        Vector3 headWorldPos = queue.Units != null && queue.Units.Count > 0 && queue.Units[0] != null 
+            ? queue.Units[0].transform.position 
+            : (queue.CurrentBodyCoordinates != null && queue.CurrentBodyCoordinates.Count > 0 ? GridToWorldPosition(queue.CurrentBodyCoordinates[0]) : queue.transform.position);
+
+        float cs = cellSize > 0 ? cellSize : 1.0f;
+        float stepSize = 0.04f;
+        List<Vector3> denseRoute = new List<Vector3>();
+
+        // 1. From headWorldPos to pipe entrance
+        Vector3 pipeEntrancePos = GridToWorldPosition(pipe.EntranceCell);
+        pipeEntrancePos.y = headWorldPos.y;
+        float distToPipe = Vector3.Distance(headWorldPos, pipeEntrancePos);
+        int stepsToPipe = Mathf.Max(1, Mathf.RoundToInt(distToPipe / stepSize));
+        for (int s = 0; s < stepsToPipe; s++)
+        {
+            float t = (float)s / stepsToPipe;
+            Vector3 pt = Vector3.Lerp(headWorldPos, pipeEntrancePos, t);
+            pt.y = headWorldPos.y;
+            denseRoute.Add(pt);
+        }
+
+        // 2. Along pipe centerline cells
+        if (pipe.Cells != null && pipe.Cells.Count >= 2)
+        {
+            for (int i = 0; i < pipe.Cells.Count - 1; i++)
+            {
+                Vector3 p0 = GridToWorldPosition(pipe.Cells[i]);
+                Vector3 p1 = GridToWorldPosition(pipe.Cells[i + 1]);
+                p0.y = headWorldPos.y;
+                p1.y = headWorldPos.y;
+                float segDist = Vector3.Distance(p0, p1);
+                int segSteps = Mathf.Max(1, Mathf.RoundToInt(segDist / stepSize));
+                for (int s = 0; s < segSteps; s++)
+                {
+                    float t = (float)s / segSteps;
+                    Vector3 pt = Vector3.Lerp(p0, p1, t);
+                    pt.y = headWorldPos.y;
+                    denseRoute.Add(pt);
+                }
+            }
+        }
+
+        // 3. From pipe exit to hole
+        Vector2Int exitDir = pipe.ExitDirection;
+        Vector3 exitForward = new Vector3(exitDir.x, 0f, exitDir.y).normalized;
+        Vector3 pipeExitPos = GridToWorldPosition(pipe.ExitCell);
+        pipeExitPos.y = headWorldPos.y;
+
+        Vector3 entrancePos = GridToWorldPosition(entranceCell);
+        entrancePos.y = headWorldPos.y;
+
+        Vector3 entryPoint = targetHole != null 
+            ? targetHole.GetHoleEntryPoint(entranceCell, exitDir, queue) 
+            : (entrancePos - exitForward * (0.50f * cs));
+        entryPoint.y = headWorldPos.y;
+
+        float leaderVisualLength = (queue != null && queue.Units.Count > 0 && queue.Units[0] != null) ? queue.Units[0].VisualLength : AntVisualConfig.Instance.LeaderVisualLength;
+        Vector3 despawnPoint = targetHole != null 
+            ? targetHole.GetHoleDespawnPoint(entranceCell, exitDir, leaderVisualLength * cs, queue) 
+            : (entryPoint + exitForward * (1.10f * cs));
+
+        float distToHole = Vector3.Distance(pipeExitPos, entryPoint);
+        int stepsToHole = Mathf.Max(1, Mathf.RoundToInt(distToHole / stepSize));
+        for (int s = 0; s < stepsToHole; s++)
+        {
+            float t = (float)s / stepsToHole;
+            Vector3 pt = Vector3.Lerp(pipeExitPos, entryPoint, t);
+            pt.y = headWorldPos.y;
+            denseRoute.Add(pt);
+        }
+
+        // 4. Hole swallowing into pit
+        float despawnDist = Vector3.Distance(entryPoint, despawnPoint);
+        int despawnSteps = Mathf.Max(1, Mathf.RoundToInt(despawnDist / stepSize));
+        for (int s = 0; s <= despawnSteps; s++)
+        {
+            float t = (float)s / despawnSteps;
+            denseRoute.Add(Vector3.Lerp(entryPoint, despawnPoint, t));
+        }
+
+        return denseRoute;
+    }
+
+    /// <summary>
     /// Attempts to launch an ant queue (or all members of its connected group) along a straight free-floor world route to its matching holder.
     /// If valid, reserves destination capacity, launches movement, and starts the timer.
     /// If invalid, plays blocked feedback and deducts 1 life.
@@ -1162,18 +1382,28 @@ public class BoardManager : MonoBehaviour
         if (queue == null || queue.IsMoving || movingQueues.Contains(queue)) return false;
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) return false;
 
-        // Concurrency check: Maximum 4 queues can move simultaneously.
-        // Fifth queue tap is temporarily ignored/soft-blocked WITHOUT deducting a life/heart!
-        if (movingQueues.Count >= MAX_CONCURRENT_MOVING_QUEUES)
-        {
-            Debug.Log($"[QueueMoveBlocked] Queue={queue.QueueId} Reason=ConcurrentMoveLimit MovingQueues={movingQueues.Count} HeartPenalty=False");
-            queue.PlayBlockedShake();
-            return false;
-        }
-
         var group = GetConnectedGroup(queue);
 
-        if (movingQueues.Count + group.Count > MAX_CONCURRENT_MOVING_QUEUES)
+        // Check if any member of the group is locked
+        foreach (var member in group)
+        {
+            if (member != null && member.IsLocked)
+            {
+                foreach (var m in group)
+                {
+                    if (m != null)
+                    {
+                        if (m.IsLocked) m.TriggerLockedFeedback();
+                        else m.PlayBlockedShake();
+                    }
+                }
+                return false;
+            }
+        }
+
+        // Concurrency check: Maximum 4 queues can move simultaneously.
+        // A single linked group of ANY size (> 4) is allowed to move when movingQueues.Count == 0!
+        if (movingQueues.Count > 0 && movingQueues.Count + group.Count > MAX_CONCURRENT_MOVING_QUEUES)
         {
             Debug.Log($"[QueueMoveBlocked] Queue={queue.QueueId} Reason=ConcurrentMoveLimit GroupSize={group.Count} MovingQueues={movingQueues.Count} HeartPenalty=False");
             foreach (var member in group)
@@ -1195,6 +1425,8 @@ public class BoardManager : MonoBehaviour
             var groupDirections = new Dictionary<AntQueueController, Vector2Int>();
             var groupTargetHoles = new Dictionary<AntQueueController, HoleController>();
             var groupEntranceCells = new Dictionary<AntQueueController, Vector2Int>();
+            var groupPipes = new Dictionary<AntQueueController, PipeController>();
+            var groupRouteCells = new Dictionary<AntQueueController, List<Vector2Int>>();
             var pendingReservations = new Dictionary<HoleController, int>();
             bool allValid = true;
             AntQueueController firstBlockedMember = null;
@@ -1202,11 +1434,13 @@ public class BoardManager : MonoBehaviour
 
             foreach (var member in group)
             {
-                if (ValidateForwardMove(member, group, pendingReservations, out var dir, out var hole, out var entrance, out var blockedReason))
+                if (ValidateForwardMove(member, group, pendingReservations, out var dir, out var hole, out var entrance, out var blockedReason, out var pipe, out var rCells))
                 {
                     groupDirections[member] = dir;
                     groupTargetHoles[member] = hole;
                     groupEntranceCells[member] = entrance;
+                    groupPipes[member] = pipe;
+                    groupRouteCells[member] = rCells;
 
                     if (!pendingReservations.ContainsKey(hole))
                     {
@@ -1220,6 +1454,29 @@ public class BoardManager : MonoBehaviour
                     firstBlockedMember = member;
                     failureReason = blockedReason;
                     break;
+                }
+            }
+
+            // Validate that routes in the group do not cross each other
+            if (allValid && group.Count > 1)
+            {
+                HashSet<Vector2Int> claimedCells = new HashSet<Vector2Int>();
+                foreach (var member in group)
+                {
+                    var rCells = groupRouteCells[member];
+                    var entrance = groupEntranceCells[member];
+                    foreach (var c in rCells)
+                    {
+                        if (c != entrance && claimedCells.Contains(c))
+                        {
+                            allValid = false;
+                            firstBlockedMember = member;
+                            failureReason = "GroupRoutesCross";
+                            break;
+                        }
+                        claimedCells.Add(c);
+                    }
+                    if (!allValid) break;
                 }
             }
 
@@ -1304,7 +1561,7 @@ public class BoardManager : MonoBehaviour
                 return false;
             }
 
-            // Launch straight continuous movement for all members
+            // Launch continuous movement for all members
             foreach (var member in group)
             {
                 if (member != null)
@@ -1313,12 +1570,33 @@ public class BoardManager : MonoBehaviour
                     var dir = groupDirections[member];
                     var hole = groupTargetHoles[member];
                     var entrance = groupEntranceCells[member];
+                    var pipe = groupPipes[member];
+                    var rCells = groupRouteCells[member];
+
                     member.DestinationHole = hole;
                     member.ForwardDirection = dir;
                     member.HoleEntranceCoordinate = entrance;
+                    member.TraversedPipe = pipe;
+                    if (pipe != null) pipe.IsPipeInUse = true;
 
-                    var straightRoute = GenerateStraightFreeWorldPath(member, dir, hole, entrance);
-                    member.StartSmoothMovement(straightRoute, hole, entrance);
+                    // Reserve transit cells
+                    foreach (var c in rCells)
+                    {
+                        reservedRouteCells.Add(c);
+                    }
+                    queueReservedRouteCells[member] = new List<Vector2Int>(rCells);
+
+                    List<Vector3> route;
+                    if (pipe != null)
+                    {
+                        route = GeneratePipeFreeWorldPath(member, dir, pipe, hole, entrance);
+                    }
+                    else
+                    {
+                        route = GenerateStraightFreeWorldPath(member, dir, hole, entrance);
+                    }
+
+                    member.StartSmoothMovement(route, hole, entrance);
                 }
             }
 
@@ -1480,7 +1758,7 @@ public class BoardManager : MonoBehaviour
     /// </summary>
     public bool IsPathClearForQueue(AntQueueController queue)
     {
-        if (queue == null) return false;
+        if (queue == null || queue.IsDormantStacked || dormantStackedQueues.Contains(queue)) return false;
 
         if (!useAutomaticPathfinding)
         {
@@ -1488,7 +1766,7 @@ public class BoardManager : MonoBehaviour
             var pendingReservations = new Dictionary<HoleController, int>();
             foreach (var member in group)
             {
-                if (member == null) return false;
+                if (member == null || member.IsLocked || member.IsDormantStacked) return false;
                 if (!ValidateForwardMove(member, group, pendingReservations, out _, out var targetHole, out _, out _))
                 {
                     return false;
@@ -1572,6 +1850,35 @@ public class BoardManager : MonoBehaviour
             movingQueues.Remove(queue);
             Debug.Log($"[QueueMoveCompleted] Queue={queue.QueueId} MovingQueues={movingQueues.Count}");
 
+            // Release reserved route cells
+            if (queueReservedRouteCells.TryGetValue(queue, out var rCells))
+            {
+                foreach (var c in rCells)
+                {
+                    reservedRouteCells.Remove(c);
+                }
+                queueReservedRouteCells.Remove(queue);
+            }
+
+            // Pipe usage decrement
+            if (queue.TraversedPipe != null)
+            {
+                queue.TraversedPipe.ConsumeUse();
+                queue.TraversedPipe.IsPipeInUse = false;
+                queue.TraversedPipe = null;
+            }
+
+            // Lock decrement:
+            // A counter decreases only after a complete queue reaches its matching hole.
+            // (A linked pair has 2 queues, so completing both queues decrements active locks by 2).
+            foreach (var q in activeQueues)
+            {
+                if (q != null && q.IsLocked)
+                {
+                    q.DecrementLock(1);
+                }
+            }
+
             bool wasActive = activeQueues.Contains(queue);
             if (wasActive)
             {
@@ -1621,6 +1928,19 @@ public class BoardManager : MonoBehaviour
         {
             queue.ReleaseReservedHole();
             movingQueues.Remove(queue);
+            if (queueReservedRouteCells.TryGetValue(queue, out var rCells))
+            {
+                foreach (var c in rCells)
+                {
+                    reservedRouteCells.Remove(c);
+                }
+                queueReservedRouteCells.Remove(queue);
+            }
+            if (queue.TraversedPipe != null)
+            {
+                queue.TraversedPipe.IsPipeInUse = false;
+                queue.TraversedPipe = null;
+            }
             Debug.Log($"[QueueMoveStoppedEarly] Queue={queue.QueueId} MovingQueues={movingQueues.Count}");
         }
     }
@@ -1745,6 +2065,29 @@ public class BoardManager : MonoBehaviour
             }
         }
         activeQueues.Clear();
+
+        foreach (var p in activePipes)
+        {
+            if (p != null)
+            {
+                p.transform.DOKill();
+                SafeDestroy(p.gameObject);
+            }
+        }
+        activePipes.Clear();
+
+        foreach (var dq in dormantStackedQueues)
+        {
+            if (dq != null)
+            {
+                dq.transform.DOKill();
+                SafeDestroy(dq.gameObject);
+            }
+        }
+        dormantStackedQueues.Clear();
+
+        reservedRouteCells.Clear();
+        queueReservedRouteCells.Clear();
 
         for (int i = transform.childCount - 1; i >= 0; i--)
         {

@@ -108,6 +108,11 @@ public class SoundManager : MonoBehaviour
         PlayClip(blockedClip, 0.8f, 1.0f);
     }
 
+    public void PlayBlockedSound()
+    {
+        PlayBlocked();
+    }
+
     public void PlayWin()
     {
         PlayClip(winClip, 1.0f, 1.0f);
