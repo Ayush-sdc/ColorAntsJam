@@ -33,7 +33,7 @@ This report was produced after a complete read-only audit of the project source 
 
 ## 2. High-Level Game Description
 
-Slither Ants Jam is a 3D top-down grid-based puzzle game inspired by Color Slither Jam. The player guides colored ant caterpillar chains into matching stadium-shaped holders while navigating around obstacles and other ant bodies.
+Slither Ants Jam is a 3D top-down grid-based puzzle game inspired by Color Slither Jam. The player guides colored ant chains into matching stadium-shaped holders while navigating around obstacles and other ant bodies.
 
 - **Game Objective:** Route every ant queue into its matching color-coded holder until the board is completely cleared.
 - **Ant Units & Queues:** Each 'queue' is a slither chain of individual 3D ant models (`AntUnit.cs`) with expressive googly eyes and colored carapaces. The leader segment is at index 0 (`head`).

@@ -1,89 +1,115 @@
 # Test Results Report: Color Ants Jam
 
 **Project:** Color Ants Jam  
-**Unity Version:** `6000.3.23f1`  
-**Test Framework:** NUnit / Unity Test Framework (UTF)  
-**Date Executed:** September 30, 2026  
-**Overall Status:** **ALL TESTS PASSING (0 FAILURES, 0 REGRESSIONS)**  
+**Unity Version:** `6000.3.23f1` (URP `17.3.0`, Target: Android)  
+**Test Framework:** NUnit / Unity Test Framework (UTF EditMode/PlayMode)  
+**Test Results XML Path:** `C:/Users/ayush/AppData/LocalLow/DefaultCompany/Slither Ants Jam/TestResults.xml` (copied to [TestResults.xml](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/TestResults.xml))  
+**Console Log Output:** `Assets/Tests/Editor/MechanicsUnitTests.cs` executed via `TestRunnerApi`  
+**Execution Date:** September 30, 2026  
+**Overall Status:** **23 / 23 TESTS PASSED (0 FAILURES, 0 REGRESSIONS)**  
 
 ---
 
-## 1. Test Suite Summary
+## 1. Test Suite Execution Summary
 
-| Test Fixture | Scope / Description | Test Count | Result |
-| :--- | :--- | :---: | :---: |
-| **`LockedAntsTests`** | Movement gating, counter decrement, padlock unlock at 0, linked pair decrement by 2 | 3 | **PASS** |
-| **`StackedAntsTests`** | Dominant upper vs dormant lower layer, lower reveal upon move acceptance, independence | 2 | **PASS** |
-| **`PipeTests`** | Directional entry gating (CanEnterFrom), side/backward rejection, usage consumption & exhaustion | 2 | **PASS** |
-| **`LinkedAntsTests`** | Atomic group launch, groups > 4 support, route non-crossing verification | 1 | **PASS** |
-| **`HoleCapacityTests`** | Explicit vs inferred hole capacity accounting for stacked layers & pipes | 1 | **PASS** |
-| **`LevelJsonValidationTests`** | 45-level automated JSON deserialization, color range, grid bounds, matching holes | 1 (45 sub-levels) | **PASS** |
-| **`ValidationScriptTests`** | Standalone Python validation against cell continuity, holder schemas, and lock values | 45 | **PASS** |
+| Test Fixture | Scope / Description | Tests | Passed | Failed | Result |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **`LockedAntsIntegrationTests`** | Movement gating while locked, decrements exactly once per rescue, linked pair decrements by 2, non-rescue event rejection, zero-unlock & restart restoration | 5 | 5 | 0 | **PASS** |
+| **`LinkedAntsIntegrationTests`** | Groups of 2, 5, 6, 7 real movement execution, atomic block with zero reservations, unequal queue/route lengths, restart/interruption cleanup | 7 | 7 | 0 | **PASS** |
+| **`StackedAntsIntegrationTests`** | Blocked tap does not reveal lower layer, accepted move reveals lower layer at original footprint, lower layer blocked by departing upper layer, independent rescue with capacity and lock counter updates | 4 | 4 | 0 | **PASS** |
+| **`PipeIntegrationTests`** | Straight and bent pipe trajectory generation, directional entry gating (entrance & direction only), concurrent queue reservation rejection (exceeding uses), consumption & exhaustion | 4 | 4 | 0 | **PASS** |
+| **`HoleCapacityAndLevelDataTests`**| Multi-hole color-grouped capacity allocation satisfying all queues including stacked, JSON round-trip preserving compatibility keys (`snakes`) and ordered cells, hard-level overlay metadata | 3 | 3 | 0 | **PASS** |
+| **`validate_all_levels.py`** | Standalone validator for structural integrity, cell continuity, valid colors, and capacity sufficiency across all 45 levels | 45 | 45 | 0 | **PASS** |
 
-**Total Test Fixtures:** 7  
-**Total Validated Checks:** 55  
-**Pass Rate:** **100%**  
-
----
-
-## 2. Unit Test Descriptions & Verification Criteria
-
-### `LockedAntsTests`
-1. **`LockedQueue_BlocksMovement_WhenCounterGreaterThanZero`**:
-   - Creates an `AntQueueController` with `IsLocked = true` and `LockAmount = 3`.
-   - Confirms `TryStartMove()` returns `false` and ant cannot slither.
-2. **`DecrementLock_ReducesCounter_AndUnlocksAtZero`**:
-   - Calls `DecrementLock(1)` on a locked queue with counter 2. Counter becomes 1, queue remains locked.
-   - Calls `DecrementLock(1)` again. Counter becomes 0, `IsLocked` transitions to `false`.
-3. **`LinkedPairCompletion_DecrementsActiveLocksByTwo`**:
-   - Verifies that two completions (as produced by a linked pair of 2 queues) reduce active lock counters by 2.
-
-### `StackedAntsTests`
-1. **`StackedAnts_DominantUpperColor_AndDormantLowerColor`**:
-   - Verifies upper queue has `ColorID = 2`, `SecondColor = 8`.
-   - Lower queue is marked `isDormantStacked = true` and initialized inactive.
-2. **`StackedAnts_RevealLowerLayer_BecomesIndependentQueue`**:
-   - Simulates upper layer move acceptance.
-   - Calls `RevealFromStack()`. Verifies lower layer activates, `IsDormantStacked` becomes `false`, and retains its body coordinates and color.
-
-### `PipeTests`
-1. **`Pipe_DirectionalEntryGating_RejectsSideAndBackwardEntry`**:
-   - Sets up a horizontal pipe from `(4, 2)` to `(7, 2)` with `EntryDirection = Vector2Int.right`.
-   - Validates that entry at `(4, 2)` with `Vector2Int.right` returns `true`.
-   - Validates that backward entry at `(7, 2)` with `Vector2Int.left` returns `false`.
-   - Validates that side entries at `(5, 2)` or `(4, 2)` moving vertically return `false`.
-2. **`Pipe_UsageConversionAndDecrement`**:
-   - Verifies `PipeCount = 2` sets `RemainingUses = 2`.
-   - Consumes uses one-by-one and confirms `IsExhausted` becomes `true` only when uses reach 0.
-
-### `LinkedAntsTests`
-1. **`LinkedGroups_SupportGroupsLargerThanFour`**:
-   - Verifies a group of 5 linked ant queues can be formed, grouped, and executed together when no other queues are moving.
-
-### `LevelJsonValidationTests`
-1. **`All45Levels_HaveValidGridAndMatchingHoles`**:
-   - Iterates through all 45 `.json` files.
-   - Validates deserialization, grid dimensions, queue counts, and guarantees that every single queue and stacked layer has a color-matched hole.
+**Total Automated Integration Tests:** 23  
+**Total Passed:** 23  
+**Total Failed:** 0  
+**Inconclusive / Skipped:** 0  
 
 ---
 
-## 3. Play Mode & Target Level Smoke Test Log
+## 2. Detailed Test Breakdown
 
-| Target Level | Mechanics Exercised | Smoke Test Observations | Status |
-| :--- | :--- | :--- | :---: |
-| **Level 1** | Normal Ant Queues | Simple straight routes; ant slithering smooth; holes swallowed cleanly; win screen triggered. | **VERIFIED** |
-| **Level 7** | Normal Large Queues | 28 queues; board construction instant; dot grid aligned; path collision check valid. | **VERIFIED** |
-| **Level 15** | Stacked Ants | 4 stacked pairs; dominant layer moves first; lower layer revealed on move; both layers cleared. | **VERIFIED** |
-| **Level 21** | Directional Pipes | 4 glossy blue pipes; directional entry enforced; straight bypass blocked; counter decrements to exhaustion. | **VERIFIED** |
-| **Level 28** | Large Linked Groups | Atomic launch of linked pairs; rope visual connects leaders; group non-crossing validated. | **VERIFIED** |
-| **Levels 30–33** | Many Locks | Padlock badges render with legible counters; companion rescues decrement locks; queues unlock at 0. | **VERIFIED** |
-| **Levels 37 & 40** | Mixed Mechanics | Interoperability of locks, stacked layers, pipes, and ropes; flawless state tracking. | **VERIFIED** |
-| **Level 45** | Worst-Case Stress | 150 queues, 4 pipes, 22 holes. 60 FPS maintained; zero memory leaks or unmanaged clones. | **VERIFIED** |
+### A. Locked Ants Integration Tests (`LockedAntsIntegrationTests`)
+- **`LockedQueue_CannotMove_WhileLocked`** [PASS]:
+  Queue initialized with `IsLocked = true` and `LockAmount = 2`. Calling `BoardManager.TryStartMove(lockedQueue)` returns `false`. Queue stays stationary (`IsMoving == false`).
+- **`LockCounter_DecrementsExactlyOncePerCompletedRescue`** [PASS]:
+  Active locked queue initialized with counter 3. Completing a single unlocked queue via `BoardManager.OnQueueCompleted(queue)` decrements counter to exactly 2.
+- **`RescuedLinkedPair_DecrementsCountersByTwo`** [PASS]:
+  Active locked queue initialized with counter 4. Completing both queues of a linked pair via `BoardManager.OnQueueCompleted` decrements counter to exactly 2 (decrement of 2).
+- **`NonRescueEvents_DoNotDecrementLockCounter`** [PASS]:
+  Asserts that blocked taps, moves in progress, stopped early / canceled moves (`OnQueueMoveStoppedEarly`), and duplicate `OnQueueCompleted` callbacks DO NOT decrement active lock counters.
+- **`Lock_UnlocksAtZero_AndRestoresOnRestart`** [PASS]:
+  Queue unlocks (`IsLocked == false`) immediately when counter reaches 0. Re-initializing data upon level restart restores original configured counter and locked state.
+
+### B. Linked Ants Integration Tests (`LinkedAntsIntegrationTests`)
+- **`LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7`** [PASS]:
+  Parameterized test exercising real groups of 2, 5, 6, and 7 queues on `BoardManager`. Verifies all members start simultaneously (`IsMoving == true`), follow their trajectories, and complete cleanly.
+- **`LinkedGroup_AtomicBlock_StaysStationaryWithoutReservations`** [PASS]:
+  5-queue linked group where member 3 has an obstacle queue blocking its path. Move attempt is rejected (`false`); all 5 queues stay stationary; 0 route cells are reserved; 0 hole slots are reserved.
+- **`LinkedGroup_SimultaneousMovement_UnequalQueueAndRouteLengths`** [PASS]:
+  Linked group with unequal queue lengths (length 2 vs length 4) and unequal route lengths (distance 4 vs distance 8). Validated and launched; both move simultaneously towards their destinations.
+- **`LinkedGroup_CleanupOnRestartAndInterruption`** [PASS]:
+  Verifies that `BoardManager.ClearBoard()` during active linked group movement cleanly removes moving queues, clears reserved route cells, and releases all reservations.
+
+### C. Stacked Ants Integration Tests (`StackedAntsIntegrationTests`)
+- **`StackedQueues_BlockedAttempt_DoesNotRevealLowerLayer`** [PASS]:
+  Upper layer attempt blocked by missing hole. Upper queue stays stationary; lower layer remains dormant and inactive (`isDormantStacked == true`, `gameObject.activeSelf == false`).
+- **`StackedQueues_AcceptedUpperMove_RevealsLowerLayerAtOriginalFootprint`** [PASS]:
+  Upper layer move accepted. Upper queue starts moving; lower layer is immediately revealed (`isDormantStacked == false`, `gameObject.activeSelf == true`) at its exact original footprint cells.
+- **`StackedQueues_LowerLayer_CannotMoveThroughDepartingUpperLayer`** [PASS]:
+  While upper layer is departing along corridor, revealed lower layer attempts to move through the same corridor. Movement rejected (`ReservedByMovingRoute` / `OccupiedByMovingQueue`).
+- **`StackedQueues_RescueEachLayerIndependently_ColorCapacityAndLocks`** [PASS]:
+  Upper layer (Color A) enters Hole A, consuming Hole A capacity and decrementing active lock by 1. Lower layer (Color B) enters Hole B, consuming Hole B capacity and decrementing active lock to 0.
+
+### D. Pipe Integration Tests (`PipeIntegrationTests`)
+- **`Pipe_StraightAndBentPipe_PathGenerationAndFollowers`** [PASS]:
+  Verifies entrance, interior cells, and exit for both straight pipes and bent (L-shaped) pipes.
+- **`Pipe_DirectionalEntryRules_RejectsSideAndBackwardEntry`** [PASS]:
+  Verifies entry is permitted only at `EntranceCell` in `EntryDirection`. Rejects backward entry at exit and side entry at intermediate cells.
+- **`Pipe_PreventsConcurrentQueues_ExceedingRemainingUses`** [PASS]:
+  Pipe with 1 remaining use. Two queues in a linked group both attempt to route through the pipe. First queue validates; second queue is rejected with `BlockedByPipeObstacle`.
+- **`Pipe_ReservationsConsumptionAndExhaustion`** [PASS]:
+  Pipe with 2 uses. Consuming 2 uses exhausts pipe (`IsExhausted == true`, `RemainingUses == 0`).
+
+### E. Hole Capacity & Level Data Tests (`HoleCapacityAndLevelDataTests`)
+- **`HoleCapacity_ColorGroupedAllocation_SatisfiesAllQueuesIncludingStacked`** [PASS]:
+  Tests multi-hole distribution on Level 15 (10 queues + 4 stacked = 14 rescues, 4 holes). Confirms total color capacity satisfies all required queues.
+- **`JsonRoundTrip_PreservesAllMechanicsFieldsAndCellOrder`** [PASS]:
+  Round-trips level data through JSON serialization/deserialization. Confirms exact preservation of compatibility key `snakes`, ordered `Cells`, `IsConnected`, `ConnectedIndex`, `IsSecondColor`, `SecondColor`, `PipeCount`, `IsLocked`, `LockAmount`.
+- **`LevelMetadata_HardLevelOverlays_DoNotAppearOnNormalLevels`** [PASS]:
+  Normal levels (`LevelDifficulty = 0`, `showHardIntro = false`) do NOT show hard overlay. Hard levels (`LevelDifficulty >= 2`) show hard overlay.
 
 ---
 
-## 4. UI & Flow Smoke Tests
-- **Hard Level Overlay:** Level 10, 14, 19, 23, 25, 29, 34, 39, 42, 45 trigger modal with "HARD LEVEL!" badge. Timer and input paused until "START" tap.
-- **Settings Modal:** Pauses game state and timer on open; resumes on close.
-- **Restart Level:** Purges runtime pipes, locks, dormant queues, and reservations cleanly. ScriptableObject asset unmodified on disk.
-- **Touch Input:** Canceled touches ignored; tap on ant triggers move; drag pans camera.
+## 3. Categorized Verification Status
+
+### Implemented
+- Ant lock badges with 3D padlock mesh and dynamic TextMeshPro counter.
+- Procedural 3D tube pipe controller with entrance gating, bent/straight trajectories, usage reservations, and exhaustion.
+- Stacked queue second color support with dormant layer reveal upon accepted move.
+- Atomic linked group validation, simultaneous launch, and parallel rope visuals.
+- Color-grouped hole capacity allocation algorithm in `ReferenceLevelRuntimeAdapter.cs`.
+- Duplicate rescue guard and pipe reservation tracking in `BoardManager.cs`.
+- Hard-level overlay gating based on `LevelDifficulty >= 2` or `ShowHardIntro`.
+- Complete JSON importer and exporter with reference schema compatibility.
+
+### Verified by Automated Tests
+- All 23 integration and unit tests in `Assets/Tests/Editor/MechanicsUnitTests.cs`.
+- Structural integrity, cell continuity, valid colors, and capacity sufficiency across all 45 levels via `validate_all_levels.py`.
+- JSON round-trip serialization preserving all mechanics fields and ordered cell sequences.
+
+### Verified Manually (In Editor PlayMode)
+- Interactive touch/click controls, camera drag panning, and zoom on Levels 1, 2, and 4.
+- Normal ant queue free-floor slithering, follower trail tracing, and swallow pit animation.
+- Hole completion effect, sound effects, and multi-cell footprint release.
+- Win panel appearance upon board clearing.
+
+### Assumed Reference Behavior (Documented Assumptions)
+- **Pipe Usage Count:** The raw field `PipeCount` in reference JSON is treated as the number of available traversals (`RemainingUses`).
+- **Pipe Entrance Direction:** Ants are permitted to enter pipes only at `Cells[0]` traveling in direction `Cells[1] - Cells[0]`. Reference game reverse-entry or multi-directional entry is unconfirmed from footage.
+- **Lock Decrement Rule:** Rescuing a single queue decrements all active locked queues by 1. Rescuing a linked pair decrements by 2.
+
+### Unverified or Failing
+- **Android Physical Hardware Performance:** Unverified. No physical Android device connected. Profiling conducted in Unity 6 Windows Editor.
+- **End-to-End Solvability of All 45 Levels:** Structural validation and capacity sufficiency pass, but full win-state playthrough has only been completed on Levels 1, 2, and 4. Levels 5–45 are not claimed fully solvable until verified by PlayMode simulation or manual playthrough.

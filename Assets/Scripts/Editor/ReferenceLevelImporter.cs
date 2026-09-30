@@ -132,7 +132,8 @@ public static class ReferenceLevelImporter
                 rawData.MaxCapacity,
                 rawData.DisabledGridCells,
                 cellInfoList,
-                queueList
+                queueList,
+                difficultyInt: rawData.LevelDifficulty
             );
 
             if (isNew)

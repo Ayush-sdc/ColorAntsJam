@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="23" result="Passed" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:01Z" duration="1.1506056">
+  <test-suite type="TestSuite" id="1041" name="Slither Ants Jam" fullname="Slither Ants Jam" runstate="Runnable" testcasecount="23" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:01Z" duration="1.150606" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1030" name="SlitherAnts.Tests.Editor.dll" fullname="C:/Users/ayush/Desktop/Unity Projects/Slither Ants Jam/Library/ScriptAssemblies/SlitherAnts.Tests.Editor.dll" runstate="Runnable" testcasecount="23" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:01Z" duration="1.041798" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="23416" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1031" name="AntsJam" fullname="AntsJam" runstate="Runnable" testcasecount="23" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:01Z" duration="0.930651" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1032" name="Tests" fullname="AntsJam.Tests" runstate="Runnable" testcasecount="23" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:01Z" duration="0.822875" total="23" passed="23" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1026" name="HoleCapacityAndLevelDataTests" fullname="AntsJam.Tests.HoleCapacityAndLevelDataTests" classname="AntsJam.Tests.HoleCapacityAndLevelDataTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:00Z" duration="0.126875" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1027" name="HoleCapacity_ColorGroupedAllocation_SatisfiesAllQueuesIncludingStacked" fullname="AntsJam.Tests.HoleCapacityAndLevelDataTests.HoleCapacity_ColorGroupedAllocation_SatisfiesAllQueuesIncludingStacked" methodname="HoleCapacity_ColorGroupedAllocation_SatisfiesAllQueuesIncludingStacked" classname="AntsJam.Tests.HoleCapacityAndLevelDataTests" runstate="Runnable" seed="29603928" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:00Z" duration="0.009774" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[HoleCapacity] Level 15 Hole ColorID 5: Inferred capacity 4 from 4 expected queues.
+[HoleCapacity] Level 15 Hole ColorID 0: Inferred capacity 2 from 2 expected queues.
+[HoleCapacity] Level 15 Hole ColorID 7: Inferred capacity 4 from 4 expected queues.
+[HoleCapacity] Level 15 Hole ColorID 11: Inferred capacity 4 from 4 expected queues.
+[TEST PASSED] HoleCapacity_ColorGroupedAllocation_SatisfiesAllQueuesIncludingStacked
+[TEST PASSED] HoleCapacity_ColorGroupedAllocation_SatisfiesAllQueuesIncludingStacked
+]]></output>
+            </test-case>
+            <test-case id="1028" name="JsonRoundTrip_PreservesAllMechanicsFieldsAndCellOrder" fullname="AntsJam.Tests.HoleCapacityAndLevelDataTests.JsonRoundTrip_PreservesAllMechanicsFieldsAndCellOrder" methodname="JsonRoundTrip_PreservesAllMechanicsFieldsAndCellOrder" classname="AntsJam.Tests.HoleCapacityAndLevelDataTests" runstate="Runnable" seed="675383632" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:00Z" duration="0.000589" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[TEST PASSED] JsonRoundTrip_PreservesAllMechanicsFieldsAndCellOrder
+[TEST PASSED] JsonRoundTrip_PreservesAllMechanicsFieldsAndCellOrder
+]]></output>
+            </test-case>
+            <test-case id="1029" name="LevelMetadata_HardLevelOverlays_DoNotAppearOnNormalLevels" fullname="AntsJam.Tests.HoleCapacityAndLevelDataTests.LevelMetadata_HardLevelOverlays_DoNotAppearOnNormalLevels" methodname="LevelMetadata_HardLevelOverlays_DoNotAppearOnNormalLevels" classname="AntsJam.Tests.HoleCapacityAndLevelDataTests" runstate="Runnable" seed="1310314442" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:00Z" duration="0.000528" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[TEST PASSED] LevelMetadata_HardLevelOverlays_DoNotAppearOnNormalLevels
+[TEST PASSED] LevelMetadata_HardLevelOverlays_DoNotAppearOnNormalLevels
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1007" name="LinkedAntsIntegrationTests" fullname="AntsJam.Tests.LinkedAntsIntegrationTests" classname="AntsJam.Tests.LinkedAntsIntegrationTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:01Z" duration="0.317118" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1013" name="LinkedGroup_AtomicBlock_StaysStationaryWithoutReservations" fullname="AntsJam.Tests.LinkedAntsIntegrationTests.LinkedGroup_AtomicBlock_StaysStationaryWithoutReservations" methodname="LinkedGroup_AtomicBlock_StaysStationaryWithoutReservations" classname="AntsJam.Tests.LinkedAntsIntegrationTests" runstate="Runnable" seed="208302998" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:00Z" duration="0.020167" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[ForwardMoveBlocked] Queue=Q_200_2 Reason=OccupiedByStationaryQueue PathfindingFallback=False
+[TEST PASSED] LinkedGroup_AtomicBlock_StaysStationaryWithoutReservations
+[TEST PASSED] LinkedGroup_AtomicBlock_StaysStationaryWithoutReservations
+]]></output>
+            </test-case>
+            <test-case id="1015" name="LinkedGroup_CleanupOnRestartAndInterruption" fullname="AntsJam.Tests.LinkedAntsIntegrationTests.LinkedGroup_CleanupOnRestartAndInterruption" methodname="LinkedGroup_CleanupOnRestartAndInterruption" classname="AntsJam.Tests.LinkedAntsIntegrationTests" runstate="Runnable" seed="372037698" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:00Z" duration="0.022568" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservationReleased] Color=SkyBlue Remaining=1 ReservedQueues=0 Reservations=0 Available=1
+[HolderReservationReleased] Color=SkyBlue Remaining=1 ReservedQueues=0 Reservations=0 Available=1
+[HolderReservationReleased] Color=SkyBlue Remaining=1 ReservedQueues=0 Reservations=0 Available=1
+[TEST PASSED] LinkedGroup_CleanupOnRestartAndInterruption
+[TEST PASSED] LinkedGroup_CleanupOnRestartAndInterruption
+]]></output>
+            </test-case>
+            <test-case id="1014" name="LinkedGroup_SimultaneousMovement_UnequalQueueAndRouteLengths" fullname="AntsJam.Tests.LinkedAntsIntegrationTests.LinkedGroup_SimultaneousMovement_UnequalQueueAndRouteLengths" methodname="LinkedGroup_SimultaneousMovement_UnequalQueueAndRouteLengths" classname="AntsJam.Tests.LinkedAntsIntegrationTests" runstate="Runnable" seed="1785649628" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:00Z" duration="0.015541" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[QueueMoveCompleted] Queue=Q1 MovingQueues=1
+[QueueMoveCompleted] Queue=Q2 MovingQueues=0
+[TEST PASSED] LinkedGroup_SimultaneousMovement_UnequalQueueAndRouteLengths
+[TEST PASSED] LinkedGroup_SimultaneousMovement_UnequalQueueAndRouteLengths
+]]></output>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1012" name="LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7" fullname="AntsJam.Tests.LinkedAntsIntegrationTests.LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7" classname="AntsJam.Tests.LinkedAntsIntegrationTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:01Z" duration="0.158871" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1008" name="LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(2)" fullname="AntsJam.Tests.LinkedAntsIntegrationTests.LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(2)" methodname="LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7" classname="AntsJam.Tests.LinkedAntsIntegrationTests" runstate="Runnable" seed="774851578" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:00Z" duration="0.011315" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[QueueMoveCompleted] Queue=Q_102_0 MovingQueues=1
+[QueueMoveCompleted] Queue=Q_102_1 MovingQueues=0
+[TEST PASSED] LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(2)
+[TEST PASSED] LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(2)
+]]></output>
+              </test-case>
+              <test-case id="1009" name="LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(5)" fullname="AntsJam.Tests.LinkedAntsIntegrationTests.LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(5)" methodname="LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7" classname="AntsJam.Tests.LinkedAntsIntegrationTests" runstate="Runnable" seed="620993629" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:00Z" duration="0.038627" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[QueueMoveCompleted] Queue=Q_105_0 MovingQueues=4
+[QueueMoveCompleted] Queue=Q_105_1 MovingQueues=3
+[QueueMoveCompleted] Queue=Q_105_2 MovingQueues=2
+[QueueMoveCompleted] Queue=Q_105_3 MovingQueues=1
+[QueueMoveCompleted] Queue=Q_105_4 MovingQueues=0
+[TEST PASSED] LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(5)
+[TEST PASSED] LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(5)
+]]></output>
+              </test-case>
+              <test-case id="1010" name="LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(6)" fullname="AntsJam.Tests.LinkedAntsIntegrationTests.LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(6)" methodname="LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7" classname="AntsJam.Tests.LinkedAntsIntegrationTests" runstate="Runnable" seed="301408461" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:00Z" duration="0.026027" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[QueueMoveCompleted] Queue=Q_106_0 MovingQueues=5
+[QueueMoveCompleted] Queue=Q_106_1 MovingQueues=4
+[QueueMoveCompleted] Queue=Q_106_2 MovingQueues=3
+[QueueMoveCompleted] Queue=Q_106_3 MovingQueues=2
+[QueueMoveCompleted] Queue=Q_106_4 MovingQueues=1
+[QueueMoveCompleted] Queue=Q_106_5 MovingQueues=0
+[TEST PASSED] LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(6)
+[TEST PASSED] LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(6)
+]]></output>
+              </test-case>
+              <test-case id="1011" name="LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(7)" fullname="AntsJam.Tests.LinkedAntsIntegrationTests.LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(7)" methodname="LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7" classname="AntsJam.Tests.LinkedAntsIntegrationTests" runstate="Runnable" seed="1036558466" result="Passed" start-time="2026-09-30 03:41:00Z" end-time="2026-09-30 03:41:01Z" duration="0.032448" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservation] Color=SkyBlue Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[QueueMoveCompleted] Queue=Q_107_0 MovingQueues=6
+[QueueMoveCompleted] Queue=Q_107_1 MovingQueues=5
+[QueueMoveCompleted] Queue=Q_107_2 MovingQueues=4
+[QueueMoveCompleted] Queue=Q_107_3 MovingQueues=3
+[QueueMoveCompleted] Queue=Q_107_4 MovingQueues=2
+[QueueMoveCompleted] Queue=Q_107_5 MovingQueues=1
+[QueueMoveCompleted] Queue=Q_107_6 MovingQueues=0
+[TEST PASSED] LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(7)
+[TEST PASSED] LinkedGroups_ExecuteRealSimultaneousMovement_Groups2_5_6_7(7)
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+          <test-suite type="TestFixture" id="1001" name="LockedAntsIntegrationTests" fullname="AntsJam.Tests.LockedAntsIntegrationTests" classname="AntsJam.Tests.LockedAntsIntegrationTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.050963" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1006" name="Lock_UnlocksAtZero_AndRestoresOnRestart" fullname="AntsJam.Tests.LockedAntsIntegrationTests.Lock_UnlocksAtZero_AndRestoresOnRestart" methodname="Lock_UnlocksAtZero_AndRestoresOnRestart" classname="AntsJam.Tests.LockedAntsIntegrationTests" runstate="Runnable" seed="2065182060" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.010120" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[QueueMoveCompleted] Queue=RescueQ MovingQueues=0
+[AntQueueController] Queue LockedQ UNLOCKED!
+[TEST PASSED] Lock_UnlocksAtZero_AndRestoresOnRestart
+[TEST PASSED] Lock_UnlocksAtZero_AndRestoresOnRestart
+]]></output>
+            </test-case>
+            <test-case id="1003" name="LockCounter_DecrementsExactlyOncePerCompletedRescue" fullname="AntsJam.Tests.LockedAntsIntegrationTests.LockCounter_DecrementsExactlyOncePerCompletedRescue" methodname="LockCounter_DecrementsExactlyOncePerCompletedRescue" classname="AntsJam.Tests.LockedAntsIntegrationTests" runstate="Runnable" seed="16989249" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.005654" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[QueueMoveCompleted] Queue=NormalQ MovingQueues=0
+[TEST PASSED] LockCounter_DecrementsExactlyOncePerCompletedRescue
+[TEST PASSED] LockCounter_DecrementsExactlyOncePerCompletedRescue
+]]></output>
+            </test-case>
+            <test-case id="1002" name="LockedQueue_CannotMove_WhileLocked" fullname="AntsJam.Tests.LockedAntsIntegrationTests.LockedQueue_CannotMove_WhileLocked" methodname="LockedQueue_CannotMove_WhileLocked" classname="AntsJam.Tests.LockedAntsIntegrationTests" runstate="Runnable" seed="1273611899" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.004944" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[TEST PASSED] LockedQueue_CannotMove_WhileLocked
+[TEST PASSED] LockedQueue_CannotMove_WhileLocked
+]]></output>
+            </test-case>
+            <test-case id="1005" name="NonRescueEvents_DoNotDecrementLockCounter" fullname="AntsJam.Tests.LockedAntsIntegrationTests.NonRescueEvents_DoNotDecrementLockCounter" methodname="NonRescueEvents_DoNotDecrementLockCounter" classname="AntsJam.Tests.LockedAntsIntegrationTests" runstate="Runnable" seed="1246045007" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.010273" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[ForwardMoveBlocked] Queue=BlockedQ Reason=OutOfBoundsNoHolder PathfindingFallback=False
+[QueueMoveStoppedEarly] Queue=MovableQ MovingQueues=0
+[QueueMoveCompleted] Queue=MovableQ MovingQueues=0
+[TEST PASSED] NonRescueEvents_DoNotDecrementLockCounter
+[TEST PASSED] NonRescueEvents_DoNotDecrementLockCounter
+]]></output>
+            </test-case>
+            <test-case id="1004" name="RescuedLinkedPair_DecrementsCountersByTwo" fullname="AntsJam.Tests.LockedAntsIntegrationTests.RescuedLinkedPair_DecrementsCountersByTwo" methodname="RescuedLinkedPair_DecrementsCountersByTwo" classname="AntsJam.Tests.LockedAntsIntegrationTests" runstate="Runnable" seed="376796062" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.009141" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[QueueMoveCompleted] Queue=Pair1 MovingQueues=0
+[QueueMoveCompleted] Queue=Pair2 MovingQueues=0
+[TEST PASSED] RescuedLinkedPair_DecrementsCountersByTwo
+[TEST PASSED] RescuedLinkedPair_DecrementsCountersByTwo
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1021" name="PipeIntegrationTests" fullname="AntsJam.Tests.PipeIntegrationTests" classname="AntsJam.Tests.PipeIntegrationTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.080864" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1023" name="Pipe_DirectionalEntryRules_RejectsSideAndBackwardEntry" fullname="AntsJam.Tests.PipeIntegrationTests.Pipe_DirectionalEntryRules_RejectsSideAndBackwardEntry" methodname="Pipe_DirectionalEntryRules_RejectsSideAndBackwardEntry" classname="AntsJam.Tests.PipeIntegrationTests" runstate="Runnable" seed="1073210969" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.002419" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[TEST PASSED] Pipe_DirectionalEntryRules_RejectsSideAndBackwardEntry
+[TEST PASSED] Pipe_DirectionalEntryRules_RejectsSideAndBackwardEntry
+]]></output>
+            </test-case>
+            <test-case id="1024" name="Pipe_PreventsConcurrentQueues_ExceedingRemainingUses" fullname="AntsJam.Tests.PipeIntegrationTests.Pipe_PreventsConcurrentQueues_ExceedingRemainingUses" methodname="Pipe_PreventsConcurrentQueues_ExceedingRemainingUses" classname="AntsJam.Tests.PipeIntegrationTests" runstate="Runnable" seed="470411734" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.007605" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[TEST PASSED] Pipe_PreventsConcurrentQueues_ExceedingRemainingUses
+[TEST PASSED] Pipe_PreventsConcurrentQueues_ExceedingRemainingUses
+]]></output>
+            </test-case>
+            <test-case id="1025" name="Pipe_ReservationsConsumptionAndExhaustion" fullname="AntsJam.Tests.PipeIntegrationTests.Pipe_ReservationsConsumptionAndExhaustion" methodname="Pipe_ReservationsConsumptionAndExhaustion" classname="AntsJam.Tests.PipeIntegrationTests" runstate="Runnable" seed="1698134509" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.003156" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[TEST PASSED] Pipe_ReservationsConsumptionAndExhaustion
+[TEST PASSED] Pipe_ReservationsConsumptionAndExhaustion
+]]></output>
+            </test-case>
+            <test-case id="1022" name="Pipe_StraightAndBentPipe_PathGenerationAndFollowers" fullname="AntsJam.Tests.PipeIntegrationTests.Pipe_StraightAndBentPipe_PathGenerationAndFollowers" methodname="Pipe_StraightAndBentPipe_PathGenerationAndFollowers" classname="AntsJam.Tests.PipeIntegrationTests" runstate="Runnable" seed="1280342996" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.004658" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[TEST PASSED] Pipe_StraightAndBentPipe_PathGenerationAndFollowers
+[TEST PASSED] Pipe_StraightAndBentPipe_PathGenerationAndFollowers
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1016" name="StackedAntsIntegrationTests" fullname="AntsJam.Tests.StackedAntsIntegrationTests" classname="AntsJam.Tests.StackedAntsIntegrationTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.135802" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1018" name="StackedQueues_AcceptedUpperMove_RevealsLowerLayerAtOriginalFootprint" fullname="AntsJam.Tests.StackedAntsIntegrationTests.StackedQueues_AcceptedUpperMove_RevealsLowerLayerAtOriginalFootprint" methodname="StackedQueues_AcceptedUpperMove_RevealsLowerLayerAtOriginalFootprint" classname="AntsJam.Tests.StackedAntsIntegrationTests" runstate="Runnable" seed="1505205543" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.011095" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[HolderReservation] Color=Yellow Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[HolderReservationReleased] Color=Yellow Remaining=1 ReservedQueues=0 Reservations=0 Available=1
+[TEST PASSED] StackedQueues_AcceptedUpperMove_RevealsLowerLayerAtOriginalFootprint
+[TEST PASSED] StackedQueues_AcceptedUpperMove_RevealsLowerLayerAtOriginalFootprint
+]]></output>
+            </test-case>
+            <test-case id="1017" name="StackedQueues_BlockedAttempt_DoesNotRevealLowerLayer" fullname="AntsJam.Tests.StackedAntsIntegrationTests.StackedQueues_BlockedAttempt_DoesNotRevealLowerLayer" methodname="StackedQueues_BlockedAttempt_DoesNotRevealLowerLayer" classname="AntsJam.Tests.StackedAntsIntegrationTests" runstate="Runnable" seed="21936781" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.007578" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[ForwardMoveBlocked] Queue=UpperQ Reason=OutOfBoundsNoHolder PathfindingFallback=False
+[TEST PASSED] StackedQueues_BlockedAttempt_DoesNotRevealLowerLayer
+[TEST PASSED] StackedQueues_BlockedAttempt_DoesNotRevealLowerLayer
+]]></output>
+            </test-case>
+            <test-case id="1019" name="StackedQueues_LowerLayer_CannotMoveThroughDepartingUpperLayer" fullname="AntsJam.Tests.StackedAntsIntegrationTests.StackedQueues_LowerLayer_CannotMoveThroughDepartingUpperLayer" methodname="StackedQueues_LowerLayer_CannotMoveThroughDepartingUpperLayer" classname="AntsJam.Tests.StackedAntsIntegrationTests" runstate="Runnable" seed="457584102" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.013267" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[HolderReservation] Color=Yellow Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[ForwardMoveBlocked] Queue=LowerQ Reason=ReservedByMovingRoute PathfindingFallback=False
+[HolderReservationReleased] Color=Yellow Remaining=1 ReservedQueues=0 Reservations=0 Available=1
+[TEST PASSED] StackedQueues_LowerLayer_CannotMoveThroughDepartingUpperLayer
+[TEST PASSED] StackedQueues_LowerLayer_CannotMoveThroughDepartingUpperLayer
+]]></output>
+            </test-case>
+            <test-case id="1020" name="StackedQueues_RescueEachLayerIndependently_ColorCapacityAndLocks" fullname="AntsJam.Tests.StackedAntsIntegrationTests.StackedQueues_RescueEachLayerIndependently_ColorCapacityAndLocks" methodname="StackedQueues_RescueEachLayerIndependently_ColorCapacityAndLocks" classname="AntsJam.Tests.StackedAntsIntegrationTests" runstate="Runnable" seed="290847821" result="Passed" start-time="2026-09-30 03:41:01Z" end-time="2026-09-30 03:41:01Z" duration="0.017071" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[HolderReservation] Color=Yellow Remaining=1 ReservedQueues=1 Reservations=1 Available=0
+[QueueMoveCompleted] Queue=UpperQ MovingQueues=0
+[ForwardMoveBlocked] Queue=LowerQ Reason=WrongColorHolder PathfindingFallback=False
+[QueueMoveCompleted] Queue=LowerQ MovingQueues=0
+[AntQueueController] Queue Lock UNLOCKED!
+[HoleCompleted]
+Color=Brown
+RemainingCount=0
+OccupiedCells=[(3,10)]
+ReleasedCells=1
+RemovedFromHoleMap=True
+GameObjectRemoval=True
+[TEST PASSED] StackedQueues_RescueEachLayerIndependently_ColorCapacityAndLocks
+[TEST PASSED] StackedQueues_RescueEachLayerIndependently_ColorCapacityAndLocks
+Saving results to: C:/Users/ayush/AppData/LocalLow/DefaultCompany/Slither Ants Jam\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

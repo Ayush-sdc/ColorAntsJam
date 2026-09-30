@@ -77,13 +77,39 @@ public class PipeController : MonoBehaviour
         CreateUsageBadge();
     }
 
+    [SerializeField] private int activeReservations = 0;
+    public int ActiveReservations => activeReservations;
+
+    /// <summary>
+    /// Attempts to reserve one usage slot for an ant queue traversing this pipe.
+    /// Prevents concurrent queues from exceeding the remaining capacity of the pipe.
+    /// Note: PipeCount conversion and entrance direction are reference assumptions until verified from reference footage.
+    /// </summary>
+    public bool TryReserveUse()
+    {
+        if (IsExhausted || isPipeInUse || (remainingUses - activeReservations <= 0))
+        {
+            return false;
+        }
+        activeReservations++;
+        return true;
+    }
+
+    /// <summary>
+    /// Releases a previously reserved usage slot (e.g. if move was blocked or canceled).
+    /// </summary>
+    public void ReleaseReservedUse()
+    {
+        activeReservations = Mathf.Max(0, activeReservations - 1);
+    }
+
     /// <summary>
     /// Checks whether an ant heading in forwardDir can legally enter this pipe at targetCell.
     /// Entry is only accepted at EntranceCell in EntryDirection. Side/backward entries rejected.
     /// </summary>
     public bool CanEnterFrom(Vector2Int targetCell, Vector2Int forwardDir)
     {
-        if (IsExhausted || isPipeInUse) return false;
+        if (IsExhausted || isPipeInUse || (remainingUses - activeReservations <= 0)) return false;
         return targetCell == EntranceCell && forwardDir == EntryDirection;
     }
 
@@ -101,6 +127,7 @@ public class PipeController : MonoBehaviour
     /// </summary>
     public void ConsumeUse()
     {
+        activeReservations = Mathf.Max(0, activeReservations - 1);
         if (remainingUses > 0)
         {
             remainingUses--;

@@ -12,7 +12,7 @@
 
 ## 1. Project Overview & Core Gameplay Loop
 
-**Color Ants Jam** is a top-down 3D grid puzzle game built in Unity for Android. Players tap / click colored ant queues ("caterpillar" slither chains) to route them into color-matched stadium holders around obstacles and other ant bodies.
+**Color Ants Jam** is a top-down 3D grid puzzle game built in Unity for Android. Players tap / click colored ant queues to route them into color-matched stadium holders around obstacles and other ant bodies.
 
 ### The Gameplay Loop
 1. **Board Rebuild**: [LevelManager.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/LevelSystem/LevelManager.cs) loads the selected `Level` asset on start or on level change. [BoardManager.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Board/BoardManager.cs) clears previous runtime objects, resets grid dots, instantiates stadium holders, spawns ant queues, and configures the camera framing.
@@ -84,7 +84,7 @@ The project utilizes a hybrid ScriptableObject and JSON architecture containing 
   - `2`: Obstacle / Blocked structure.
 - **`IsConnected` & `ConnectedIndex`**: Defines linked / roped ant queues that move together as an atomic unit.
 - **`IsLocked` & `LockAmount`**: Defines locked queues requiring rescue counters.
-- **`IsSecondColor` & `SecondColor`**: Defines stacked / double-layered caterpillar queues.
+- **`IsSecondColor` & `SecondColor`**: Defines stacked / double-layered ant queues.
 - **`PipeCount`**: Direction-changing pipes with limited redirect uses.
 
 ---

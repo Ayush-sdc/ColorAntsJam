@@ -137,38 +137,97 @@ public static class ReferenceLevelRuntimeAdapter
             }
         }
 
-        // Assign capacity: if explicit capacity exists, use it; otherwise infer and warn
+        // Assign capacity: group holes by ColorID so total color capacity satisfies all required queues (including stacked/piped).
+        // If explicit capacity exists in JSON, respect it and report mismatches. If inferred, distribute across holes.
+        var holesByColor = new Dictionary<int, List<RuntimeReferenceHole>>();
         foreach (var h in holes)
         {
-            bool wasInferred = false;
-            int assigned = 0;
+            if (!holesByColor.TryGetValue(h.ColorID, out var list))
+            {
+                list = new List<RuntimeReferenceHole>();
+                holesByColor[h.ColorID] = list;
+            }
+            list.Add(h);
+        }
 
-            if (h.ExplicitCapacity > 0)
+        foreach (var kvp in holesByColor)
+        {
+            int colorId = kvp.Key;
+            var colorHoles = kvp.Value;
+            int totalNeeded = matchingQueueCounts.TryGetValue(colorId, out int t) ? t : 0;
+
+            int explicitSum = 0;
+            int holesWithoutExplicit = 0;
+            foreach (var h in colorHoles)
             {
-                assigned = h.ExplicitCapacity;
+                if (h.ExplicitCapacity > 0) explicitSum += h.ExplicitCapacity;
+                else holesWithoutExplicit++;
             }
-            else if (forwardCounts.TryGetValue(h, out int count) && count > 0)
+
+            if (holesWithoutExplicit == 0)
             {
-                assigned = count;
-                wasInferred = true;
+                // All holes have explicit capacity
+                foreach (var h in colorHoles) h.Capacity = h.ExplicitCapacity;
+                if (explicitSum < totalNeeded)
+                {
+                    Debug.LogWarning($"[HoleCapacityMismatch] Level {level.LevelNumber} ColorID {colorId}: Explicit capacity sum {explicitSum} is less than required queues {totalNeeded}!");
+                }
+                continue;
             }
-            else if (matchingQueueCounts.TryGetValue(h.ColorID, out int totalCount) && totalCount > 0)
+
+            if (colorHoles.Count == 1)
             {
-                assigned = totalCount;
-                wasInferred = true;
+                var h = colorHoles[0];
+                int assigned = h.ExplicitCapacity > 0 ? h.ExplicitCapacity : Mathf.Max(1, totalNeeded);
+                h.Capacity = assigned;
+                if (h.ExplicitCapacity <= 0)
+                {
+                    Debug.LogWarning($"[HoleCapacity] Level {level.LevelNumber} Hole ColorID {h.ColorID}: Inferred capacity {assigned} from {totalNeeded} expected queues.");
+                }
             }
             else
             {
-                assigned = 1;
-                wasInferred = true;
-            }
+                // Multi-hole distribution: start with forwardCounts or 1
+                int currentAllocated = 0;
+                foreach (var h in colorHoles)
+                {
+                    if (h.ExplicitCapacity > 0)
+                    {
+                        h.Capacity = h.ExplicitCapacity;
+                    }
+                    else
+                    {
+                        int fCount = forwardCounts.TryGetValue(h, out int fc) ? fc : 0;
+                        h.Capacity = Mathf.Max(1, fCount);
+                    }
+                    currentAllocated += h.Capacity;
+                }
 
-            h.Capacity = assigned;
+                // If sum of capacities is still less than totalNeeded, distribute remaining across non-explicit holes
+                while (currentAllocated < totalNeeded)
+                {
+                    RuntimeReferenceHole bestHole = null;
+                    int minCap = int.MaxValue;
+                    foreach (var h in colorHoles)
+                    {
+                        if (h.ExplicitCapacity <= 0 && h.Capacity < minCap)
+                        {
+                            minCap = h.Capacity;
+                            bestHole = h;
+                        }
+                    }
+                    if (bestHole == null) break;
+                    bestHole.Capacity++;
+                    currentAllocated++;
+                }
 
-            if (wasInferred)
-            {
-                int exp = matchingQueueCounts.TryGetValue(h.ColorID, out int val) ? val : 0;
-                Debug.LogWarning($"[HoleCapacity] Level {level.LevelNumber} Hole ColorID {h.ColorID}: Inferred capacity {assigned} from {exp} expected queues (including stacked/piped).");
+                foreach (var h in colorHoles)
+                {
+                    if (h.ExplicitCapacity <= 0)
+                    {
+                        Debug.LogWarning($"[HoleCapacity] Level {level.LevelNumber} Multi-hole ColorID {h.ColorID}: Inferred capacity {h.Capacity} (total color needed: {totalNeeded}).");
+                    }
+                }
             }
         }
 

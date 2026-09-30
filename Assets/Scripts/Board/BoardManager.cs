@@ -8,6 +8,7 @@ public class BoardManager : MonoBehaviour
 {
     private static BoardManager instance;
     public static BoardManager Instance => instance;
+    public static void SetTestInstance(BoardManager testInstance) => instance = testInstance;
 
     [Header("Board References")]
     [SerializeField] private Transform boardParent;
@@ -38,6 +39,7 @@ public class BoardManager : MonoBehaviour
     private readonly List<AntQueueController> dormantStackedQueues = new List<AntQueueController>();
     private readonly HashSet<Vector2Int> reservedRouteCells = new HashSet<Vector2Int>();
     private readonly Dictionary<AntQueueController, List<Vector2Int>> queueReservedRouteCells = new Dictionary<AntQueueController, List<Vector2Int>>();
+    private readonly HashSet<AntQueueController> completedQueues = new HashSet<AntQueueController>();
     private readonly HashSet<string> completedHoleIds = new HashSet<string>();
     private int completedHoleCount = 0;
 
@@ -60,6 +62,14 @@ public class BoardManager : MonoBehaviour
     public bool EnableDiagnostics { get => enableDiagnostics; set => enableDiagnostics = value; }
     public bool IsTestInstance => isTestInstance;
 
+    public int ActiveMovingQueuesCount => movingQueues.Count;
+
+    public void SetGridDimensions(int w, int h)
+    {
+        width = w;
+        height = h;
+    }
+
     public void RegisterActiveQueue(AntQueueController queue)
     {
         if (queue != null)
@@ -69,6 +79,32 @@ public class BoardManager : MonoBehaviour
             {
                 activeQueues.Add(queue);
             }
+        }
+    }
+
+    public void RegisterActiveHole(HoleController hole)
+    {
+        if (hole != null)
+        {
+            if (!activeHoles.Contains(hole))
+            {
+                activeHoles.Add(hole);
+            }
+            if (hole.OccupiedCells != null)
+            {
+                foreach (var cell in hole.OccupiedCells)
+                {
+                    holesMap[cell] = hole;
+                }
+            }
+        }
+    }
+
+    public void RegisterActivePipe(PipeController pipe)
+    {
+        if (pipe != null && !activePipes.Contains(pipe))
+        {
+            activePipes.Add(pipe);
         }
     }
 
@@ -1029,7 +1065,8 @@ public class BoardManager : MonoBehaviour
         out Vector2Int entranceCell, 
         out string blockedReason,
         out PipeController traversedPipe,
-        out List<Vector2Int> routeCells)
+        out List<Vector2Int> routeCells,
+        Dictionary<PipeController, int> pendingPipeReservations = null)
     {
         forwardDir = Vector2Int.zero;
         targetHole = null;
@@ -1134,8 +1171,14 @@ public class BoardManager : MonoBehaviour
             PipeController p = GetPipeAt(curr);
             if (p != null)
             {
-                // Can only enter if entrance matches and direction matches
-                if (traversedPipe != null || !p.CanEnterFrom(curr, currentDir))
+                int pipeRes = 0;
+                if (pendingPipeReservations != null && pendingPipeReservations.TryGetValue(p, out int prCount))
+                {
+                    pipeRes = prCount;
+                }
+
+                // Can only enter if entrance matches, direction matches, and pipe has remaining unreserved uses
+                if (traversedPipe != null || !p.CanEnterFrom(curr, currentDir) || (p.RemainingUses - p.ActiveReservations - pipeRes <= 0))
                 {
                     blockedReason = "BlockedByPipeObstacle";
                     return false;
@@ -1428,13 +1471,14 @@ public class BoardManager : MonoBehaviour
             var groupPipes = new Dictionary<AntQueueController, PipeController>();
             var groupRouteCells = new Dictionary<AntQueueController, List<Vector2Int>>();
             var pendingReservations = new Dictionary<HoleController, int>();
+            var pendingPipeReservations = new Dictionary<PipeController, int>();
             bool allValid = true;
             AntQueueController firstBlockedMember = null;
             string failureReason = "";
 
             foreach (var member in group)
             {
-                if (ValidateForwardMove(member, group, pendingReservations, out var dir, out var hole, out var entrance, out var blockedReason, out var pipe, out var rCells))
+                if (ValidateForwardMove(member, group, pendingReservations, out var dir, out var hole, out var entrance, out var blockedReason, out var pipe, out var rCells, pendingPipeReservations))
                 {
                     groupDirections[member] = dir;
                     groupTargetHoles[member] = hole;
@@ -1447,6 +1491,15 @@ public class BoardManager : MonoBehaviour
                         pendingReservations[hole] = 0;
                     }
                     pendingReservations[hole]++;
+
+                    if (pipe != null)
+                    {
+                        if (!pendingPipeReservations.ContainsKey(pipe))
+                        {
+                            pendingPipeReservations[pipe] = 0;
+                        }
+                        pendingPipeReservations[pipe]++;
+                    }
                 }
                 else
                 {
@@ -1550,6 +1603,43 @@ public class BoardManager : MonoBehaviour
 
             if (!allReserved)
             {
+                for (int i = 0; i < reservedHoles.Count; i++)
+                {
+                    reservedHoles[i].ReleaseReservation(reservedMembers[i]);
+                }
+                foreach (var member in group)
+                {
+                    if (member != null) member.PlayBlockedShake();
+                }
+                return false;
+            }
+
+            // Reserve pipe uses with rollback on failure
+            List<PipeController> successfullyReservedPipes = new List<PipeController>();
+            bool pipeReservationFailed = false;
+            foreach (var member in group)
+            {
+                var pipe = groupPipes[member];
+                if (pipe != null)
+                {
+                    if (pipe.TryReserveUse())
+                    {
+                        successfullyReservedPipes.Add(pipe);
+                    }
+                    else
+                    {
+                        pipeReservationFailed = true;
+                        break;
+                    }
+                }
+            }
+
+            if (pipeReservationFailed)
+            {
+                foreach (var p in successfullyReservedPipes)
+                {
+                    p.ReleaseReservedUse();
+                }
                 for (int i = 0; i < reservedHoles.Count; i++)
                 {
                     reservedHoles[i].ReleaseReservation(reservedMembers[i]);
@@ -1845,6 +1935,9 @@ public class BoardManager : MonoBehaviour
 
     public void OnQueueCompleted(AntQueueController queue)
     {
+        if (queue == null || completedQueues.Contains(queue)) return;
+        completedQueues.Add(queue);
+
         if (queue != null)
         {
             movingQueues.Remove(queue);
@@ -2086,6 +2179,7 @@ public class BoardManager : MonoBehaviour
         }
         dormantStackedQueues.Clear();
 
+        completedQueues.Clear();
         reservedRouteCells.Clear();
         queueReservedRouteCells.Clear();
 
