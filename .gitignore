@@ -27,7 +27,6 @@ sysinfo.txt
 # Builds
 *.apk
 *.aab
-*.unitypackage
 *.app
 
 # Crashlytics generated file
@@ -63,5 +62,9 @@ Thumbs.db
 *_BACKUP*
 *.log
 *.zip
-scratch_*.py
+*.xlsx
+scratch_*
 test_parity_output.txt
+level6_queues_analysis.txt
+__pycache__/
+*.pyc

@@ -1,0 +1,46 @@
+LevelNumber,GridWidth,GridHeight,Duration,Difficulty,QueueCount,AntCount,HoleCount,ObstacleCount,LinkedQueues,LinkedGroups,LockedQueues,StackedQueues,PipeCount,DisabledCells,HoleCapacityTotal,UnreachableForwardQueues,Status,UnsupportedMechanics
+1,8,5,0.0,0,5,30,5,0,0,0,0,0,0,0,5,0,Playable,None
+2,10,10,0.0,0,10,46,5,0,0,0,0,0,0,34,10,0,Playable,None
+3,10,10,0.0,0,15,87,5,0,0,0,0,0,0,0,15,0,Playable,None
+4,10,10,0.0,0,14,77,9,0,0,0,0,0,0,0,14,0,Playable,None
+5,15,15,0.0,0,23,133,6,0,0,0,0,0,0,32,23,0,Playable,None
+6,20,20,0.0,0,32,184,11,0,0,0,0,0,0,189,32,0,Playable,None
+7,15,15,0.0,0,28,152,5,0,26,12,1,0,0,48,28,0,RequiresUnsupportedMechanics,LockedQueues(1)
+8,15,15,0.0,0,30,172,14,0,7,4,0,0,0,0,30,0,Playable,None
+9,15,15,0.0,0,52,188,17,0,43,22,0,0,0,0,52,0,Playable,None
+10,20,20,0.0,2,47,323,18,0,16,4,0,0,0,0,47,0,Playable,None
+11,7,25,0.0,0,27,136,9,0,0,0,0,0,0,0,27,0,Playable,None
+12,30,30,0.0,0,31,310,15,0,0,0,0,0,0,541,31,0,Playable,None
+13,20,20,0.0,0,27,143,13,0,0,0,0,0,0,234,27,0,Playable,None
+14,30,30,0.0,2,70,566,12,0,0,0,0,0,0,224,70,0,Playable,None
+15,13,13,0.0,0,10,43,4,0,0,0,0,4,0,105,10,0,RequiresUnsupportedMechanics,StackedQueues(4)
+16,17,17,0.0,0,29,216,24,0,0,0,0,13,0,0,41,0,RequiresUnsupportedMechanics,StackedQueues(13)
+17,20,20,0.0,0,49,330,14,0,11,6,0,0,0,0,49,0,Playable,None
+18,20,20,0.0,0,62,286,26,0,30,14,0,0,0,0,62,0,Playable,None
+19,30,30,0.0,2,64,499,10,0,0,0,0,0,0,343,64,0,Playable,None
+20,17,17,0.0,0,39,209,14,0,18,6,0,3,0,49,39,0,RequiresUnsupportedMechanics,StackedQueues(3)
+21,12,12,0.0,0,8,36,6,4,0,0,0,0,0,73,8,0,Playable,None
+22,15,15,0.0,0,17,78,14,7,0,0,0,0,0,18,22,13,PotentialDeadlockWithoutPipesOrSteering,ForwardRayMissesHole(13q)
+23,25,30,0.0,2,54,215,15,13,0,0,0,0,0,406,46,14,PotentialDeadlockWithoutPipesOrSteering,ForwardRayMissesHole(14q)
+24,20,20,0.0,0,49,316,7,4,5,2,0,0,0,0,48,1,PotentialDeadlockWithoutPipesOrSteering,ForwardRayMissesHole(1q)
+25,25,30,0.0,2,93,642,23,1,2,1,0,2,0,0,91,2,RequiresUnsupportedMechanics,StackedQueues(2); ForwardRayMissesHole(2q)
+26,20,20,0.0,0,33,186,10,0,0,0,0,0,0,164,33,0,Playable,None
+27,30,30,0.0,0,41,348,15,0,0,0,0,0,0,499,41,0,Playable,None
+28,25,40,0.0,0,67,389,22,0,19,7,0,0,0,544,67,0,Playable,None
+29,30,30,0.0,2,50,399,30,0,8,4,0,8,0,401,58,0,RequiresUnsupportedMechanics,StackedQueues(8)
+30,11,11,0.0,0,11,41,2,0,0,0,9,0,0,56,11,0,RequiresUnsupportedMechanics,LockedQueues(9)
+31,15,15,0.0,0,29,142,5,0,0,0,9,0,0,42,29,0,RequiresUnsupportedMechanics,LockedQueues(9)
+32,25,25,0.0,0,33,218,8,4,3,2,8,1,0,346,29,4,RequiresUnsupportedMechanics,LockedQueues(8); StackedQueues(1); ForwardRayMissesHole(4q)
+33,25,25,0.0,0,65,422,13,5,9,4,11,0,0,75,55,10,RequiresUnsupportedMechanics,LockedQueues(11); ForwardRayMissesHole(10q)
+34,30,30,0.0,2,113,655,26,0,0,0,0,0,0,0,113,0,Playable,None
+35,20,20,0.0,0,51,228,12,0,13,3,0,0,0,0,51,0,Playable,None
+36,30,30,0.0,0,38,324,12,0,0,0,0,0,0,537,38,0,Playable,None
+37,15,15,0.0,0,29,167,6,2,5,3,8,3,0,0,25,4,RequiresUnsupportedMechanics,LockedQueues(8); StackedQueues(3); ForwardRayMissesHole(4q)
+38,30,30,0.0,0,44,304,8,1,0,0,0,0,0,535,44,0,Playable,None
+39,20,25,0.0,2,61,441,17,0,0,0,0,0,0,0,61,0,Playable,None
+40,20,20,0.0,0,53,317,7,3,5,2,0,2,0,0,48,5,RequiresUnsupportedMechanics,StackedQueues(2); ForwardRayMissesHole(5q)
+41,30,30,0.0,0,63,368,34,0,9,4,0,8,0,428,81,0,RequiresUnsupportedMechanics,StackedQueues(8)
+42,30,30,0.0,2,87,801,28,0,0,0,0,0,0,0,87,0,Playable,None
+43,20,20,0.0,0,58,308,26,0,13,6,0,0,0,0,58,0,Playable,None
+44,32,31,0.0,0,68,531,27,0,6,3,0,5,0,367,68,0,RequiresUnsupportedMechanics,StackedQueues(5)
+45,40,40,0.0,2,150,1409,22,4,35,15,0,0,2,0,142,8,RequiresUnsupportedMechanics,Pipes(2); ForwardRayMissesHole(8q)
