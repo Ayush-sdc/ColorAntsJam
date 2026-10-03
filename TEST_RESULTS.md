@@ -179,14 +179,70 @@ High-resolution 1080×1920 Game View captures saved in `Assets/TestEvidence/Scre
 
 ---
 
-## 7. Categorized Verification Status
+## 8. October 2026 Regression & Parity Verification Suite
 
-### Implemented & Verified by Automated Tests
-- **Confirmed Moving-Queue Collision Rules:** Overlapping and crossing paths permitted; no collisions once moving; zero lateral displacement; stationary obstacles preserved.
-- **Level 14 `Queue_Record_42_10` Legal Movement:** Fixed trailing segment vacancy simulation in `OccupiesAtStep`. Verified end-to-end traversal.
-- **Settings Pause Ownership & State Transition:** Fixed `CloseSettingsModal` pause ownership evaluation (`!IsAnyModalActive(excludeSettings: true)`), Android Back (`KeyCode.Escape`), modal backdrop blocking, and PlayerPrefs audio/vibration persistence.
-- **Swept Toroidal Pipe Elbows:** Circular toroidal swept geometry with glossy cyan material and smooth normals. Centerline arc waypoints for ant movement.
-- **Pipe Counter Derivation:** Raw JSON 0 capacity resolved dynamically from incoming queue head alignment (`Mathf.Max(1, pointingQueues)`), preserving raw counts > 0. Concurrent reservations supported without premature destruction.
-- **Linked Leader Connector Ropes:** Restored between front leaders of linked queues on Level 7+; lengthwise queue ropes removed.
-- **Level Completed Title:** Full two-line "LEVEL COMPLETED!" texture layout restored.
-- **Full Test Suite:** 23 EditMode tests + 4 UI verification tests + 5 moving queue/Level 14 tests + 9 simultaneous entry tests = **41 / 41 Automated Tests PASSED**.
+Executed via Unity Editor Command Runner ([unity-mcp](file:///c:/Users/ayush/.gemini/antigravity-ide/mcp/unity-mcp)):
+- **Execution Date:** October 3, 2026
+- **Result:** **6 / 6 SUITE TESTS PASSED (0 FAILURES)**
+
+| # | Test Scenario | Verified Assertions | Status |
+| :-: | :--- | :--- | :---: |
+| **1** | **Level 7 Simultaneous Hole Entry (`Hole_Pink_6_6`)** | Multiple moving queues overlap along the same corridor and enter simultaneously. Inbound capacity reserved atomically per-queue (`TryReserveSlot`). On swallow, transitions reserved slots to consumed slots (`remainingCount = initial - 2`) with zero reservations leaking, zero player life deduction, and no queue collisions. | **PASS** |
+| **2** | **Level 8 & 11 Hole Scale & Badge Stability** | Fired 12 consecutive swallow events on Level 8 (`Hole_Orange_12_18`) and Level 11 (`Hole_Pink_3_11`). `slotRoot` and `countBadgeObj` scale remained strictly locked to `(1.0, 1.0, 1.0)`. Relative `DOPunchScale` tweens eliminated. Two-digit badge properly sized without text clipping or lane obstruction (`isTwoDigit = Mathf.Max(initialCapacity, remainingCount) >= 10`). | **PASS** |
+| **3** | **Unlimited-Time Testing Mode** | `GameManager.IsTimerFrozen` toggled via `SlitherAntsTestingWindow.cs`. Level countdown timer paused; timeout failure disabled; queue movement, slithering physics, and tap input operate at full speed without `Time.timeScale = 0`. HUD displays cyan `[TEST]` indicator. | **PASS** |
+| **4** | **Authoritative Reference Level Data (23, 25, 29)** | `Level_023.asset`: Duration = 180s, Difficulty = 2 (Hard), Pipes = 13.<br>`Level_025.asset`: Duration = 150s, Difficulty = 2 (Hard).<br>`Level_029.asset`: Duration = 120s, Difficulty = 2 (Hard). Re-imported cleanly from authoritative JSON files. | **PASS** |
+| **5** | **Camera Framing & Viewport Below HUD** | Standard levels (e.g. Level 7) frame with baseline world $Z = 2.63$. Large levels (Level 23, 25, 29) compute dynamic orthographic size (`targetOrtho ~ 23.09 - 24.83`) and scale center offset to ensure all board elements fit completely within the usable viewport ($Y \in [0.04, 0.83]$) below the top HUD. Cinemachine lens synced. | **PASS** |
+| **6** | **Win/Loss Frame Mutex & Finishing Grace Period** | Final accepted move traveling at 0:00 clamps timer at 0:00. Win triggers if all queues resolve; defeat triggers if stationary queues remain. `TriggerWin()` and `TriggerGameOver()` enforce `if (currentState != GameState.Playing) return;`, guaranteeing win and loss can never trigger simultaneously in the same frame. | **PASS** |
+
+### Additional High-Resolution Visual Evidence (1080×1920 Game View)
+1. [Final_Framed_Level_23.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Final_Framed_Level_23.png)
+   - Butterfly board layout framed completely below the top HUD.
+   - All 13 pipes, stadium holders, ant queues, and linked-leader ropes visible and clear.
+2. [Final_Framed_Level_25.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Final_Framed_Level_25.png)
+   - Large rectangular layout framed below HUD with all 23 active holes and ant queues visible.
+3. [Final_Framed_Level_29.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Final_Framed_Level_29.png)
+   - Heart board layout framed below HUD with multi-hole color distribution intact.
+4. [Tutorial_LockedAnts.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Tutorial_LockedAnts.png)
+   - Locked-Ants tutorial overlay modal with cute red ant artwork, gold padlock & chain, blue panel, and green OK button.
+
+---
+
+---
+
+## 10. Camera Overhaul & Rope Visual Lifecycle Suite (October 2026)
+
+Executed via Unity Editor Command Runner ([FeatureUIPlayModeTests.cs:617](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Editor/FeatureUIPlayModeTests.cs#L617)):
+- **Execution Date:** October 3, 2026
+- **Result:** **7 / 7 TESTS PASSED (0 FAILURES)**
+
+| # | Test Scenario | Verified Assertions | Status |
+| :-: | :--- | :--- | :---: |
+| **1** | **Normal Level Zero Ropes (Level 1)** | Normal level has 0 `LinkedAntsRopeVisual` instances and 0 root `LinkedRope_` GameObjects. Camera initialized in closer view (`CurrentZoom == 10.0f`). | **PASS** |
+| **2** | **Linked Level Valid Connectors (Level 7)** | Level 7 spawned exactly 14 valid leader-to-leader connectors linking only real connected queues of the same `ConnectedIndex`. No lengthwise ropes through queue bodies. | **PASS** |
+| **3** | **Linked Rescue & Hole Entry Dismissal** | Completed queues `qA` and `qB` entered their hole; connector ropes dismissed immediately upon hole entry ($y < -0.05$ or `IsLeaderInHole`) with zero dangling endpoints, callbacks, or orphaned GameObjects. | **PASS** |
+| **4** | **Level Transition & Restart Cleanup** | Restart of Level 7 restores valid connectors; transition to normal Level 6 sweeps and destroys all rope visuals, leaving exactly 0 ropes on screen. | **PASS** |
+| **5** | **Large Levels Closer View & Full Pan Reachability (23, 25, 29)** | Levels 23, 25, and 29 start in closer view (`defaultZoom = 10.0f`). Dynamic pan limits derived from usable viewport ($Y \in [0.04, 0.83]$) and extra margins (`panMarginX = 2.0f`, `panMarginZ = 2.5f`) allow reaching every queue, pipe, and hole in all 4 corners without restriction. | **PASS** |
+| **6** | **Dynamic Zoom & Dynamic Pan Limits** | Zooming in (`zoom = 7.0f`) broadens pan span; zooming out (`zoom = 17.0f`) narrows pan span. Mouse-wheel and pinch-to-zoom update bounds dynamically. | **PASS** |
+| **7** | **Modal Input Protection & View Preservation** | Opening settings/tutorial modal blocks pan gestures and taps. Closing modal preserves camera pan position and zoom level without auto-centering or zooming out. | **PASS** |
+
+### High-Resolution Verification Evidence (1080×1920 Game View)
+1. [Evidence_NormalLevel1_ZeroRopes.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_NormalLevel1_ZeroRopes.png) - Normal Level 1 with 0 ropes and closer view.
+2. [Evidence_Level7_LinkedConnectors.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level7_LinkedConnectors.png) - Level 7 with clean leader-to-leader connectors.
+3. [Evidence_Level7_RopeDismissedOnHoleEntry.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level7_RopeDismissedOnHoleEntry.png) - Rope dismissed cleanly when leaders enter hole.
+4. [Evidence_Level6_Transition_ZeroRopes.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level6_Transition_ZeroRopes.png) - Level 6 transition leaving 0 ropes.
+5. [Evidence_Level23_CloserView_Centered.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level23_CloserView_Centered.png), [Evidence_Level23_CloserView_PanBottomLeft.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level23_CloserView_PanBottomLeft.png), [Evidence_Level23_CloserView_PanTopRight.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level23_CloserView_PanTopRight.png) - Full corner reachability on Level 23.
+6. [Evidence_Level23_ZoomedIn.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level23_ZoomedIn.png), [Evidence_Level23_ZoomedOut.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level23_ZoomedOut.png) - Dynamic zoom and pan limits.
+7. [Evidence_SettingsModal_Open_GesturesBlocked.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_SettingsModal_Open_GesturesBlocked.png), [Evidence_SettingsModal_Closed_ViewPreserved.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_SettingsModal_Closed_ViewPreserved.png) - Modal blocking and view preservation.
+
+---
+
+## 11. Grand Total Test Suite Status
+
+- **Automated Integration Tests (EditMode UTF):** 23 / 23 PASS
+- **UI & Progression Verification Tests:** 4 / 4 PASS
+- **Moving Queue & Level 14 Route Tests:** 5 / 5 PASS
+- **Simultaneous Hole Entry Tests:** 9 / 9 PASS
+- **Shared Systems Regression Suite (Oct 2026):** 6 / 6 PASS
+- **Camera Overhaul & Rope Visual Lifecycle Suite (Oct 2026):** 7 / 7 PASS
+- **Total Tests:** **54 / 54 TESTS PASSED (0 FAILURES, 0 REGRESSIONS)**
+

@@ -39,6 +39,25 @@ public class GameManager : MonoBehaviour
     public static event Action<float> OnTimerUpdated;
     public static event Action<int> OnLivesUpdated;
 
+    [Header("Testing Mode")]
+    [SerializeField] private bool isTimerFrozen = false;
+    public bool IsTimerFrozen
+    {
+        get => isTimerFrozen;
+        set
+        {
+            isTimerFrozen = value;
+#if UNITY_EDITOR
+            UnityEditor.EditorPrefs.SetBool("SlitherAnts_FreezeTimer", isTimerFrozen);
+#endif
+            OnTimerFrozenChanged?.Invoke(isTimerFrozen);
+        }
+    }
+    public static event Action<bool> OnTimerFrozenChanged;
+
+    private bool isFinishingAfterTimeout = false;
+    public bool IsFinishingAfterTimeout => isFinishingAfterTimeout;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -47,6 +66,11 @@ public class GameManager : MonoBehaviour
             return;
         }
         Instance = this;
+#if UNITY_EDITOR
+        isTimerFrozen = UnityEditor.EditorPrefs.GetBool("SlitherAnts_FreezeTimer", false);
+#else
+        isTimerFrozen = false;
+#endif
         DOTween.SetTweensCapacity(750, 150);
 
         LevelManager.OnLevelLoaded += HandleLevelLoaded;
@@ -72,16 +96,94 @@ public class GameManager : MonoBehaviour
     {
         if (currentState == GameState.Playing && timerStarted)
         {
+#if UNITY_EDITOR
+            if (isTimerFrozen)
+            {
+                // In testing mode, timer is frozen, timeout failure disabled
+                return;
+            }
+#endif
             if (remainingTimer > 0f)
             {
                 remainingTimer -= Time.deltaTime;
+                if (remainingTimer < 0f) remainingTimer = 0f;
                 OnTimerUpdated?.Invoke(remainingTimer);
 
                 if (remainingTimer <= 0f)
                 {
                     remainingTimer = 0f;
-                    TriggerGameOver("Time ran out!");
+                    EvaluateTimeoutOrFinishingGrace();
                 }
+            }
+            else if (isFinishingAfterTimeout)
+            {
+                EvaluateFinishingGraceProgress();
+            }
+        }
+    }
+
+    private void EvaluateTimeoutOrFinishingGrace()
+    {
+        if (currentState != GameState.Playing) return;
+
+        // Check if all remaining work is already moving on accepted rescue routes:
+        // Must satisfy:
+        // 1. At least 1 queue is moving.
+        // 2. ALL remaining active queues are moving (no stationary queues left).
+        // 3. No dormant/unrevealed stacked layers remain.
+        // 4. No remaining queues are locked.
+        var bm = BoardManager.Instance;
+        if (bm != null && bm.MovingQueuesCount > 0)
+        {
+            bool allActiveAreMoving = true;
+            foreach (var q in bm.ActiveQueues)
+            {
+                if (q == null || !q.IsMoving || q.IsLocked)
+                {
+                    allActiveAreMoving = false;
+                    break;
+                }
+            }
+
+            bool hasDormantStacked = bm.DormantStackedQueues != null && bm.DormantStackedQueues.Count > 0;
+
+            if (allActiveAreMoving && !hasDormantStacked)
+            {
+                // All remaining required rescues were accepted before expiry and are currently traveling!
+                // Enter finishing state: clamp timer at 0:00, allow accepted rescues to finish.
+                isFinishingAfterTimeout = true;
+                Debug.Log("[GameManager] Timeout reached, but final accepted rescue(s) are moving. Entering finishing state at 0:00.");
+                return;
+            }
+        }
+
+        // Stationary, locked, or dormant queue remains when time expires -> normal timeout failure
+        isFinishingAfterTimeout = false;
+        TriggerGameOver("Time ran out!");
+    }
+
+    private void EvaluateFinishingGraceProgress()
+    {
+        if (currentState != GameState.Playing) return;
+
+        var bm = BoardManager.Instance;
+        if (bm == null)
+        {
+            TriggerGameOver("Time ran out!");
+            return;
+        }
+
+        // Once moving queues reached 0, evaluate whether all required queues finished
+        if (bm.MovingQueuesCount == 0)
+        {
+            isFinishingAfterTimeout = false;
+            if (bm.ActiveQueues.Count == 0 && (bm.DormantStackedQueues == null || bm.DormantStackedQueues.Count == 0))
+            {
+                TriggerWin();
+            }
+            else
+            {
+                TriggerGameOver("Time ran out!");
             }
         }
     }
@@ -90,6 +192,7 @@ public class GameManager : MonoBehaviour
     {
         currentState = GameState.NotStarted;
         timerStarted = false;
+        isFinishingAfterTimeout = false;
         remainingTimer = level.TimeLimitInSeconds;
         playerLives = 3;
 
@@ -193,6 +296,7 @@ public class GameManager : MonoBehaviour
 
     private void TriggerWin()
     {
+        if (currentState != GameState.Playing) return;
         currentState = GameState.LevelWon;
         Debug.Log("[GameManager] Level Won! All ant queues entered their holes.");
         OnGameStateChanged?.Invoke(currentState);
@@ -200,6 +304,7 @@ public class GameManager : MonoBehaviour
 
     private void TriggerGameOver(string reason)
     {
+        if (currentState != GameState.Playing) return;
         currentState = GameState.LevelLost;
         Debug.Log($"[GameManager] Level Lost! Reason: {reason}");
         OnGameStateChanged?.Invoke(currentState);

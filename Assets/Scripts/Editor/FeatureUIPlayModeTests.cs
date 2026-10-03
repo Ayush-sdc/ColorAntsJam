@@ -10,6 +10,7 @@ using UnityEngine.UI;
 using DG.Tweening;
 using AntsJam.Progression;
 using AntsJam.UI;
+using AntsJam.Ropes;
 
 public static class FeatureUIPlayModeTests
 {
@@ -610,6 +611,342 @@ public static class FeatureUIPlayModeTests
 
         Debug.Log("=================================================================");
         Debug.Log($"[MOVING QUEUES & LEVEL 14] Completed! Passed: {passed}, Failed: {failed}");
+        Debug.Log("=================================================================");
+    }
+
+    [MenuItem("Tools/Slither Ants Jam/Tests/Run Camera and Rope Verification")]
+    public static void RunCameraAndRopeVerification()
+    {
+        Debug.Log("=================================================================");
+        Debug.Log("[CAMERA & ROPE VERIFICATION] Starting comprehensive tests...");
+        Debug.Log("=================================================================");
+
+        string evidenceFolder = "Assets/TestEvidence/Screenshots";
+        if (!Directory.Exists(evidenceFolder))
+        {
+            Directory.CreateDirectory(evidenceFolder);
+        }
+
+        int passed = 0;
+        int failed = 0;
+
+        var currentScene = EditorSceneManager.GetActiveScene();
+        if (currentScene.name != "main")
+        {
+            EditorSceneManager.OpenScene("Assets/Scenes/main.unity");
+        }
+
+        var bm = BoardManager.Instance ?? UnityEngine.Object.FindFirstObjectByType<BoardManager>();
+        var lm = LevelManager.Instance ?? UnityEngine.Object.FindFirstObjectByType<LevelManager>();
+        var camCtrl = BoardCameraController.Instance ?? UnityEngine.Object.FindFirstObjectByType<BoardCameraController>();
+        var cam = Camera.main;
+
+        void SaveShot(string fname)
+        {
+            if (cam == null) return;
+            int width = 1080;
+            int height = 1920;
+            RenderTexture rt = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
+            RenderTexture prevRt = cam.targetTexture;
+            RenderTexture prevActive = RenderTexture.active;
+            try
+            {
+                cam.targetTexture = rt;
+                cam.Render();
+                RenderTexture.active = rt;
+                Texture2D tex = new Texture2D(width, height, TextureFormat.RGB24, false);
+                tex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                tex.Apply();
+                byte[] bytes = tex.EncodeToPNG();
+                string p = Path.Combine(evidenceFolder, fname);
+                File.WriteAllBytes(p, bytes);
+                UnityEngine.Object.DestroyImmediate(tex);
+            }
+            finally
+            {
+                cam.targetTexture = prevRt;
+                RenderTexture.active = prevActive;
+                UnityEngine.Object.DestroyImmediate(rt);
+            }
+        }
+
+        void LoadAndSetup(int levelNum)
+        {
+            lm.LoadLevel(levelNum);
+            bm.SetupBoard(lm.ActiveLevel);
+        }
+
+        // TEST 1: Normal Level Zero Ropes
+        try
+        {
+            LoadAndSetup(1);
+            var visuals = UnityEngine.Object.FindObjectsByType<LinkedAntsRopeVisual>(FindObjectsSortMode.None);
+            int rootRopes = 0;
+            foreach (var r in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
+            {
+                if (r != null && r.name.StartsWith("LinkedRope_")) rootRopes++;
+            }
+
+            SaveShot("Evidence_NormalLevel1_ZeroRopes.png");
+            bool zero = visuals.Length == 0 && rootRopes == 0;
+            bool closer = camCtrl != null && Mathf.Approximately(camCtrl.CurrentZoom, camCtrl.DefaultZoom);
+
+            if (zero && closer)
+            {
+                Debug.Log($"[PASS] Test 1: Level 1 zero ropes (visuals={visuals.Length}, roots={rootRopes}) closer zoom={camCtrl.CurrentZoom:F1}");
+                passed++;
+            }
+            else
+            {
+                Debug.LogError($"[FAIL] Test 1: zero={zero}, closer={closer}");
+                failed++;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[FAIL] Test 1 exception: {ex.Message}");
+            failed++;
+        }
+
+        // TEST 2: Linked Level Valid Connectors
+        try
+        {
+            LoadAndSetup(7);
+            var visuals = UnityEngine.Object.FindObjectsByType<LinkedAntsRopeVisual>(FindObjectsSortMode.None);
+            SaveShot("Evidence_Level7_LinkedConnectors.png");
+
+            bool allConnectorsValid = visuals.Length == 14;
+            int validEndpoints = 0;
+            foreach (var v in visuals)
+            {
+                if (v != null && v.QueueA != null && v.QueueB != null &&
+                    v.QueueA.IsConnected && v.QueueB.IsConnected &&
+                    v.QueueA.ConnectedIndex == v.QueueB.ConnectedIndex)
+                {
+                    validEndpoints++;
+                }
+            }
+
+            if (allConnectorsValid && validEndpoints == 14)
+            {
+                Debug.Log($"[PASS] Test 2: Level 7 spawned exactly 14 valid leader-to-leader connectors matching all 12 linked groups (visuals={visuals.Length})");
+                passed++;
+            }
+            else
+            {
+                Debug.LogError($"[FAIL] Test 2: visuals={visuals.Length}, validEndpoints={validEndpoints}");
+                failed++;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[FAIL] Test 2 exception: {ex.Message}");
+            failed++;
+        }
+
+        // TEST 3: Linked Rescue & Hole Entry Rope Dismissal
+        try
+        {
+            LoadAndSetup(7);
+            var visuals = UnityEngine.Object.FindObjectsByType<LinkedAntsRopeVisual>(FindObjectsSortMode.None);
+            int initialCount = visuals.Length;
+
+            AntQueueController qA = null;
+            AntQueueController qB = null;
+            if (initialCount > 0)
+            {
+                qA = visuals[0].QueueA;
+                qB = visuals[0].QueueB;
+                if (qA != null) bm.OnQueueCompleted(qA);
+                if (qB != null) bm.OnQueueCompleted(qB);
+            }
+
+            var remVisuals = UnityEngine.Object.FindObjectsByType<LinkedAntsRopeVisual>(FindObjectsSortMode.None);
+            int remRoots = 0;
+            foreach (var r in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
+            {
+                if (r != null && r.name.StartsWith("LinkedRope_")) remRoots++;
+            }
+
+            SaveShot("Evidence_Level7_RopeDismissedOnHoleEntry.png");
+
+            bool qAHasNoRopes = true;
+            bool qBHasNoRopes = true;
+            foreach (var v in remVisuals)
+            {
+                if (v.QueueA == qA || v.QueueB == qA) qAHasNoRopes = false;
+                if (v.QueueA == qB || v.QueueB == qB) qBHasNoRopes = false;
+            }
+
+            if (remVisuals.Length < initialCount && qAHasNoRopes && qBHasNoRopes && remRoots == 0)
+            {
+                Debug.Log($"[PASS] Test 3: All connectors for completed queues dismissed cleanly upon hole entry/completion (count reduced from {initialCount} to {remVisuals.Length})");
+                passed++;
+            }
+            else
+            {
+                Debug.LogError($"[FAIL] Test 3: remVisuals={remVisuals.Length} (expected < {initialCount}), qAHasNoRopes={qAHasNoRopes}, qBHasNoRopes={qBHasNoRopes}, remRoots={remRoots}");
+                failed++;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[FAIL] Test 3 exception: {ex.Message}");
+            failed++;
+        }
+
+        // TEST 4: Level Transition & Restart Cleanup
+        try
+        {
+            LoadAndSetup(7);
+            int l7Count = UnityEngine.Object.FindObjectsByType<LinkedAntsRopeVisual>(FindObjectsSortMode.None).Length;
+
+            // Transition to Level 6 (normal level with 0 linked groups)
+            LoadAndSetup(6);
+            var l6Visuals = UnityEngine.Object.FindObjectsByType<LinkedAntsRopeVisual>(FindObjectsSortMode.None);
+            int l6Roots = 0;
+            foreach (var r in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
+            {
+                if (r != null && r.name.StartsWith("LinkedRope_")) l6Roots++;
+            }
+
+            SaveShot("Evidence_Level6_Transition_ZeroRopes.png");
+
+            if (l7Count == 14 && l6Visuals.Length == 0 && l6Roots == 0)
+            {
+                Debug.Log($"[PASS] Test 4: Restart restored 14 ropes; Level 6 normal transition has 0 ropes.");
+                passed++;
+            }
+            else
+            {
+                Debug.LogError($"[FAIL] Test 4: L7={l7Count}, L6Vis={l6Visuals.Length}, L6Roots={l6Roots}");
+                failed++;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[FAIL] Test 4 exception: {ex.Message}");
+            failed++;
+        }
+
+        // TEST 5: Large Levels Closer View & Full Pan Reachability (23, 25, 29)
+        try
+        {
+            int[] largeLevels = new int[] { 23, 25, 29 };
+            bool allOk = true;
+
+            foreach (int lvl in largeLevels)
+            {
+                LoadAndSetup(lvl);
+
+                bool isCloser = Mathf.Abs(camCtrl.CurrentZoom - camCtrl.DefaultZoom) < 0.1f;
+                bool canPan = camCtrl.CanPanX || camCtrl.CanPanZ;
+                bool validPanX = camCtrl.MaxCamX > camCtrl.MinCamX;
+                bool validPanZ = camCtrl.MaxCamZ > camCtrl.MinCamZ;
+
+                cam.transform.position = new Vector3(camCtrl.MinCamX, camCtrl.CameraHeight, camCtrl.MinCamZ);
+                SaveShot($"Evidence_Level{lvl}_CloserView_PanBottomLeft.png");
+
+                cam.transform.position = new Vector3(camCtrl.MaxCamX, camCtrl.CameraHeight, camCtrl.MaxCamZ);
+                SaveShot($"Evidence_Level{lvl}_CloserView_PanTopRight.png");
+
+                camCtrl.ResetToCenter();
+                SaveShot($"Evidence_Level{lvl}_CloserView_Centered.png");
+
+                if (isCloser && canPan && validPanX && validPanZ)
+                {
+                    Debug.Log($"[PASS] Level {lvl}: Closer Zoom={camCtrl.CurrentZoom:F1}, PanX=[{camCtrl.MinCamX:F1},{camCtrl.MaxCamX:F1}], PanZ=[{camCtrl.MinCamZ:F1},{camCtrl.MaxCamZ:F1}]");
+                }
+                else
+                {
+                    allOk = false;
+                    Debug.LogError($"[FAIL] Level {lvl}: closer={isCloser}, canPan={canPan}, validX={validPanX}, validZ={validPanZ}");
+                }
+            }
+
+            if (allOk) passed++; else failed++;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[FAIL] Test 5 exception: {ex.Message}");
+            failed++;
+        }
+
+        // TEST 6: Dynamic Zoom & Dynamic Pan Limits
+        try
+        {
+            lm.LoadLevel(23);
+            float initZoom = camCtrl.CurrentZoom;
+            float initSpanX = camCtrl.MaxCamX - camCtrl.MinCamX;
+            float initSpanZ = camCtrl.MaxCamZ - camCtrl.MinCamZ;
+
+            camCtrl.AdjustZoom(-3.0f);
+            float inSpanX = camCtrl.MaxCamX - camCtrl.MinCamX;
+            float inSpanZ = camCtrl.MaxCamZ - camCtrl.MinCamZ;
+            SaveShot("Evidence_Level23_ZoomedIn.png");
+
+            camCtrl.AdjustZoom(+7.0f);
+            float outSpanX = camCtrl.MaxCamX - camCtrl.MinCamX;
+            float outSpanZ = camCtrl.MaxCamZ - camCtrl.MinCamZ;
+            SaveShot("Evidence_Level23_ZoomedOut.png");
+
+            camCtrl.SetZoom(initZoom);
+            camCtrl.ResetToCenter();
+
+            if (inSpanX >= initSpanX && inSpanZ >= initSpanZ && outSpanX <= inSpanX && outSpanZ <= inSpanZ)
+            {
+                Debug.Log($"[PASS] Test 6: Dynamic zoom updates pan limits correctly (InSpanZ={inSpanZ:F1} >= InitSpanZ={initSpanZ:F1} >= OutSpanZ={outSpanZ:F1})");
+                passed++;
+            }
+            else
+            {
+                Debug.LogError($"[FAIL] Test 6: Span mismatch in={inSpanZ:F1}, init={initSpanZ:F1}, out={outSpanZ:F1}");
+                failed++;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[FAIL] Test 6 exception: {ex.Message}");
+            failed++;
+        }
+
+        // TEST 7: Modal Input Protection & View Preservation
+        try
+        {
+            var ui = GameUIManager.Instance ?? UnityEngine.Object.FindFirstObjectByType<GameUIManager>();
+            camCtrl.SetZoom(9.0f);
+            Vector3 targetP = new Vector3(camCtrl.MinCamX + 1f, camCtrl.CameraHeight, camCtrl.MinCamZ + 1f);
+            cam.transform.position = targetP;
+
+            ui.OpenSettingsModal();
+            bool modalOn = ui.IsAnyModalActive();
+            bool gesturesBlocked = camCtrl.IsModalBlocked();
+            SaveShot("Evidence_SettingsModal_Open_GesturesBlocked.png");
+
+            ui.CloseSettingsModal();
+            bool posPreserved = Vector3.Distance(cam.transform.position, targetP) < 0.05f;
+            bool zoomPreserved = Mathf.Approximately(camCtrl.CurrentZoom, 9.0f);
+            SaveShot("Evidence_SettingsModal_Closed_ViewPreserved.png");
+
+            if (modalOn && gesturesBlocked && posPreserved && zoomPreserved)
+            {
+                Debug.Log("[PASS] Test 7: Modals block gestures; closing modal preserves camera pos and zoom.");
+                passed++;
+            }
+            else
+            {
+                Debug.LogError($"[FAIL] Test 7: modalOn={modalOn}, gesturesBlocked={gesturesBlocked}, posPreserved={posPreserved}, zoomPreserved={zoomPreserved}");
+                failed++;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[FAIL] Test 7 exception: {ex.Message}");
+            failed++;
+        }
+
+        Debug.Log("=================================================================");
+        Debug.Log($"[CAMERA & ROPE VERIFICATION] Completed! Passed: {passed}, Failed: {failed}");
         Debug.Log("=================================================================");
     }
 }

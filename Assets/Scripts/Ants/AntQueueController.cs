@@ -65,6 +65,8 @@ public class AntQueueController : MonoBehaviour
     public IReadOnlyList<Vector2Int> CurrentBodyCoordinates => currentBodyCoordinates;
     public IReadOnlyList<Vector2Int> RemainingPath => remainingPath;
     public IReadOnlyList<AntUnit> Units => antUnits;
+    private bool isLeaderInHole = false;
+    public bool IsLeaderInHole => isLeaderInHole;
 
     [SerializeField] private AntsJam.Ropes.AntQueueRopeVisual ropeVisual;
     public AntsJam.Ropes.AntQueueRopeVisual RopeVisual => ropeVisual;
@@ -127,6 +129,7 @@ public class AntQueueController : MonoBehaviour
         secondColor = data.SecondColor;
         isLocked = data.IsLocked;
         lockAmount = data.LockAmount;
+        isLeaderInHole = false;
 
         currentBodyCoordinates = new List<Vector2Int>(data.InitialBodyCoordinates);
         remainingPath = new List<Vector2Int>(data.FullPathToHole);
@@ -742,10 +745,11 @@ public class AntQueueController : MonoBehaviour
                 if (!hasAcquiredHoleEntry && destinationHole != null)
                 {
                     float distToEntry = Vector3.Distance(currentHeadPos, holeEntryPoint);
-                    if (distToEntry < 0.35f)
+                    if (distToEntry < 0.45f)
                     {
                         destinationHole.RequestHoleEntry(this);
                         hasAcquiredHoleEntry = true;
+                        isLeaderInHole = true;
                     }
                 }
 
@@ -784,6 +788,7 @@ public class AntQueueController : MonoBehaviour
                 if (routeIndex >= currentSmoothRoute.Count - 1)
                 {
                     headReachedPit = true;
+                    isLeaderInHole = true;
                     currentHeadPos = holeDespawnPoint;
                     Vector3 pitFwd = units[0] != null ? units[0].transform.forward : Vector3.forward;
                     AddTrailPoint(holeDespawnPoint, pitFwd);

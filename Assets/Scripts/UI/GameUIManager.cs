@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
@@ -76,11 +77,21 @@ public class GameUIManager : MonoBehaviour
     private bool isSettingsAnimating = false;
     private Sequence failSequence;
 
+    public static GameUIManager Instance { get; private set; }
+
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
         GameManager.OnGameStateChanged += HandleGameStateChanged;
         GameManager.OnTimerUpdated += UpdateTimerUI;
         GameManager.OnLivesUpdated += UpdateLivesUI;
+        GameManager.OnTimerFrozenChanged += HandleTimerFrozenChanged;
         LevelManager.OnLevelLoaded += HandleLevelLoaded;
         AntQueueController.OnQueueMoveStarted += HandleQueueMoveStarted;
 
@@ -170,9 +181,12 @@ public class GameUIManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (Instance == this) Instance = null;
+
         GameManager.OnGameStateChanged -= HandleGameStateChanged;
         GameManager.OnTimerUpdated -= UpdateTimerUI;
         GameManager.OnLivesUpdated -= UpdateLivesUI;
+        GameManager.OnTimerFrozenChanged -= HandleTimerFrozenChanged;
         LevelManager.OnLevelLoaded -= HandleLevelLoaded;
         AntQueueController.OnQueueMoveStarted -= HandleQueueMoveStarted;
     }
@@ -427,6 +441,33 @@ public class GameUIManager : MonoBehaviour
         var cfg = progressionConfig != null ? progressionConfig : FeatureProgressionConfig.Instance;
         var pending = cfg != null ? cfg.GetPendingTutorials(level.LevelNumber) : null;
 
+        // Check actual mechanic presence on the level rather than assuming old hard-coded introduction levels
+        if (cfg != null && level != null && level.AntQueues != null)
+        {
+            bool hasLockedAnts = false;
+            foreach (var q in level.AntQueues)
+            {
+                if (q.IsLocked || q.LockAmount > 0)
+                {
+                    hasLockedAnts = true;
+                    break;
+                }
+            }
+
+            if (hasLockedAnts && !cfg.IsTutorialAcknowledged("locked_ants"))
+            {
+                var lockedFeat = cfg.GetFeature("locked_ants");
+                if (lockedFeat != null)
+                {
+                    if (pending == null) pending = new List<AntsJam.Progression.FeatureDefinition>();
+                    if (!pending.Contains(lockedFeat))
+                    {
+                        pending.Insert(0, lockedFeat);
+                    }
+                }
+            }
+        }
+
         if (pending != null && pending.Count > 0 && featureTutorialModal != null)
         {
             GameManager.Instance?.PauseGame();
@@ -637,12 +678,31 @@ public class GameUIManager : MonoBehaviour
         hardLevelOverlay = overlayObj;
     }
 
+    private void HandleTimerFrozenChanged(bool frozen)
+    {
+        if (GameManager.Instance != null)
+        {
+            UpdateTimerUI(GameManager.Instance.RemainingTimer);
+        }
+    }
+
     private void UpdateTimerUI(float seconds)
     {
         if (timerText == null) return;
         int mins = Mathf.FloorToInt(seconds / 60f);
         int secs = Mathf.FloorToInt(seconds % 60f);
-        timerText.text = $"{mins}:{secs:00}";
+        string timeStr = $"{mins}:{secs:00}";
+
+#if UNITY_EDITOR
+        if (GameManager.Instance != null && GameManager.Instance.IsTimerFrozen)
+        {
+            timerText.text = $"{timeStr} [TEST]";
+            timerText.color = new Color(0.2f, 0.85f, 1f);
+            return;
+        }
+#endif
+        timerText.text = timeStr;
+        timerText.color = Color.white;
     }
 
     private void UpdateLivesUI(int lives)

@@ -896,13 +896,13 @@ public class BoardManager : MonoBehaviour
             }
         }
 
-        // 3. Only Other Ant Queues block (stationary and moving units of other queues)
+        // 3. Only Other Ant Queues block (stationary units of other queues)
         if (activeQueues != null)
         {
             float antDistSqr = (antRadius + antRadius) * (antRadius + antRadius);
             foreach (var q in activeQueues)
             {
-                if (q == null || q == currentQueue) continue;
+                if (q == null || q == currentQueue || q.IsMoving) continue;
                 if (q.Units != null)
                 {
                     foreach (var u in q.Units)
@@ -1868,6 +1868,18 @@ public class BoardManager : MonoBehaviour
                 queueReservedRouteCells.Remove(queue);
             }
 
+            // Dismiss and clean up any linked rope connecting this queue
+            for (int i = activeLinkedRopes.Count - 1; i >= 0; i--)
+            {
+                var rope = activeLinkedRopes[i];
+                if (rope != null && (rope.QueueA == queue || rope.QueueB == queue))
+                {
+                    rope.Cleanup();
+                    SafeDestroy(rope.gameObject);
+                    activeLinkedRopes.RemoveAt(i);
+                }
+            }
+
             // Pipe usage decrement
             if (queue.TraversedPipe != null)
             {
@@ -1894,36 +1906,12 @@ public class BoardManager : MonoBehaviour
 
                 // Destination hole is notified by AntQueueController.OnEntireQueueEnteredHole()
                 // when the tail finishes its swallow animation. Ensure destination hole swallows queue
-                // if it hasn't already (e.g. in tests, instantaneous moves, or null fallback):
+                // if it hasn't already (e.g. in tests or instantaneous moves where animation is skipped):
                 if (queue.DestinationHole != null)
                 {
                     if (queue.DestinationHole.HasReservation(queue))
                     {
                         queue.DestinationHole.OnEntireQueueEnteredHole(queue);
-                    }
-                }
-                else
-                {
-                    HoleController targetHole = null;
-                    if (queue.CurrentBodyCoordinates != null && queue.CurrentBodyCoordinates.Count > 0)
-                    {
-                        targetHole = GetHoleAt(queue.CurrentBodyCoordinates[0]);
-                    }
-                    if (targetHole == null)
-                    {
-                        foreach (var h in activeHoles)
-                        {
-                            if (h != null && !h.IsCompleted && h.ColorID == queue.ColorID)
-                            {
-                                targetHole = h;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (targetHole != null)
-                    {
-                        targetHole.OnEntireQueueEnteredHole(queue);
                     }
                 }
 
@@ -2203,6 +2191,31 @@ public class BoardManager : MonoBehaviour
             }
         }
         activeLinkedRopes.Clear();
+
+        // Safety sweep: find any stray rope visuals or renderers in scene
+        var strayVisuals = UnityEngine.Object.FindObjectsByType<AntsJam.Ropes.LinkedAntsRopeVisual>(FindObjectsSortMode.None);
+        foreach (var v in strayVisuals)
+        {
+            if (v != null)
+            {
+                v.Cleanup();
+                SafeDestroy(v.gameObject);
+            }
+        }
+
+        // Safety sweep: find any stray root objects or unparented instances named LinkedRope_*
+        var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        if (activeScene.isLoaded)
+        {
+            var rootObjs = activeScene.GetRootGameObjects();
+            foreach (var rootObj in rootObjs)
+            {
+                if (rootObj != null && rootObj.name.StartsWith("LinkedRope_"))
+                {
+                    SafeDestroy(rootObj);
+                }
+            }
+        }
     }
 
     private void SafeDestroy(UnityEngine.Object obj)

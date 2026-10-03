@@ -15,7 +15,7 @@ MonoBehaviour:
   levelNumber: 23
   levelName: Reference Level 23
   difficulty: 2
-  duration: 0
+  duration: 180
   gridSize: {x: 25, y: 30}
   gridWidth: 25
   gridHeight: 30
@@ -4253,7 +4253,7 @@ MonoBehaviour:
     connectedIndex: 0
     isSecondColor: 0
     secondColor: 0
-    pipeCount: 0
+    pipeCount: 1
     isLocked: 0
     lockAmount: 0
     holeCapacity: 0
@@ -4270,7 +4270,7 @@ MonoBehaviour:
     connectedIndex: 0
     isSecondColor: 0
     secondColor: 0
-    pipeCount: 0
+    pipeCount: 1
     isLocked: 0
     lockAmount: 0
     holeCapacity: 0
@@ -4287,7 +4287,7 @@ MonoBehaviour:
     connectedIndex: 0
     isSecondColor: 0
     secondColor: 0
-    pipeCount: 0
+    pipeCount: 1
     isLocked: 0
     lockAmount: 0
     holeCapacity: 0
@@ -4304,7 +4304,7 @@ MonoBehaviour:
     connectedIndex: 0
     isSecondColor: 0
     secondColor: 0
-    pipeCount: 0
+    pipeCount: 2
     isLocked: 0
     lockAmount: 0
     holeCapacity: 0
@@ -4321,7 +4321,7 @@ MonoBehaviour:
     connectedIndex: 0
     isSecondColor: 0
     secondColor: 0
-    pipeCount: 0
+    pipeCount: 3
     isLocked: 0
     lockAmount: 0
     holeCapacity: 0
@@ -4338,7 +4338,7 @@ MonoBehaviour:
     connectedIndex: 0
     isSecondColor: 0
     secondColor: 0
-    pipeCount: 0
+    pipeCount: 2
     isLocked: 0
     lockAmount: 0
     holeCapacity: 0
@@ -4390,7 +4390,7 @@ MonoBehaviour:
     connectedIndex: 0
     isSecondColor: 0
     secondColor: 0
-    pipeCount: 0
+    pipeCount: 2
     isLocked: 0
     lockAmount: 0
     holeCapacity: 0
@@ -4418,7 +4418,7 @@ MonoBehaviour:
     connectedIndex: 0
     isSecondColor: 0
     secondColor: 0
-    pipeCount: 0
+    pipeCount: 2
     isLocked: 0
     lockAmount: 0
     holeCapacity: 0
@@ -4499,7 +4499,7 @@ MonoBehaviour:
     connectedIndex: 0
     isSecondColor: 0
     secondColor: 0
-    pipeCount: 0
+    pipeCount: 1
     isLocked: 0
     lockAmount: 0
     holeCapacity: 0
@@ -4527,7 +4527,7 @@ MonoBehaviour:
     connectedIndex: 0
     isSecondColor: 0
     secondColor: 0
-    pipeCount: 0
+    pipeCount: 1
     isLocked: 0
     lockAmount: 0
     holeCapacity: 0
@@ -4608,7 +4608,7 @@ MonoBehaviour:
     connectedIndex: 0
     isSecondColor: 0
     secondColor: 0
-    pipeCount: 0
+    pipeCount: 2
     isLocked: 0
     lockAmount: 0
     holeCapacity: 0
@@ -4703,7 +4703,7 @@ MonoBehaviour:
     connectedIndex: 0
     isSecondColor: 0
     secondColor: 0
-    pipeCount: 0
+    pipeCount: 1
     isLocked: 0
     lockAmount: 0
     holeCapacity: 0
@@ -5368,7 +5368,7 @@ MonoBehaviour:
     connectedIndex: 0
     isSecondColor: 0
     secondColor: 0
-    pipeCount: 0
+    pipeCount: 2
     isLocked: 0
     lockAmount: 0
     holeCapacity: 0
@@ -5670,7 +5670,7 @@ MonoBehaviour:
     isLocked: 0
     lockAmount: 0
     holeCapacity: 0
-  levelDifficulty: 0
+  levelDifficulty: 2
   showHardIntro: 1
   tutorialFlags: 0
   holeCapacity: 0

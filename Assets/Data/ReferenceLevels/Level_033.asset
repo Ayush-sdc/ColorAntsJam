@@ -15,7 +15,7 @@ MonoBehaviour:
   levelNumber: 33
   levelName: Reference Level 33
   difficulty: 0
-  duration: 0
+  duration: 120
   gridSize: {x: 25, y: 25}
   gridWidth: 25
   gridHeight: 25

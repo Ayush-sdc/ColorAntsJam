@@ -10,10 +10,10 @@ public enum CameraProjectionMode
 }
 
 /// <summary>
-/// Fixed-view camera controller for Slither Ants Jam with manual drag-panning.
-/// Maintains constant camera height/distance, rotation, and FOV across all levels (no dynamic zoom).
-/// Centers initial view on the board and allows horizontal/vertical drag-panning only when the level
-/// layout exceeds the visible Game View footprint. Clamps panning to playable board boundaries.
+/// Closer-view camera controller for Slither Ants Jam with smooth pan freedom and pinch/scroll zoom.
+/// Starts at a comfortable closer view with larger, clearer ants instead of forcing full-board fit.
+/// Calculates dynamic pan limits from board bounds and current zoom, allowing horizontal and vertical
+/// panning to bring every queue, hole, and pipe comfortably into the usable screen area below the HUD.
 /// </summary>
 [ExecuteAlways]
 public class BoardCameraController : MonoBehaviour
@@ -25,25 +25,51 @@ public class BoardCameraController : MonoBehaviour
     [Tooltip("When true, Cinemachine controls board framing. When false, Main Camera is positioned directly.")]
     [SerializeField] private bool useCinemachine = false;
 
-    [Header("Fixed Baseline Optics (Constant across levels)")]
-    [SerializeField] private CameraProjectionMode projectionMode = CameraProjectionMode.Perspective;
+    [Header("Camera Projection & Angle")]
+    [SerializeField] private CameraProjectionMode projectionMode = CameraProjectionMode.Orthographic;
     [Range(60f, 90f)]
     [SerializeField] private float cameraPitch = 88f;
     [Range(30f, 90f)]
     [SerializeField] private float perspectiveFov = 78f;
     [SerializeField] private float cameraHeight = 13.04f;
-    [SerializeField] private float baselineZOffset = -0.17f;
+
+    [Header("Closer View & Zoom Configuration")]
+    [Tooltip("Default zoom (orthographic size) configured for comfortable closer view with large clear ants")]
+    [SerializeField] private float defaultZoom = 10.0f;
+    [Tooltip("Minimum allowable zoom (closest view)")]
+    [SerializeField] private float minZoom = 5.5f;
+    [Tooltip("Maximum allowable zoom (farthest view)")]
+    [SerializeField] private float maxZoom = 26.0f;
+    [Tooltip("Zoom sensitivity multiplier for mouse wheel and mobile pinch gestures")]
+    [SerializeField] private float zoomSensitivity = 1.0f;
+    [SerializeField] private float currentZoom = 10.0f;
+
+    [Header("Pan Settings & Movement Margins")]
+    [Tooltip("Pan movement sensitivity multiplier")]
+    [SerializeField] private float panSensitivity = 1.0f;
+    [Tooltip("Extra horizontal movement margin beyond board bounds (world units)")]
+    [SerializeField] private float panMarginX = 2.0f;
+    [Tooltip("Extra vertical movement margin beyond board bounds (world units)")]
+    [SerializeField] private float panMarginZ = 2.5f;
+
+    [Header("Usable Viewport Below HUD")]
+    [Tooltip("Bottom safe area margin in viewport Y (0 = screen bottom)")]
+    [SerializeField] private float minUsableViewportY = 0.04f;
+    [Tooltip("Top limit below HUD in viewport Y (1 = screen top)")]
+    [SerializeField] private float maxUsableViewportY = 0.83f;
+    [Tooltip("Horizontal safe area margin in viewport X")]
+    [SerializeField] private float horizontalMargin = 0.04f;
 
     [Header("Camera References")]
     [SerializeField] private Camera mainCamera;
     [SerializeField] private CinemachineBrain cinemachineBrain;
     [SerializeField] private CinemachineCamera gameplayCamera;
 
-    [Header("Content Framing & Visual Margins")]
+    [Header("Content Framing & Visual Padding")]
     [Tooltip("Small extra visual padding around outer geometry in world units")]
     [SerializeField] private float visualPadding = 0.35f;
 
-    [Header("Runtime Pan Diagnostics")]
+    [Header("Runtime Pan & Zoom Diagnostics")]
     [SerializeField] private Bounds boardBounds;
     [SerializeField] private float visibleWidth;
     [SerializeField] private float visibleHeight;
@@ -60,7 +86,6 @@ public class BoardCameraController : MonoBehaviour
     // Pointer drag tracking
     private Vector2 dragStartPointerPos;
     private Vector3 dragStartCamPos;
-    private Vector2 camToVisOffset;
     private Level currentActiveLevel;
     private int lastScreenWidth = -1;
     private int lastScreenHeight = -1;
@@ -80,11 +105,24 @@ public class BoardCameraController : MonoBehaviour
     public float CameraPitch => cameraPitch;
     public float PerspectiveFov => perspectiveFov;
     public float CameraHeight => cameraHeight;
+    public float DefaultZoom { get => defaultZoom; set => defaultZoom = value; }
+    public float MinZoom { get => minZoom; set => minZoom = value; }
+    public float MaxZoom { get => maxZoom; set => maxZoom = value; }
+    public float ZoomSensitivity { get => zoomSensitivity; set => zoomSensitivity = value; }
+    public float PanSensitivity { get => panSensitivity; set => panSensitivity = value; }
+    public float PanMarginX { get => panMarginX; set => panMarginX = value; }
+    public float PanMarginZ { get => panMarginZ; set => panMarginZ = value; }
+    public float CurrentZoom => currentZoom;
+
     public bool CanPanX => canPanX;
     public bool CanPanZ => canPanZ;
     public Bounds BoardBounds => boardBounds;
     public float VisibleWidth => visibleWidth;
     public float VisibleHeight => visibleHeight;
+    public float MinCamX => minCamX;
+    public float MaxCamX => maxCamX;
+    public float MinCamZ => minCamZ;
+    public float MaxCamZ => maxCamZ;
     public Vector3 InitialCamPos => initialCamPos;
     public Vector3 CurrentCamPos => currentCamPos;
     public bool IsDragging => isDragging;
@@ -131,6 +169,18 @@ public class BoardCameraController : MonoBehaviour
                 RecalculateFramingAndPanLimits();
             }
         }
+
+        // Mouse wheel zoom in Editor / Desktop (blocked while any modal owns input)
+        if (!IsModalBlocked())
+        {
+            float scroll = Input.mouseScrollDelta.y;
+            if (Mathf.Abs(scroll) > 0.01f)
+            {
+                // Scroll up (positive) = zoom in (decrease ortho size)
+                // Scroll down (negative) = zoom out (increase ortho size)
+                AdjustZoom(-scroll * zoomSensitivity * 0.8f);
+            }
+        }
     }
 
     public void EnsureReferences()
@@ -175,6 +225,20 @@ public class BoardCameraController : MonoBehaviour
         }
     }
 
+    public bool IsModalBlocked()
+    {
+        var ui = GameUIManager.Instance ?? FindFirstObjectByType<GameUIManager>();
+        if (ui != null && ui.IsAnyModalActive())
+        {
+            return true;
+        }
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing)
+        {
+            return true;
+        }
+        return false;
+    }
+
     /// <summary>
     /// Alias for SetupCameraForLevel to preserve backwards compatibility.
     /// </summary>
@@ -184,8 +248,9 @@ public class BoardCameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// Configures the fixed-view camera for the given level.
-    /// Calculates board bounds, visible camera footprint, overflow, and clamps camera to centered starting position.
+    /// Configures the camera for the given level with a comfortable closer view.
+    /// Resets zoom to defaultZoom (large, clear ants) and centers the board within the usable viewport below HUD.
+    /// Calculates full pan limits allowing reach to every queue, hole, and pipe.
     /// </summary>
     public void SetupCameraForLevel(Level level)
     {
@@ -198,23 +263,20 @@ public class BoardCameraController : MonoBehaviour
         lastScreenHeight = Screen.height;
 
         ApplyFixedCameraOptics();
+
+        // Reset to configured closer view zoom on level load
+        currentZoom = defaultZoom;
+        ApplyZoomToCamera(currentZoom);
+
         RecalculateFramingAndPanLimits();
 
         // Place camera at centered starting position
         currentCamPos = initialCamPos;
         ApplyCameraPosition(currentCamPos);
 
-        // Required diagnostic logs
-        if (!canPanX && !canPanZ)
-        {
-            Debug.Log($"[CameraPan] Level={level.LevelNumber} FitsViewport=True CanPanX=False CanPanY=False");
-        }
-        else
-        {
-            Debug.Log($"[CameraPan] Level={level.LevelNumber} BoardBounds={boardBounds.size.x:F2}x{boardBounds.size.z:F2} " +
-                      $"VisibleBounds={visibleWidth:F2}x{visibleHeight:F2} CanPanX={canPanX} CanPanY={canPanZ} " +
-                      $"PanX=[{minCamX:F2},{maxCamX:F2}] PanY=[{minCamZ:F2},{maxCamZ:F2}] FOV={perspectiveFov:F0}");
-        }
+        Debug.Log($"[BoardCameraController] Level={level.LevelNumber} Zoom={currentZoom:F1} " +
+                  $"BoardBounds={boardBounds.size.x:F1}x{boardBounds.size.z:F1} " +
+                  $"PanX=[{minCamX:F1},{maxCamX:F1}] PanZ=[{minCamZ:F1},{maxCamZ:F1}] CloserStartingView=Active");
     }
 
     private void ApplyFixedCameraOptics()
@@ -244,6 +306,55 @@ public class BoardCameraController : MonoBehaviour
         }
     }
 
+    private void ApplyZoomToCamera(float zoom)
+    {
+        if (mainCamera != null && mainCamera.orthographic)
+        {
+            mainCamera.orthographicSize = zoom;
+        }
+
+        if (useCinemachine && gameplayCamera != null)
+        {
+            gameplayCamera.Lens.OrthographicSize = zoom;
+        }
+    }
+
+    /// <summary>
+    /// Adjusts camera zoom by delta and dynamically recalculates pan clamps.
+    /// Clamps zoom between minZoom and maxZoom.
+    /// </summary>
+    public void AdjustZoom(float zoomDelta)
+    {
+        if (IsModalBlocked()) return;
+
+        float targetZoom = Mathf.Clamp(currentZoom + zoomDelta, minZoom, maxZoom);
+        if (Mathf.Abs(targetZoom - currentZoom) > 0.001f)
+        {
+            SetZoom(targetZoom);
+        }
+    }
+
+    /// <summary>
+    /// Sets camera zoom directly, updating optics and pan clamp bounds.
+    /// </summary>
+    public void SetZoom(float newZoom)
+    {
+        currentZoom = Mathf.Clamp(newZoom, minZoom, maxZoom);
+        ApplyZoomToCamera(currentZoom);
+
+        RecalculateFramingAndPanLimits();
+
+        // Clamp camera position to newly updated pan boundaries
+        float actualMinX = Mathf.Min(minCamX, maxCamX);
+        float actualMaxX = Mathf.Max(minCamX, maxCamX);
+        float actualMinZ = Mathf.Min(minCamZ, maxCamZ);
+        float actualMaxZ = Mathf.Max(minCamZ, maxCamZ);
+
+        currentCamPos.x = Mathf.Clamp(currentCamPos.x, actualMinX, actualMaxX);
+        currentCamPos.z = Mathf.Clamp(currentCamPos.z, actualMinZ, actualMaxZ);
+        ApplyCameraPosition(currentCamPos);
+    }
+
     private void RecalculateFramingAndPanLimits()
     {
         if (currentActiveLevel == null) return;
@@ -251,11 +362,8 @@ public class BoardCameraController : MonoBehaviour
         // 1. Calculate complete playable level footprint
         CalculateBoardBounds(currentActiveLevel);
 
-        // 2. Calculate visible camera world footprint on board plane (Y = 0)
-        CalculateVisibleFootprint();
-
-        // 3. Calculate initial center position and pan clamps
-        CalculatePanLimits();
+        // 2. Calculate dynamic pan limits for current zoom level
+        UpdatePanLimitsForCurrentZoom();
     }
 
     private void CalculateBoardBounds(Level level)
@@ -264,10 +372,10 @@ public class BoardCameraController : MonoBehaviour
         int h = level.GridHeight > 0 ? level.GridHeight : 6;
         float cs = level.CellSize > 0f ? level.CellSize : 1.0f;
 
-        float minX = -(w - 1) * 0.5f * cs - 0.5f * cs;
-        float maxX = (w - 1) * 0.5f * cs + 0.5f * cs;
-        float minZ = -(h - 1) * 0.5f * cs - 0.5f * cs;
-        float maxZ = (h - 1) * 0.5f * cs + 0.5f * cs;
+        float minX = float.MaxValue;
+        float maxX = float.MinValue;
+        float minZ = float.MaxValue;
+        float maxZ = float.MinValue;
 
         Vector3 GridToWorld(int gx, int gy)
         {
@@ -284,12 +392,15 @@ public class BoardCameraController : MonoBehaviour
             maxZ = Mathf.Max(maxZ, z + radZ);
         }
 
+        bool hasAnyContent = false;
+
         if (level.AntQueues != null)
         {
             foreach (var q in level.AntQueues)
             {
                 if (q.Cells != null && q.Cells.Count > 0)
                 {
+                    hasAnyContent = true;
                     foreach (var cell in q.Cells)
                     {
                         Vector3 pos = GridToWorld(cell.x, cell.y);
@@ -298,6 +409,7 @@ public class BoardCameraController : MonoBehaviour
                 }
                 if (q.InitialBodyCoordinates != null && q.InitialBodyCoordinates.Count > 0)
                 {
+                    hasAnyContent = true;
                     foreach (var cell in q.InitialBodyCoordinates)
                     {
                         Vector3 pos = GridToWorld(cell.x, cell.y);
@@ -311,12 +423,55 @@ public class BoardCameraController : MonoBehaviour
         {
             foreach (var hole in level.Holes)
             {
+                hasAnyContent = true;
                 Vector3 pos = GridToWorld(hole.GridCoordinate.x, hole.GridCoordinate.y);
                 Encapsulate(pos.x, pos.z, 1.0f * cs, 1.0f * cs);
             }
         }
 
-        // Apply intentional visual padding for outer holder geometries
+        var refHoles = ReferenceLevelRuntimeAdapter.ExtractHoles(level);
+        if (refHoles != null)
+        {
+            foreach (var rH in refHoles)
+            {
+                if (rH.OccupiedCells != null)
+                {
+                    hasAnyContent = true;
+                    foreach (var cell in rH.OccupiedCells)
+                    {
+                        Vector3 pos = GridToWorld(cell.x, cell.y);
+                        Encapsulate(pos.x, pos.z, 0.6f * cs, 0.6f * cs);
+                    }
+                }
+            }
+        }
+
+        var refPipes = ReferenceLevelRuntimeAdapter.ExtractPipes(level);
+        if (refPipes != null)
+        {
+            foreach (var rP in refPipes)
+            {
+                if (rP.Cells != null)
+                {
+                    hasAnyContent = true;
+                    foreach (var cell in rP.Cells)
+                    {
+                        Vector3 pos = GridToWorld(cell.x, cell.y);
+                        Encapsulate(pos.x, pos.z, 0.6f * cs, 0.6f * cs);
+                    }
+                }
+            }
+        }
+
+        if (!hasAnyContent)
+        {
+            minX = -(w - 1) * 0.5f * cs - 0.5f * cs;
+            maxX = (w - 1) * 0.5f * cs + 0.5f * cs;
+            minZ = -(h - 1) * 0.5f * cs - 0.5f * cs;
+            maxZ = (h - 1) * 0.5f * cs + 0.5f * cs;
+        }
+
+        // Apply visual padding for outer holder geometries
         minX -= visualPadding * cs;
         maxX += visualPadding * cs;
         minZ -= visualPadding * cs;
@@ -329,115 +484,81 @@ public class BoardCameraController : MonoBehaviour
         boardBounds = new Bounds(center, new Vector3(boundsWidth, 1f, boundsHeight));
     }
 
-    private void CalculateVisibleFootprint()
+    private void UpdatePanLimitsForCurrentZoom()
     {
         if (mainCamera == null) return;
 
-        Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+        float aspect = mainCamera.aspect > 0.01f ? mainCamera.aspect : ((float)Mathf.Max(1, Screen.width) / Mathf.Max(1, Screen.height));
+        visibleHeight = 2f * currentZoom;
+        visibleWidth = visibleHeight * aspect;
 
-        // Evaluate visible footprint with camera at reference position
-        Vector3 refCamPos = new Vector3(boardBounds.center.x, cameraHeight, boardBounds.center.z + baselineZOffset);
-        Quaternion refRot = Quaternion.Euler(cameraPitch, 0f, 0f);
+        float usableFracW = Mathf.Clamp01(1.0f - horizontalMargin * 2f);
+        float usableHalfW = currentZoom * aspect * usableFracW;
 
-        // Temporarily position camera for raycasting
-        Vector3 prevPos = mainCamera.transform.position;
-        Quaternion prevRot = mainCamera.transform.rotation;
-        mainCamera.transform.position = refCamPos;
-        mainCamera.transform.rotation = refRot;
+        float pitchRad = cameraPitch * Mathf.Deg2Rad;
+        float sinPitch = Mathf.Sin(pitchRad);
+        float cotPitch = Mathf.Cos(pitchRad) / Mathf.Sin(pitchRad);
+        float pitchZOffset = cameraHeight * cotPitch;
 
-        Vector2[] viewports = new Vector2[]
-        {
-            new Vector2(0f, 0f),
-            new Vector2(1f, 0f),
-            new Vector2(0f, 1f),
-            new Vector2(1f, 1f)
-        };
+        // Viewport vertical safe area in camera Y units
+        float yCamMin = (minUsableViewportY - 0.5f) * 2f * currentZoom;
+        float yCamMax = (maxUsableViewportY - 0.5f) * 2f * currentZoom;
+        float yCamMid = (yCamMin + yCamMax) * 0.5f;
 
-        float minX = float.MaxValue, maxX = float.MinValue;
-        float minZ = float.MaxValue, maxZ = float.MinValue;
+        // Centered camera position so board center aligns with center of usable viewport below HUD
+        float initialZ = boardBounds.center.z - pitchZOffset - (yCamMid / sinPitch);
+        initialCamPos = new Vector3(boardBounds.center.x, cameraHeight, initialZ);
 
-        for (int i = 0; i < 4; i++)
-        {
-            Ray ray = mainCamera.ViewportPointToRay(new Vector3(viewports[i].x, viewports[i].y, 0f));
-            if (groundPlane.Raycast(ray, out float enter))
-            {
-                Vector3 hit = ray.GetPoint(enter);
-                minX = Mathf.Min(minX, hit.x);
-                maxX = Mathf.Max(maxX, hit.x);
-                minZ = Mathf.Min(minZ, hit.z);
-                maxZ = Mathf.Max(maxZ, hit.z);
-            }
-        }
+        // Horizontal pan limits: allow bringing min.x and max.x comfortably inside usable horizontal bounds
+        float camXLeftLimit = boardBounds.min.x - panMarginX + usableHalfW;
+        float camXRightLimit = boardBounds.max.x + panMarginX - usableHalfW;
+        minCamX = Mathf.Min(camXLeftLimit, boardBounds.center.x - panMarginX);
+        maxCamX = Mathf.Max(camXRightLimit, boardBounds.center.x + panMarginX);
+        canPanX = (maxCamX - minCamX) > 0.05f;
 
-        mainCamera.transform.position = prevPos;
-        mainCamera.transform.rotation = prevRot;
+        // Vertical pan limits:
+        // Panning camera +Z moves viewport content down, bringing board top (max.z) into usable view below HUD.
+        // Panning camera -Z moves viewport content up, bringing board bottom (min.z) into usable view above bottom HUD.
+        float camZBottomLimit = boardBounds.min.z - panMarginZ - pitchZOffset - (yCamMin / sinPitch);
+        float camZTopLimit = boardBounds.max.z + panMarginZ - pitchZOffset - (yCamMax / sinPitch);
 
-        visibleWidth = maxX - minX;
-        visibleHeight = maxZ - minZ;
-
-        // Relative offset between reference camera position and visible footprint center
-        float visCenterX = (minX + maxX) * 0.5f;
-        float visCenterZ = (minZ + maxZ) * 0.5f;
-        camToVisOffset = new Vector2(visCenterX - refCamPos.x, visCenterZ - refCamPos.z);
+        minCamZ = Mathf.Min(camZBottomLimit, initialZ - panMarginZ);
+        maxCamZ = Mathf.Max(camZTopLimit, initialZ + panMarginZ);
+        canPanZ = (maxCamZ - minCamZ) > 0.05f;
     }
 
-    private void CalculatePanLimits()
+    /// <summary>
+    /// Optional testing/debug action: calculates the zoom required to fit the entire board on screen
+    /// below the HUD at once, without altering the normal gameplay default starting view.
+    /// </summary>
+    [ContextMenu("Fit Board Below HUD (Debug Action)")]
+    public void FitBoard()
     {
-        float boardWidth = boardBounds.size.x;
-        float boardHeight = boardBounds.size.z;
-        Vector3 boardCenter = boardBounds.center;
-
-        // Initial camera position centers the visible footprint on the board
-        initialCamPos = new Vector3(
-            boardCenter.x,
-            cameraHeight,
-            boardCenter.z + baselineZOffset
-        );
-
-        // Overflow detection
-        canPanX = boardWidth > visibleWidth;
-        canPanZ = boardHeight > visibleHeight;
-
-        // When camera is at initialCamPos:
-        float visMinX = initialCamPos.x + camToVisOffset.x - visibleWidth * 0.5f;
-        float visMaxX = initialCamPos.x + camToVisOffset.x + visibleWidth * 0.5f;
-        float visMinZ = initialCamPos.z + camToVisOffset.y - visibleHeight * 0.5f;
-        float visMaxZ = initialCamPos.z + camToVisOffset.y + visibleHeight * 0.5f;
-
-        if (canPanX)
+        if (currentActiveLevel == null && BoardManager.Instance != null && BoardManager.Instance.CurrentLevel != null)
         {
-            // Clamping bounds: screen left edge cannot go past board min.x, screen right edge cannot go past board max.x
-            minCamX = initialCamPos.x + (boardBounds.min.x - visMinX);
-            maxCamX = initialCamPos.x + (boardBounds.max.x - visMaxX);
-            if (minCamX > maxCamX)
-            {
-                minCamX = maxCamX = initialCamPos.x;
-                canPanX = false;
-            }
-        }
-        else
-        {
-            minCamX = maxCamX = initialCamPos.x;
+            currentActiveLevel = BoardManager.Instance.CurrentLevel;
         }
 
-        if (canPanZ)
+        if (currentActiveLevel != null)
         {
-            minCamZ = initialCamPos.z + (boardBounds.min.z - visMinZ);
-            maxCamZ = initialCamPos.z + (boardBounds.max.z - visMaxZ);
-            if (minCamZ > maxCamZ)
-            {
-                minCamZ = maxCamZ = initialCamPos.z;
-                canPanZ = false;
-            }
-        }
-        else
-        {
-            minCamZ = maxCamZ = initialCamPos.z;
+            CalculateBoardBounds(currentActiveLevel);
+            float aspect = mainCamera.aspect > 0.01f ? mainCamera.aspect : ((float)Mathf.Max(1, Screen.width) / Mathf.Max(1, Screen.height));
+            float usableFracW = Mathf.Clamp01(1.0f - horizontalMargin * 2f);
+            float usableFracH = Mathf.Clamp01(maxUsableViewportY - minUsableViewportY);
+
+            float requiredOrthoW = boardBounds.size.x / (2f * aspect * usableFracW);
+            float requiredOrthoH = boardBounds.size.z / (2f * usableFracH);
+            float fitOrtho = Mathf.Clamp(Mathf.Max(requiredOrthoW, requiredOrthoH), minZoom, maxZoom);
+
+            SetZoom(fitOrtho);
+            ResetToCenter();
         }
     }
 
     public void OnDragStart(Vector2 screenPos)
     {
+        if (IsModalBlocked()) return;
+
         isDragging = true;
         dragStartPointerPos = screenPos;
         dragStartCamPos = (mainCamera != null) ? mainCamera.transform.position : currentCamPos;
@@ -446,7 +567,11 @@ public class BoardCameraController : MonoBehaviour
     public void OnDrag(Vector2 currentScreenPos)
     {
         if (!isDragging) return;
-        if (!canPanX && !canPanZ) return;
+        if (IsModalBlocked())
+        {
+            OnDragEnd();
+            return;
+        }
         if (mainCamera == null) return;
 
         Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
@@ -464,15 +589,15 @@ public class BoardCameraController : MonoBehaviour
             Vector3 pStart = startRay.GetPoint(d1);
             Vector3 pCurr = currRay.GetPoint(d2);
 
-            Vector3 delta = pCurr - pStart;
+            Vector3 delta = (pCurr - pStart) * panSensitivity;
 
-            float targetX = canPanX
-                ? Mathf.Clamp(dragStartCamPos.x - delta.x, minCamX, maxCamX)
-                : initialCamPos.x;
+            float actualMinX = Mathf.Min(minCamX, maxCamX);
+            float actualMaxX = Mathf.Max(minCamX, maxCamX);
+            float actualMinZ = Mathf.Min(minCamZ, maxCamZ);
+            float actualMaxZ = Mathf.Max(minCamZ, maxCamZ);
 
-            float targetZ = canPanZ
-                ? Mathf.Clamp(dragStartCamPos.z - delta.z, minCamZ, maxCamZ)
-                : initialCamPos.z;
+            float targetX = Mathf.Clamp(dragStartCamPos.x - delta.x, actualMinX, actualMaxX);
+            float targetZ = Mathf.Clamp(dragStartCamPos.z - delta.z, actualMinZ, actualMaxZ);
 
             currentCamPos = new Vector3(targetX, cameraHeight, targetZ);
             ApplyCameraPosition(currentCamPos);

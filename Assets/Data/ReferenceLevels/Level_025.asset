@@ -15,7 +15,7 @@ MonoBehaviour:
   levelNumber: 25
   levelName: Reference Level 25
   difficulty: 2
-  duration: 0
+  duration: 150
   gridSize: {x: 25, y: 30}
   gridWidth: 25
   gridHeight: 30
@@ -6162,7 +6162,7 @@ MonoBehaviour:
     isLocked: 0
     lockAmount: 0
     holeCapacity: 0
-  levelDifficulty: 0
+  levelDifficulty: 2
   showHardIntro: 1
   tutorialFlags: 0
   holeCapacity: 0

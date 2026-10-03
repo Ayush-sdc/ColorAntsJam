@@ -9774,8 +9774,8 @@
         "x": 25,
         "y": 30
     },
-    "Duration": 120.0,
-    "LevelDifficulty": 0,
+    "Duration": 150.0,
+    "LevelDifficulty": 2,
     "MaxCapacity": 0,
     "DisabledGridCells": []
 }

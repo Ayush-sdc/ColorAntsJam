@@ -15,7 +15,7 @@ MonoBehaviour:
   levelNumber: 38
   levelName: Reference Level 38
   difficulty: 0
-  duration: 0
+  duration: 120
   gridSize: {x: 30, y: 30}
   gridWidth: 30
   gridHeight: 30

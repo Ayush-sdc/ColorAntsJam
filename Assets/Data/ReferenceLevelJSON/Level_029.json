@@ -9296,7 +9296,7 @@
         "y": 30
     },
     "Duration": 120.0,
-    "LevelDifficulty": 0,
+    "LevelDifficulty": 2,
     "MaxCapacity": 0,
     "DisabledGridCells": [
         {

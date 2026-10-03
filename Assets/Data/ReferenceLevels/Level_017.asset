@@ -15,7 +15,7 @@ MonoBehaviour:
   levelNumber: 17
   levelName: Reference Level 17
   difficulty: 0
-  duration: 0
+  duration: 120
   gridSize: {x: 20, y: 20}
   gridWidth: 20
   gridHeight: 20

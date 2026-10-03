@@ -59,8 +59,11 @@ public class HoleController : MonoBehaviour
     [SerializeField] private int inboundReservations = 0;
     private readonly HashSet<AntQueueController> reservedQueues = new HashSet<AntQueueController>();
     private readonly HashSet<AntQueueController> enteringQueues = new HashSet<AntQueueController>();
+    private readonly HashSet<AntQueueController> completedQueues = new HashSet<AntQueueController>();
     private readonly Dictionary<AntQueueController, int> queueLaneIndices = new Dictionary<AntQueueController, int>();
     private int nextLaneCounter = 0;
+    private Vector3 stableSlotRootScale = Vector3.one;
+    private Vector3 stableBadgeScale = Vector3.one;
 
     public int InboundReservations => reservedQueues.Count + inboundReservations;
     public int AvailableCapacity => Mathf.Max(0, remainingCount - InboundReservations);
@@ -129,11 +132,14 @@ public class HoleController : MonoBehaviour
         inboundReservations = 0;
         reservedQueues.Clear();
         enteringQueues.Clear();
+        completedQueues.Clear();
         queueLaneIndices.Clear();
         nextLaneCounter = 0;
         isCompleted = false;
         hasDisappeared = false;
         remainingCount = initialCapacity;
+        if (slotRoot != null) slotRoot.localScale = stableSlotRootScale;
+        if (countBadgeObj != null) countBadgeObj.transform.localScale = stableBadgeScale;
         UpdateBadgeDisplay();
     }
 
@@ -466,7 +472,8 @@ public class HoleController : MonoBehaviour
         float badgeH = (effectiveW == 1 && effectiveH == 1)
             ? Mathf.Clamp((initialCapacity >= 2 ? 0.32f : 0.38f) * cs, 0.24f * cs, pitH * 0.58f)
             : Mathf.Clamp(0.42f * cs, 0.32f * cs, Mathf.Min(pitW, pitH) * 0.72f);
-        float badgeW = (remainingCount >= 10) ? badgeH * 1.25f : badgeH;
+        bool isTwoDigit = Mathf.Max(initialCapacity, remainingCount) >= 10;
+        float badgeW = isTwoDigit ? badgeH * 1.25f : badgeH;
         float badgeRadius = Mathf.Min(0.09f * cs, Mathf.Min(badgeW, badgeH) * 0.35f);
 
         Vector3 badgePos;
@@ -884,9 +891,16 @@ public class HoleController : MonoBehaviour
 
         if (queue != null)
         {
+            if (completedQueues.Contains(queue)) return;
+            completedQueues.Add(queue);
+
             enteringQueues.Remove(queue);
-            reservedQueues.Remove(queue);
+            bool wasReserved = reservedQueues.Remove(queue);
             queueLaneIndices.Remove(queue);
+            if (!wasReserved && inboundReservations > 0)
+            {
+                inboundReservations--;
+            }
         }
         else if (inboundReservations > 0)
         {
@@ -1004,35 +1018,17 @@ public class HoleController : MonoBehaviour
     public void PlaySwallowEffect()
     {
         if (!Application.isPlaying) return;
-        if (slotRoot == null) return;
-
-        slotRoot.DOKill();
-        slotRoot.localScale = Vector3.one;
-        slotRoot.DOScale(new Vector3(1.08f, 0.92f, 1.08f), 0.08f)
-            .SetEase(Ease.OutQuad)
-            .OnComplete(() =>
-            {
-                if (slotRoot != null)
-                {
-                    slotRoot.DOScale(Vector3.one, 0.12f).SetEase(Ease.OutBounce);
-                }
-            });
-
-        if (countBadgeObj != null)
-        {
-            countBadgeObj.transform.DOKill();
-            countBadgeObj.transform.DOPunchScale(new Vector3(0.22f, 0.22f, 0.22f), 0.18f, 5, 0.5f);
-        }
+        // Dimension stability: Strictly avoid scaling slotRoot or countBadgeObj.
+        if (slotRoot != null) slotRoot.localScale = stableSlotRootScale;
+        if (countBadgeObj != null) countBadgeObj.transform.localScale = stableBadgeScale;
     }
 
     private void PlayCompletedEffect()
     {
         if (!Application.isPlaying) return;
-        if (slotRoot == null) return;
-
-        slotRoot.DOScale(new Vector3(1.12f, 1.0f, 1.12f), 0.2f)
-            .SetLoops(2, LoopType.Yoyo)
-            .SetEase(Ease.OutBack);
+        // Keep stable scale; disappear animation will shrink to zero cleanly.
+        if (slotRoot != null) slotRoot.localScale = stableSlotRootScale;
+        if (countBadgeObj != null) countBadgeObj.transform.localScale = stableBadgeScale;
     }
 
     private void SpawnSwallowVFX()

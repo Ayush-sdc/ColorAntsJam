@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Level
   levelNumber: 45
   levelName: Reference Level 45
-  difficulty: 2
-  duration: 0
+  difficulty: 0
+  duration: 120
   gridSize: {x: 40, y: 40}
   gridWidth: 40
   gridHeight: 40
@@ -12070,6 +12070,6 @@ MonoBehaviour:
     lockAmount: 0
     holeCapacity: 0
   levelDifficulty: 0
-  showHardIntro: 1
+  showHardIntro: 0
   tutorialFlags: 0
   holeCapacity: 0

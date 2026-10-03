@@ -102,7 +102,8 @@ public class PlayerInputHandler : MonoBehaviour
             }
         }
 
-        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing)
+        if ((GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) ||
+            (GameUIManager.Instance != null && GameUIManager.Instance.IsAnyModalActive()))
         {
             if (isCameraDragging)
             {
@@ -110,6 +111,34 @@ public class PlayerInputHandler : MonoBehaviour
             }
             isPointerDown = false;
             isCameraDragging = false;
+            return;
+        }
+
+        // Two-finger pinch-to-zoom on mobile
+        if (Input.touchCount >= 2)
+        {
+            if (isCameraDragging)
+            {
+                BoardCameraController.Instance?.OnDragEnd();
+                isCameraDragging = false;
+            }
+            isPointerDown = false;
+
+            Touch touch0 = Input.GetTouch(0);
+            Touch touch1 = Input.GetTouch(1);
+
+            Vector2 touch0Prev = touch0.position - touch0.deltaPosition;
+            Vector2 touch1Prev = touch1.position - touch1.deltaPosition;
+
+            float prevTouchDeltaMag = (touch0Prev - touch1Prev).magnitude;
+            float touchDeltaMag = (touch0.position - touch1.position).magnitude;
+
+            float deltaMagnitudeDiff = prevTouchDeltaMag - touchDeltaMag;
+            if (Mathf.Abs(deltaMagnitudeDiff) > 0.5f && BoardCameraController.Instance != null)
+            {
+                float zoomDelta = (deltaMagnitudeDiff / Mathf.Max(1, Screen.height)) * BoardCameraController.Instance.ZoomSensitivity * 16f;
+                BoardCameraController.Instance.AdjustZoom(zoomDelta);
+            }
             return;
         }
 
@@ -124,7 +153,7 @@ public class PlayerInputHandler : MonoBehaviour
         Vector2 pointerPos = Vector2.zero;
         int pointerId = -1;
 
-        if (Input.touchCount > 0)
+        if (Input.touchCount == 1)
         {
             Touch touch = Input.GetTouch(0);
             pointerPos = touch.position;

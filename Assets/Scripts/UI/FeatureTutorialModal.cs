@@ -233,6 +233,21 @@ namespace AntsJam.UI
         private void DismissAll()
         {
             modalSequence?.Kill();
+
+            if (customPrefabContainer != null)
+            {
+                for (int i = customPrefabContainer.childCount - 1; i >= 0; i--)
+                {
+                    Destroy(customPrefabContainer.GetChild(i).gameObject);
+                }
+            }
+
+            if (illustrationImage != null)
+            {
+                illustrationImage.sprite = null;
+                illustrationImage.gameObject.SetActive(false);
+            }
+
             gameObject.SetActive(false);
             currentFeature = null;
 

@@ -81,8 +81,10 @@ namespace AntsJam.Ropes
             ropeTransform = ropeInstance.transform;
             ropeRenderer = ropeInstance.GetComponentInChildren<MeshRenderer>();
 
-            // Root-level placement so ant walking bob does NOT affect rope
-            ropeTransform.SetParent(null, true);
+            // Parent under this rope controller object (which is under boardParent)
+            // This ensures proper lifecycle management: when boardParent or this controller is destroyed/cleared,
+            // ropeInstance is guaranteed to be cleaned up and never left at scene root.
+            ropeTransform.SetParent(transform, true);
         }
 
         private void LateUpdate()
@@ -111,6 +113,12 @@ namespace AntsJam.Ropes
             if (queue == null) return true;
             if (!queue.gameObject.activeInHierarchy) return true;
 
+            // Check direct property if queue flagged leader has entered hole
+            if (queue.IsLeaderInHole)
+            {
+                return true;
+            }
+
             // Only moving queues can enter a hole. While waiting at rest, leaders are NEVER in a hole.
             if (!queue.IsMoving)
             {
@@ -121,7 +129,7 @@ namespace AntsJam.Ropes
             if (queue.Units != null && queue.Units.Count > 0)
             {
                 var headUnit = queue.Units[0];
-                if (headUnit == null || !headUnit.gameObject.activeInHierarchy || headUnit.transform.position.y < -0.10f)
+                if (headUnit == null || !headUnit.gameObject.activeInHierarchy || headUnit.transform.position.y < -0.05f)
                 {
                     return true;
                 }
@@ -227,6 +235,9 @@ namespace AntsJam.Ropes
                 ropeTransform = null;
                 ropeRenderer = null;
             }
+
+            queueA = null;
+            queueB = null;
         }
 
         private void OnDestroy()
