@@ -8,6 +8,10 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private bool isMusicMuted = false;
     [Range(0f, 1f)] [SerializeField] private float masterVolume = 0.8f;
 
+    [Header("SFX Clips")]
+    [Tooltip("AudioClip played when an ant queue bumps into a stationary obstacle. If unassigned, procedural tone is used.")]
+    [SerializeField] private AudioClip ouchClip;
+
     private AudioSource sfxSource;
 
     private AudioClip tapClip;
@@ -22,6 +26,7 @@ public class SoundManager : MonoBehaviour
 
     public bool IsMuted => isMuted;
     public bool IsMusicMuted => isMusicMuted;
+    public AudioClip OuchClip { get => ouchClip; set => ouchClip = value; }
 
     private void Awake()
     {
@@ -60,7 +65,7 @@ public class SoundManager : MonoBehaviour
 
     private void HandleQueueMoveStarted(AntQueueController queue)
     {
-        PlayTap();
+        // Suppressed to prevent stacking with queue selection sound per user specification
     }
 
     private void HandleQueueBlocked(AntQueueController queue)
@@ -110,6 +115,14 @@ public class SoundManager : MonoBehaviour
 
     public void PlaySwallow()
     {
+        // Hole-entry audio removed per user specification.
+    }
+
+    /// <summary>
+    /// Plays the hole-entry sound (swallowClip) immediately once when a distinct stationary queue is tapped.
+    /// </summary>
+    public void PlayQueueSelect()
+    {
         PlayClip(swallowClip, 0.85f, Random.Range(0.95f, 1.05f));
     }
 
@@ -121,6 +134,21 @@ public class SoundManager : MonoBehaviour
     public void PlayBlockedSound()
     {
         PlayBlocked();
+    }
+
+    /// <summary>
+    /// Plays the ouch / bump impact sound once at actual collision impact, respecting mute/volume settings.
+    /// </summary>
+    public void PlayOuch()
+    {
+        if (ouchClip != null)
+        {
+            PlayClip(ouchClip, 0.95f, Random.Range(0.95f, 1.05f));
+        }
+        else
+        {
+            PlayClip(blockedClip, 0.85f, 1.0f);
+        }
     }
 
     public void PlayWin()
@@ -192,6 +220,17 @@ public class SoundManager : MonoBehaviour
             float env = Mathf.Exp(-t * 6f);
             return (Mathf.Sin(2 * Mathf.PI * freq * t) + 0.2f * Mathf.Sin(3 * Mathf.PI * freq * t)) * env;
         });
+
+        // 7. Bump / Ouch Tone (0.16s) - Fallback if no audio asset assigned
+        if (ouchClip == null)
+        {
+            ouchClip = CreateTone(sampleRate, 0.16f, (t, dur) =>
+            {
+                float freq = Mathf.Lerp(320f, 130f, t / dur);
+                float env = Mathf.Exp(-t * 24f);
+                return (Mathf.Sin(2 * Mathf.PI * freq * t) + 0.35f * Mathf.Sin(4 * Mathf.PI * freq * t)) * env;
+            });
+        }
     }
 
     private AudioClip CreateTone(int sampleRate, float duration, System.Func<float, float, float> sampleFunc)

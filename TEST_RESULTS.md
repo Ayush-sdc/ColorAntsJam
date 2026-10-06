@@ -236,7 +236,226 @@ Executed via Unity Editor Command Runner ([FeatureUIPlayModeTests.cs:617](file:/
 
 ---
 
-## 11. Grand Total Test Suite Status
+## 11. Visual Bugs Verification Suite: Progress Bar & Ant Entry (October 2026)
+
+Executed via Unity Editor Command Runner ([FeatureUIPlayModeTests.cs:953](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Editor/FeatureUIPlayModeTests.cs#L953)):
+- **Execution Date:** October 3, 2026
+- **Result:** **2 / 2 TESTS PASSED (0 FAILURES)**
+
+| # | Test Scenario | Verified Assertions | Status |
+| :-: | :--- | :--- | :---: |
+| **1** | **Progress Bar Fills from Zero (`TestProgressBarFillFromZero`)** | • Overlay initializes displayed fill to `0f` and text to `"0%"` before becoming visible.<br>• Animates upward strictly from 0% to the target saved progress using unscaled time (`.SetUpdate(true)`).<br>• Text stays synchronized with fill (`0%` -> `33%` -> `100%`).<br>• Cancels existing tweens upon reopen and handles 0% and 100% targets cleanly.<br>• Prefab default serialized values updated to `0` and `"0%"` (zero 1-frame flash).<br>• Presentation resets on dismiss/reuse without resetting saved player progress. | **PASS** |
+| **2** | **Ants Disappear at Hole Entrance Rim (`TestAntEntranceDisappearance`)** | • Each ant becomes invisible at the hole entrance rim plane (`Vector3.Dot(leadingEdge - holeEntryPoint, entryForward) >= 0f`).<br>• Ant heads and bodies do NOT cross the pit or emerge beyond the opposite rim on small 1x1 holes.<br>• Follower ants remain visible until their own leading edge crosses the entrance plane.<br>• Visual hiding (`unit.SetVisualVisibility(false)`) is strictly decoupled from logical completion (queue completes only after final ant enters, hole capacity decrements by 1, simultaneous entry and lock counters preserved).<br>• Linked-leader connector ropes cleaned up immediately without floating ropes.<br>• Visibility is fully restored on pool reuse / level restart (`unit.ResetWalkVisual()`). | **PASS** |
+
+### High-Resolution Verification Evidence (1080×1920 Game View)
+1. [Evidence_ProgressBar_0Percent_Initial.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_ProgressBar_0Percent_Initial.png)
+   - Overlay visible before animation starts; progress bar fill is strictly empty (0%) and percentage label reads `"0%"`.
+2. [Evidence_ProgressBar_33Percent_Target.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_ProgressBar_33Percent_Target.png)
+   - Progress bar animated smoothly upward from 0% to 33%, with label updating in lockstep to `"33%"`.
+3. [Evidence_ProgressBar_100Percent_Target.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_ProgressBar_100Percent_Target.png)
+   - Progress bar reopened and animated cleanly to 100%, completing milestone with `"100%"` display and scale celebration.
+4. [Evidence_AntEntry_DisappearanceAtRim.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_AntEntry_DisappearanceAtRim.png)
+   - Leader ant reaches entrance boundary rim of a 1x1 hole and becomes visually hidden immediately, while following ant remains visible on board grid.
+
+---
+
+## 12. Level 23 Multi-Pipe & Visual Spacing Verification Suite (October 2026)
+
+Executed via Unity Editor Command Runner ([FeatureUIPlayModeTests.cs:1293](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Editor/FeatureUIPlayModeTests.cs#L1293)):
+- **Execution Date:** October 5, 2026
+- **Result:** **3 / 3 TESTS PASSED (0 FAILURES)**
+
+| # | Test Scenario | Verified Assertions | Status |
+| :-: | :--- | :--- | :---: |
+| **1** | **Level 23 `Queue_Record_75_3` Multi-Pipe Traversal & Accounting** | • `ValidateForwardMove` accepts `Queue_Record_75_3` (ColorID 3) traversing sequentially through Pipe #6 and Pipe #7 into Hole #72.<br>• `traversedPipes` contains both Pipe 6 and Pipe 7 in exact order.<br>• `TryStartMove` reserves Pipe 6, Pipe 7, and Hole 72 atomically.<br>• Move starts smoothly with continuous world spline path.<br>• Completed passage via `OnQueueCompleted` decrements remaining uses of Pipe 6 (2 -> 1), Pipe 7 (3 -> 2), and Hole 72 (3 -> 2), consuming exactly ONE use per completed queue, not per ant.<br>• Active reservations released cleanly to 0. | **PASS** |
+| **2** | **Ant Queue Visual Spacing Consistency** | • `AntQueueVisualSettings` shared asset scales ants (`workerVisualScale = 0.35f`, `leaderVisualScale = 0.38f`) eliminating lengthwise gaps.<br>• Queues read as distinct continuous groups.<br>• Logical grid cell spacing (1.0), ant count, and tail coordinates are strictly preserved.<br>• Lateral clearance between neighboring queues (0.44 units) prevents visual merging.<br>• No jumping, spreading, or bunching when motion begins. | **PASS** |
+| **3** | **Small Hole Progressive Descent and Concealment** | • Ant visibly reaches and enters the actual hole opening.<br>• Leader and followers plunge steeply downward into the pit opening (`0.32f * cs` forward, `y` drops to `-0.35f`) with proportional scale reduction.<br>• Ants stay VISIBLE at the rim and plunge into the pit; they do NOT pop prematurely out of existence on the outer rim.<br>• Ants do NOT traverse across the pit or emerge beyond the opposite rim on small 1x1 holes.<br>• Units submerge/conceal only once fully inside the pit (`pitDescent >= 0.95f` or `y <= -0.34f`).<br>• Visual entry is strictly decoupled from rescue accounting (capacity, locks, grace period).<br>• Visual state is fully restored on pool reuse / level restart. | **PASS** |
+
+### High-Resolution Verification Evidence (1080×1920 Game View)
+1. [Evidence_Record_75_3_TraversingRoute.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Record_75_3_TraversingRoute.png)
+   - Level 23 `Queue_Record_75_3` traversing its multi-pipe route through Pipe 6 and Pipe 7 into Hole 72 with active reservations.
+2. [Evidence_QueueSpacing_StaticAndMoving.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_QueueSpacing_StaticAndMoving.png)
+   - Visual spacing demonstration showing continuous cohesive ant bodies with clear lateral lane clearance and zero motion bunching.
+3. [Evidence_SmallHoleEntry_ProgressiveConceal.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_SmallHoleEntry_ProgressiveConceal.png)
+   - Progressive pit entry showing ant plunging into 1x1 pit interior before concealing, with zero premature rim popping and zero far-edge emergence.
+
+---
+
+## 14. Queue Speed, Screen Overhauls & Concurrency Test Suite (October 2026)
+
+Executed via Unity Editor Command Runner ([PlayModeConcurrencyAndScreensTests.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Editor/PlayModeConcurrencyAndScreensTests.cs)):
+- **Execution Date:** October 6, 2026
+- **Result:** **11 / 11 TESTS PASSED (0 FAILURES)**
+
+| # | Test Scenario | Verified Assertions | Status |
+| :-: | :--- | :--- | :--- |
+| **1** | **6 Concurrent Queues to Different Holes** | Rapidly launched 6 valid queues heading to 6 different holes. All 6 queues started concurrently (`ActiveMovingQueuesCount == 6`) before prior queues finished. Global queue concurrency limit (`MAX_CONCURRENT_MOVING_QUEUES = 4`) verified removed. | **PASS** |
+| **2** | **Multiple Queues to Same Hole with Sufficient Capacity** | 3 queues approached the same hole (capacity 4) from unobstructed cardinal directions simultaneously. All 3 queues started together, reserving 3 slots atomically (`InboundReservations == 3`, `AvailableCapacity == 1`). | **PASS** |
+| **3** | **Two Queues Sharing Exact Same Path** | Two distinct queues launched along the exact same path/trajectory. Moving queues freely overlap, cross, and follow identical coordinates without collision, life loss, or blocking. | **PASS** |
+| **4** | **Insufficient Hole Capacity Cannot Be Overbooked** | Hole with capacity 1 accepted Q1 (`AvailableCapacity` reduced to 0). Q2 attempting to move toward the same hole was rejected immediately (`TryStartMove == false`), preserving atomic capacity limits without overbooking. | **PASS** |
+| **5** | **Repeated Taps on Same Moving Queue** | Tapping an already moving queue was rejected cleanly (`s2 == false`). Did not duplicate movement coroutines, reservation counts, or completion callbacks. | **PASS** |
+| **6** | **Linked Group Launch During Active Unrelated Moves** | Launched a linked group of 2 queues while an unrelated moving queue was already traveling. Linked group launched atomically and synchronously with zero serialization delay (`TotalMoving == 3`). | **PASS** |
+| **7** | **Movement Speed Multiplier & Spacing Consistency** | Verified base speed (6.8) scales to 10.2 when multiplier is 1.5× (`EffectiveMoveSpeed = 10.2`). Applied frame-rate-independently with stable spacing, smooth pipe traversal, and progressive hole descent without snapping or trigger skipping. | **PASS** |
+| **8** | **Level 30 vs Level 31 Completion Screen UI** | Level 30 shows feature progress bar ("Features Mastered! 100%"). Level 31 hides the progress bar, percentage text, next feature label, and icon glow. Title and Next button are repositioned to $Y = 120$ and $Y = -120$, cleanly eliminating any empty gap. | **PASS** |
+| **9** | **Dedicated Campaign-Complete Screen (Level 45)** | Completing Level 45 displays `CampaignCompletedOverlay` with "ALL LEVELS COMPLETED!", cute linked ants illustration, "You rescued every ant queue!", and glossy "PLAY AGAIN" button without loading Level 46. | **PASS** |
+| **10** | **PLAY AGAIN Preserves Saved Progression** | Clicking "PLAY AGAIN" sets active level to 1 for replay without modifying `HighestCompletedLevel` (remains 45), sound/vibration preferences, or tutorial acknowledgements. | **PASS** |
+| **11** | **Timeout Grace Period on Final Accepted Moves** | Moves accepted before timer expiry complete successfully without instant game over, upholding the existing grace rule. | **PASS** |
+
+### High-Resolution Verification Evidence (1080×1920 Game View)
+1. [Evidence_Level30_CompletionScreen.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level30_CompletionScreen.png)
+   - Level 30 completion overlay showing "LEVEL COMPLETED!", feature progress bar at 100%, and NEXT button.
+2. [Evidence_Level31_CompletionScreen_NoProgress.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level31_CompletionScreen_NoProgress.png)
+   - Level 31 completion overlay showing cleanly repositioned title and NEXT button with feature progress elements completely hidden and zero empty vertical gap.
+3. [Evidence_CampaignCompleted_Screen.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_CampaignCompleted_Screen.png)
+   - Final campaign complete overlay showing "ALL LEVELS COMPLETED!" gold title, celebratory cute ants with rotating rays, "You rescued every ant queue!", and glossy "PLAY AGAIN" pill button.
+
+---
+
+## 16. Feature Overlays, Legal Terms & Welcome Verification Suite (Oct 2026)
+
+**Test Runner:** Executed via `Tools/Slither Ants Jam/Tests/Run Tutorial and Legal Tests` ([TutorialAndLegalPlayModeTests.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Editor/TutorialAndLegalPlayModeTests.cs))  
+**Execution Date:** October 6, 2026  
+**Status:** **11 / 11 TESTS PASSED (0 FAILURES, 0 REGRESSIONS)**
+
+| # | Test Fixture / Method | Description / Expected Behavior | Result |
+| :-: | :--- | :--- | :-: |
+| **1** | **Tutorial Prefabs & OK Hit Areas** | All 4 prefabs (`FeatureOverlay_LinkedAnts`, `FeatureOverlay_StackedAnts`, `FeatureOverlay_Pipes`, `FeatureOverlay_LockedAnts`) exist with preserved aspect ratio (`1201/1309`) and invisible Unity Button hit areas anchored over illustrated OK artwork (`(0.31, 0.031)` to `(0.69, 0.115)`). | **PASS** |
+| **2** | **Tutorial Acknowledgement Persistence** | Acknowledging a tutorial writes `SeenTutorial_<id>` to `PlayerPrefs`; subsequent level checks confirm tutorial is no longer pending; clean reset restores state. | **PASS** |
+| **3** | **Tutorial Modal Pause & Input Blocking** | Showing tutorial modal pauses countdown timer, blocks board gestures and camera interaction, and dismisses smoothly on OK tap. | **PASS** |
+| **4** | **Settings -> Legal Terms -> Document Navigation** | Opening Settings allows navigating into Legal Terms modal, which opens the scrollable Document Viewer for ToS/Privacy Policy; closing document returns to Legal Terms; closing Legal Terms returns to Settings; gameplay remains paused throughout. | **PASS** |
+| **5** | **Account Deletion Safety (No Data Erased on Tap)** | Tapping Account Deletion displays request contact instructions and does NOT erase local progression data (`PlayerPrefs`) or remote data. | **PASS** |
+| **6** | **Personalized Ads Disabled Notice** | Since no consent/ads SDK is installed, personalized ads button is visibly disabled (`interactable = false`) with clear informative feedback; no dummy functional switches. | **PASS** |
+| **7** | **Player ID Row Handling & Copy** | When no backend player ID is configured, ID row is completely hidden; when configured, row is visible and copy button copies ID to clipboard with toast confirmation. | **PASS** |
+| **8** | **Welcome Overlay First-Launch Acceptance** | Welcome overlay displays on first launch without prior acceptance; tapping ACCEPT records terms version and ISO timestamp in `PlayerPrefs` and triggers callback to continue game. | **PASS** |
+| **9** | **Welcome Overlay Terms Version Update** | Updating configured terms version from `1.0.0` to `1.1.0` requires renewed acceptance; records new version and timestamp. | **PASS** |
+| **10** | **Android Back Stack Hierarchy** | Android Back (Escape) dismisses modals in strict topmost-first order: Document -> Legal Terms -> Settings -> Gameplay. | **PASS** |
+| **11** | **Full Game View UI Screenshots** | Captures all 9 UI screens into `Assets/TestEvidence/Screenshots/` including Canvas UI elements. | **PASS** |
+
+### High-Resolution Verification Evidence (1080×1920 Full Game View)
+1. [Evidence_Tutorial_LinkedAnts.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Tutorial_LinkedAnts.png)
+   - Flattened Linked Ants tutorial composition displayed over dimmed board with invisible OK hit area.
+2. [Evidence_Tutorial_StackedAnts.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Tutorial_StackedAnts.png)
+   - Flattened Stacked Ants tutorial composition displayed with preserved aspect ratio.
+3. [Evidence_Tutorial_Pipes.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Tutorial_Pipes.png)
+   - Flattened Pipes tutorial composition displayed with preserved aspect ratio.
+4. [Evidence_Tutorial_LockedAnts.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Tutorial_LockedAnts.png)
+   - Flattened Locked Ants tutorial composition displayed with preserved aspect ratio.
+5. [Evidence_Settings_WithLegalButton.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Settings_WithLegalButton.png)
+   - Settings modal showing the newly added "LEGAL TERMS" button alongside Sound, Music, and Vibration.
+6. [Evidence_LegalTerms_Modal.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_LegalTerms_Modal.png)
+   - Legal Terms modal matching `Privacy_policies.png` with periwinkle outer frame, cream inset, circular red close button, Privacy Policy, Terms of Service, Account Deletion, and disabled Ads entries.
+7. [Evidence_LegalDocument_PrivacyPolicy.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_LegalDocument_PrivacyPolicy.png)
+   - In-game scrollable Privacy Policy document modal with clean typography and close button.
+8. [Evidence_LegalDocument_AccountDeletion.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_LegalDocument_AccountDeletion.png)
+   - Account Deletion and Data Request modal with contact instructions and request procedures.
+9. [Evidence_Welcome_Overlay.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Welcome_Overlay.png)
+   - Welcome overlay matching `Welcome.png` with purple backdrop, cream card, blue header backing, Terms/Privacy links, and green ACCEPT button.
+
+### Missing Third-Party Service Disclosures & Technical Limitations
+- **Personalized Advertising SDK**: No mobile advertising SDK (e.g. Google Mobile Ads, Unity Ads, AppLovin MAX) or Consent Management Platform (CMP / UMP) is installed in this project. As requested, the "Personalized Ads" entry is marked visually unavailable (`interactable = false`) with informative user messaging. A toggle has deliberately not been added to prevent misleading players.
+- **Backend Authentication / Player ID Service**: No external player account or auth backend (e.g. Firebase, PlayFab, Unity Gaming Services) is configured. The Player ID row in Legal Terms is hidden by default (`isPlayerIdAvailable = false`) to avoid displaying fabricated IDs or mock accounts.
+
+---
+
+## 17. Fixes Verification Suite: Overlay Visibility, Entry VFX Removal & Queue Click Audio (Oct 2026)
+
+**Test Runner:** Executed via Unity Editor Command Runner & [FixesVerificationTestSuite.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Editor/FixesVerificationTestSuite.cs)  
+**Execution Date:** October 6, 2026  
+**Status:** **9 / 9 TESTS PASSED (0 FAILURES, 0 REGRESSIONS)**  
+
+| Test Scenario | Scope / Description | Result |
+| :--- | :--- | :---: |
+| **`Test 1: Overlay Artwork & Button Hit Area`** | Verifies all 4 feature tutorial overlays (`Linked Ants`, `Stacked Ants`, `Pipes`, `Locked Ants`) instantiate with visible artwork, `color.a == 1.0`, `preserveAspect == true`, and an active OK button. | **PASS** |
+| **`Test 2: Missing Asset Fallback & Error Logging`** | Simulates missing tutorial asset; confirms `Debug.LogError` is logged and a readable, dismissible fallback modal with OK button is displayed instead of blank dim screen. | **PASS** |
+| **`Test 3: Welcome & Legal Terms Visibility`** | Verifies `WelcomeOverlay` and `LegalTermsModal` instantiate with full opacity (`alpha == 1`), visible content, and active dismiss/accept buttons. | **PASS** |
+| **`Test 4: Level Completed & Hard Level Lifecycle`** | Verifies `LevelCompletedOverlay` and `HardLevelIntroOverlay` modal lifecycles, canvas groups, and interactive buttons without stuck states. | **PASS** |
+| **`Test 5: Hole Entry Smoke/Glow VFX Removal`** | Triggers ant and queue swallow events on `HoleController`; confirms 0 `ant_dis` / `Nest FX` instances spawned and no particle systems instantiated. | **PASS** |
+| **`Test 6: Cleanup Active Entry Effects Routine`** | Calls `HoleController.CleanupActiveEntryEffects()`; confirms any lingering or pooled entry particle effects are destroyed cleanly. | **PASS** |
+| **`Test 7: Queue Selection Audio on Stationary Tap`** | Taps stationary ant queue via `PlayerInputHandler`; confirms `PlayQueueSelect()` triggers immediately playing `swallowClip`. | **PASS** |
+| **`Test 8: Selection Audio Removed from Hole Entry`** | Simulates complete ant swallow and queue completion; confirms zero swallow SFX played on hole entry. | **PASS** |
+| **`Test 9: Audio Filtering (Moving, UI, Drag, Mute)`** | Verifies taps on moving queues, UI elements, board drags/pinches do NOT trigger queue selection sound; confirms mute setting silences audio. | **PASS** |
+
+### Verified High-Resolution Screenshot Evidence (1080×1920 Game View)
+
+Rendered and saved under `Assets/TestEvidence/Screenshots/`:
+1. [Evidence_Fix_LinkedAnts_Overlay.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Fix_LinkedAnts_Overlay.png)
+   - High-fidelity Linked Ants composition (transparent PNG) with title, cute roped ant illustration, description, and OK button with functioning invisible hit area.
+2. [Evidence_Fix_StackedAnts_Overlay.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Fix_StackedAnts_Overlay.png)
+   - Stacked Ants composition rendered with crisp white tint, preserved aspect ratio, and active button.
+3. [Evidence_Fix_Pipes_Overlay.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Fix_Pipes_Overlay.png)
+   - Pipe tutorial composition with badge 3 and ant entering pipe; zero distorting aspect stretch.
+4. [Evidence_Fix_LockedAnts_Overlay.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Fix_LockedAnts_Overlay.png)
+   - Locked Ants tutorial composition with padlock emblem and clear instructions.
+5. [Evidence_Fix_Welcome_Overlay.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Fix_Welcome_Overlay.png)
+   - Welcome modal rendered cleanly with full text visibility and green Accept button.
+6. [Evidence_Fix_LegalTerms_Modal.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Fix_LegalTerms_Modal.png)
+   - Legal Terms modal displayed over dimmed board with active navigation buttons.
+7. [Evidence_Fix_Gameplay_Board.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Fix_Gameplay_Board.png)
+   - Live gameplay board showing ant queues and stadium holders after modal dismissal.
+
+---
+
+---
+
+## 18. Welcome Scene & Milestone Progression Test Suite (Oct 2026)
+
+**Test Runner:** Executed via Unity Editor & [WelcomeAndProgressionVerificationSuite.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Editor/WelcomeAndProgressionVerificationSuite.cs)  
+**Execution Date:** October 6, 2026  
+**Status:** **7 / 7 TESTS PASSED (0 FAILURES, 0 REGRESSIONS)**  
+
+| Test Scenario | Scope / Description | Result |
+| :--- | :--- | :---: |
+| **`Test 1: Build Settings Scene Order`** | Verifies `[0] Assets/Scenes/Welcome.unity` is active startup scene and `[1] Assets/Scenes/main.unity` is active gameplay scene. | **PASS** |
+| **`Test 2: Milestones & Range Boundaries`** | Validates exact ranges: Levels 1–6 Linked (100% on lvl 6), Levels 7–14 Stacked (100% on lvl 14), Levels 15–20 Pipes (100% on lvl 20), Levels 21–29 Locked (100% on lvl 29). | **PASS** |
+| **`Test 3: Preview Icons Validity & Aspect`** | Asserts all 4 preview sprites (`Preview_LinkedAnts.png`, `Preview_StackedAnts.png`, `Preview_Pipes.png`, `Preview_LockedAnts.png`) exist, are assigned, have square aspect ratio and non-zero alpha. | **PASS** |
+| **`Test 4: Replay Progression Guards`** | Verifies completing an earlier level during replay (e.g. Lvl 2 with highest=10) displays progress toward next still-locked feature without inflating saved progress. | **PASS** |
+| **`Test 5: Level 30 Onward Hides Next-Feature Section`** | Verifies `effectiveLevel >= 30` hides the next-feature progress section completely (Levels 30–45). | **PASS** |
+| **`Test 6: Tutorials at Level Start & Persistence`** | Verifies unacknowledged tutorials trigger at exact level starts (7, 15, 21, 30), pause gameplay, and persist acknowledgement strictly on OK. | **PASS** |
+| **`Test 7: Legal Terms Acceptance Lifecycle`** | Verifies terms version and ISO timestamp tracking, duplicate tap debouncing, unconfigured terms rejection, and zero data reset on editor preview. | **PASS** |
+
+### Milestone Range Boundaries & Presentation Table
+
+| Feature | Intro Level | Start Milestone | Active Completed Range | Progress Formula | Presentation on Completion Screen |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Linked Ants** | Level 7 | Level 1 | Levels 1–6 | $\text{clamp01}\left(\frac{\text{Lvl}}{6}\right)$ | Displays `Preview_LinkedAnts` icon, reaching **100%** upon completing Level 6. Next loads Level 7 with tutorial. |
+| **Stacked Ants** | Level 15 | Level 7 | Levels 7–14 | $\text{clamp01}\left(\frac{\text{Lvl} - 6}{8}\right)$ | Displays `Preview_StackedAnts` icon, reaching **100%** upon completing Level 14. Next loads Level 15 with tutorial. |
+| **Pipes** | Level 21 | Level 15 | Levels 15–20 | $\text{clamp01}\left(\frac{\text{Lvl} - 14}{6}\right)$ | Displays `Preview_Pipes` icon, reaching **100%** upon completing Level 20. Next loads Level 21 with tutorial. |
+| **Locked Ants** | Level 30 | Level 21 | Levels 21–29 | $\text{clamp01}\left(\frac{\text{Lvl} - 20}{9}\right)$ | Displays `Preview_LockedAnts` icon, reaching **100%** upon completing Level 29. Next loads Level 30 with tutorial. |
+| **All Introduced**| — | — | Level 30 onward | — | Next-feature progress section is **completely hidden**. Title and Next button reposition to $Y=120$ and $Y=-120$. |
+
+### Level Data Appearance vs Presentation Milestones Audit
+- **Linked Ants**: Presentation Milestone = Level 7 | First in level data = **Level 7** (Match)
+- **Stacked Ants**: Presentation Milestone = Level 15 | First in level data = **Level 15** (Match)
+- **Pipes**: Presentation Milestone = Level 21 | First in level data = **Level 23** (Puzzle data preserved; no mechanics appear earlier than milestone)
+- **Locked Ants**: Presentation Milestone = Level 30 | First in level data = **Level 30** (Match)
+
+### High-Resolution Evidence Screenshots Captured (1080×1920 Screen Space UI)
+
+Rendered and verified under `Assets/TestEvidence/Screenshots/`:
+1. [Evidence_Welcome_Scene.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Welcome_Scene.png)
+   - Standalone Welcome startup scene with deep-purple background, cream card, WELCOME title badge, legal body text, Terms/Privacy link buttons, and green ACCEPT button.
+2. [Evidence_Level6_Completion_Linked100.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level6_Completion_Linked100.png)
+   - Level 6 completion screen showing Linked Ants preview icon and progress bar filled to **100%**.
+3. [Evidence_Level7_LinkedTutorial.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level7_LinkedTutorial.png)
+   - Level 7 entry tutorial overlay with transparent composition artwork and OK button hit area.
+4. [Evidence_Level14_Completion_Stacked100.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level14_Completion_Stacked100.png)
+   - Level 14 completion screen showing Stacked Ants preview icon and progress bar filled to **100%**.
+5. [Evidence_Level15_StackedTutorial.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level15_StackedTutorial.png)
+   - Level 15 entry tutorial overlay with Stacked Ants composition artwork.
+6. [Evidence_Level20_Completion_Pipes100.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level20_Completion_Pipes100.png)
+   - Level 20 completion screen showing Pipes preview icon and progress bar filled to **100%**.
+7. [Evidence_Level21_PipesTutorial.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level21_PipesTutorial.png)
+   - Level 21 entry tutorial overlay with Pipes composition artwork.
+8. [Evidence_Level29_Completion_Locked100.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level29_Completion_Locked100.png)
+   - Level 29 completion screen showing Locked Ants preview icon and progress bar filled to **100%**.
+9. [Evidence_Level30_LockedTutorial.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level30_LockedTutorial.png)
+   - Level 30 entry tutorial overlay with Locked Ants composition artwork.
+10. [Evidence_Level30_Completion_ProgressHidden.png](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/TestEvidence/Screenshots/Evidence_Level30_Completion_ProgressHidden.png)
+    - Level 30 completion screen confirming next-feature progress section is completely hidden with repositioned title and Next button.
+
+---
+
+## 19. Grand Total Test Suite Status
 
 - **Automated Integration Tests (EditMode UTF):** 23 / 23 PASS
 - **UI & Progression Verification Tests:** 4 / 4 PASS
@@ -244,5 +463,106 @@ Executed via Unity Editor Command Runner ([FeatureUIPlayModeTests.cs:617](file:/
 - **Simultaneous Hole Entry Tests:** 9 / 9 PASS
 - **Shared Systems Regression Suite (Oct 2026):** 6 / 6 PASS
 - **Camera Overhaul & Rope Visual Lifecycle Suite (Oct 2026):** 7 / 7 PASS
-- **Total Tests:** **54 / 54 TESTS PASSED (0 FAILURES, 0 REGRESSIONS)**
+- **Visual Bugs Verification Suite (Oct 2026):** 2 / 2 PASS
+- **Level 23 Multi-Pipe & Visual Spacing Suite (Oct 2026):** 3 / 3 PASS
+- **Queue Speed, Screen Overhauls & Concurrency Suite (Oct 2026):** 11 / 11 PASS
+- **Tutorial Overlays & Legal Terms Verification Suite (Oct 2026):** 11 / 11 PASS
+- **Fixes Verification Suite (Oct 2026):** 9 / 9 PASS
+- **Welcome & Progression Verification Suite (Oct 2026):** 7 / 7 PASS
+
+---
+
+## 20. Wrong-Move Feedback Verification Suite (Play Mode UTF)
+
+Executed via `Tools/Slither Ants Jam/Tests/Run Failed Move Feedback Suite`:
+
+| # | Test Name | Expected Behavior | Result |
+|---|-----------|-------------------|--------|
+| 1 | **Blocker Several Cells Ahead** | Moves forward along route, contacts stationary blocker with ant mesh clearance, plays cosmetic bump, ouch sound, deducts exactly 1 heart at impact, reverses back along path to exact start position, restores Idle. | **PASS** |
+| 2 | **Adjacent Blocker** | Immediately adjacent blocker causes minimal approach without mesh overlap/teleport, recoil, 1 heart deduction, exact return. | **PASS** |
+| 3 | **Bent Queue Retracing** | Followers dynamically retrace curved path around corners in reverse without rigid block translation or diagonal drift. | **PASS** |
+| 4 | **Rapid Repeated Taps** | Repeated taps on a moving/returning failed queue are ignored; exactly 1 failed action and 1 heart lost. | **PASS** |
+| 5 | **Unrelated Valid Queues Responsive** | While a blocked queue is in FailedMoveApproach/Returning, unrelated valid queues start and travel to holes smoothly. | **PASS** |
+| 6 | **Moving Queues Non-Collision** | Queues moving concurrently towards rescue holes share and cross paths without collision or false life loss. | **PASS** |
+| 7 | **Blocker Clears Before Impact** | When blocker starts moving away before contact, collision penalty is canceled; queue returns safely with 0 life loss. | **PASS** |
+| 8 | **Linked-Group Atomic Failure** | Group advances to earliest genuine collision distance in parallel lockstep with connector rope aligned; costs exactly 1 life and 1 ouch; returns all members in unison. | **PASS** |
+| 9 | **Stacked Lower Layer Hidden** | Failed move attempt of upper queue never uncovers, activates, or reveals dormant lower layer. | **PASS** |
+| 10 | **No Resource Consumption** | Failed route through pipe/toward hole leaves available hole capacity and pipe remaining uses untouched; pipe temporary reservation released. | **PASS** |
+| 11 | **Last-Heart Failure Deferred** | Impact reducing lives to 0 lets impact recoil and return motion finish completely before showing LevelLost failure overlay. | **PASS** |
+| 12 | **Pause / Resume Robustness** | Settings pause/resume freezes and resumes in-flight approach/return cleanly without disruption. | **PASS** |
+
+- **Failed Move Feedback Suite Score**: **12 / 12 PASS (100%)**
+
+---
+
+## 21. Precise Physical Collision & Strict Heading Suite (Play Mode UTF)
+
+Executed via `PreciseFailedMoveVerificationSuite.cs`:
+
+| # | Test Scenario | Verified Numerical Assertions | Status |
+|---|---------------|-------------------------------|:------:|
+| 1 | **Strict Straight Advance Across All 4 Headings** | Perpendicular lateral deviation is strictly $0.0000$ across Right ($0^\circ$), Up ($90^\circ$), Left ($180^\circ$), Down ($270^\circ$). Leader never drifts, steers, or curves. | **PASS** |
+| 2 | **Zero Visual Overlap: Head, Side, & Tail** | Continuous swept distance calculation clamps leader before any proxy interpenetration. Minimum distance between proxies $\ge 0.0400$ units. Mesh overlap $= 0.0000$ units. | **PASS** |
+| 3 | **Dynamic Scale Adaptation** | Scales 0.75×, 1.00×, 1.25× correctly scale collision proxies; leader stops safely without overlap for all visual sizes. | **PASS** |
+| 4 | **High Speed & Low Framerate Clamp** | Move speed $20.0\,\text{units/s}$ with simulated large frame delta $\Delta t = 0.10\,\text{s}$ does not overshoot or tunnel through blocker. Contact is clamped precisely. | **PASS** |
+| 5 | **Blocker Remains 100% Stationary** | Blocker translation during impact $= 0.0000$ units. Zero `DOPunchPosition` shift. Leader recoil moves backward only along trail. | **PASS** |
+| 6 | **Linked Group Synchronization & Single Heart** | Parallel members advance in lockstep; group stops at earliest contact; exactly 1 heart lost and 1 ouch sound played. | **PASS** |
+| 7 | **Forward-Facing Retrace & Pose Restoration** | Ants back up facing forward (yaw rotation change $= 0.0000^\circ$); leader and follower final pose error $= 0.0000$ units. | **PASS** |
+| 8 | **Wrong-Color Hole Rim Contact All 4 Directions** | Up, Down, Left, Right approaches stop leader front tip at hole outer rim with 0.04m clearance. Leader pivot stays $\ge 0.56$m outside the hole (never crosses rim). 0 lateral deviation. | **PASS** |
+| 9 | **Wrong-Color Hole Small (1x1) vs Large (2x2)** | Outer rim boundaries adapt to hole geometry (1x1: 0.64m, 2x2: 1.36m). Front tip stops at outer rim, 0 mesh penetration into pit. | **PASS** |
+| 10 | **Immediately Adjacent Wrong-Color Hole** | Leader starting directly in front of wrong hole advances short distance ($< 0.16$m), stops at rim, plays ouch, loses 1 heart, returns to exact initial pose. | **PASS** |
+| 11 | **Bent Queue Wrong-Color Hole Retracing & Full Visibility** | Bent queue followers follow leader's straight extension; 100% visible throughout attempt (0 swallowing, 0 descent, 0 fading); followers reverse along trail. | **PASS** |
+| 12 | **Linked Group Wrong-Color Hole vs Blocker Synchronization** | One member facing wrong hole, other facing stationary queue: group stops at earliest contact, recoils and pauses in lockstep, loses exactly 1 heart. | **PASS** |
+| 13 | **Wrong-Color Contact Zero Resource Consumption** | Failed contact never consumes hole capacity, never decrements locks, and never reveals stacked ants. Hole capacity and lock counters remain 100% intact. | **PASS** |
+| 14 | **Rule Preservation: Full Same-Color Holes & Queues** | Full same-color hole preserves static blocked shake and immediate life loss without moving; stationary queue collisions continue to animate cleanly. | **PASS** |
+
+- **Precise Physical Verification Suite Score**: **14 / 14 PASS (100%)**
+
+### Measured Physical Metrics Summary
+- **Perpendicular Lateral Displacement**: $0.0000\,\text{units}$ (Exact straight cardinal heading, 0 curve/steering).
+- **Collision Proxy Clearance**: $\ge 0.0400\,\text{units}$ (Zero mesh penetration).
+- **Ant Head Pivot Clearance from Hole Rim**: $> 0.5600\,\text{units}$ (Pivot never enters hole before stopping).
+- **Stationary Blocker Translation**: $0.0000\,\text{units}$ (Strictly stationary).
+- **Backup Heading Flip**: $0.0000^\circ$ (Ants face forward while reversing).
+- **Post-Return Restoration Error**: $0.0000\,\text{units}$ (Exact pose restore).
+- **Resource Consumption on Failure**: $0$ capacity consumed, $0$ locks decremented, $0$ stacked ants revealed.
+
+### Video, Animation & High-Resolution Close-Up Evidence
+
+#### A. Wrong-Color Hole Outer Rim Contact Evidence (Latest Requirement)
+- **Normal Speed Video Recording**: [wrong_color_hole_rim_contact.mp4](file:///C:/Users/ayush/.gemini/antigravity-ide/brain/ae35056b-c43d-4b5c-8e8c-8a8d94f515d1/wrong_color_hole_rim_contact.mp4) (25 fps Game View)
+- **Normal Speed Animated WebP**: [wrong_color_hole_rim_contact.webp](file:///C:/Users/ayush/.gemini/antigravity-ide/brain/ae35056b-c43d-4b5c-8e8c-8a8d94f515d1/wrong_color_hole_rim_contact.webp)
+- **Slow Motion Video Recording**: [wrong_color_hole_rim_slowmo.mp4](file:///C:/Users/ayush/.gemini/antigravity-ide/brain/ae35056b-c43d-4b5c-8e8c-8a8d94f515d1/wrong_color_hole_rim_slowmo.mp4) (10 fps, 0.40× speed)
+- **Slow Motion Animated WebP**: [wrong_color_hole_rim_slowmo.webp](file:///C:/Users/ayush/.gemini/antigravity-ide/brain/ae35056b-c43d-4b5c-8e8c-8a8d94f515d1/wrong_color_hole_rim_slowmo.webp)
+- **Impact Contact Close-Up**: [wrong_color_rim_contact_closeup.png](file:///C:/Users/ayush/.gemini/antigravity-ide/brain/ae35056b-c43d-4b5c-8e8c-8a8d94f515d1/wrong_color_rim_contact_closeup.png) (Close-up showing ant head tip touching outer rim with 0 penetration and pivot outside)
+
+#### B. Stationary Blocker Queue Collision Evidence
+- **Normal Speed Video Recording**: [failed_move_collision_reverse.mp4](file:///C:/Users/ayush/.gemini/antigravity-ide/brain/ae35056b-c43d-4b5c-8e8c-8a8d94f515d1/failed_move_collision_reverse.mp4) (25 fps Game View)
+- **Normal Speed Animated WebP**: [failed_move_collision_reverse.webp](file:///C:/Users/ayush/.gemini/antigravity-ide/brain/ae35056b-c43d-4b5c-8e8c-8a8d94f515d1/failed_move_collision_reverse.webp)
+- **Slow Motion Video Recording**: [failed_move_slow_motion.mp4](file:///C:/Users/ayush/.gemini/antigravity-ide/brain/ae35056b-c43d-4b5c-8e8c-8a8d94f515d1/failed_move_slow_motion.mp4) (8 fps, 0.32× speed)
+- **Slow Motion Animated WebP**: [failed_move_slow_motion.webp](file:///C:/Users/ayush/.gemini/antigravity-ide/brain/ae35056b-c43d-4b5c-8e8c-8a8d94f515d1/failed_move_slow_motion.webp)
+- **Impact Contact Close-Up**: [impact_contact_closeup.png](file:///C:/Users/ayush/.gemini/antigravity-ide/brain/ae35056b-c43d-4b5c-8e8c-8a8d94f515d1/impact_contact_closeup.png) (Close-up showing exact 0-penetration clearance)
+
+---
+
+## Grand Total Test Suite Status
+
+- **Automated Tests Across All Suites:** **123 / 123 TESTS PASSED (0 FAILURES, 0 REGRESSIONS)**
+  - Automated Integration Tests (EditMode UTF): 23 / 23 PASS
+  - UI & Progression Verification Tests: 4 / 4 PASS
+  - Moving Queue & Level 14 Route Tests: 5 / 5 PASS
+  - Simultaneous Hole Entry Tests: 9 / 9 PASS
+  - Shared Systems Regression Suite: 6 / 6 PASS
+  - Camera Overhaul & Rope Visual Lifecycle Suite: 7 / 7 PASS
+  - Visual Bugs Verification Suite: 2 / 2 PASS
+  - Level 23 Multi-Pipe & Visual Spacing Suite: 3 / 3 PASS
+  - Queue Speed, Screen Overhauls & Concurrency Suite: 11 / 11 PASS
+  - Tutorial Overlays & Legal Terms Suite: 11 / 11 PASS
+  - Fixes Verification Suite: 9 / 9 PASS
+  - Welcome & Progression Verification Suite: 7 / 7 PASS
+  - Failed Move Feedback Suite: 12 / 12 PASS
+  - Precise Physical Collision Verification Suite: 14 / 14 PASS
+
+
+
 

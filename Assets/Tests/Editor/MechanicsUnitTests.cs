@@ -633,11 +633,11 @@ namespace AntsJam.Tests
             var pendingHoles = new Dictionary<HoleController, int>();
             var pendingPipes = new Dictionary<PipeController, int>();
 
-            bool v1 = board.ValidateForwardMove(q1, group, pendingHoles, out _, out _, out _, out _, out _, out _, pendingPipes);
+            bool v1 = board.ValidateForwardMove(q1, group, pendingHoles, out _, out _, out _, out _, out List<PipeController> _, out _, pendingPipes);
             Assert.IsTrue(v1);
             pendingPipes[pipe] = 1;
 
-            bool v2 = board.ValidateForwardMove(q2, group, pendingHoles, out _, out _, out _, out var reason, out _, out _, pendingPipes);
+            bool v2 = board.ValidateForwardMove(q2, group, pendingHoles, out _, out _, out _, out var reason, out List<PipeController> _, out _, pendingPipes);
             Assert.IsFalse(v2, "Second queue cannot reserve pipe when only 1 use is remaining.");
             Assert.AreEqual("BlockedByPipeObstacle", reason);
         }
@@ -1383,6 +1383,149 @@ namespace AntsJam.Tests
             Assert.AreEqual(0, pipe.RemainingUses);
             Assert.AreEqual(0, pipe.ActiveReservations);
             Assert.IsTrue(pipe.IsExhausted);
+        }
+
+        private PipeController CreatePipe(List<Vector2Int> cells, int uses)
+        {
+            var go = new GameObject("Pipe");
+            spawnedObjs.Add(go);
+            var pipe = go.AddComponent<PipeController>();
+            pipe.Initialize(cells, uses);
+            board.RegisterActivePipe(pipe);
+            return pipe;
+        }
+
+        [Test]
+        public void Level23_Queue_Record_75_3_TraversesMultiplePipes_AndCompletes()
+        {
+            // Level 23 Grid dimensions: 24 x 24
+            board.SetGridDimensions(24, 24);
+
+            // Pipe #6: [(13, 13), (13, 12), (14, 12)], 2 uses
+            var pipe6Cells = new List<Vector2Int> { new Vector2Int(13, 13), new Vector2Int(13, 12), new Vector2Int(14, 12) };
+            var pipe6Go = new GameObject("Pipe6");
+            spawnedObjs.Add(pipe6Go);
+            var pipe6 = pipe6Go.AddComponent<PipeController>();
+            pipe6.Initialize(pipe6Cells, rawPipeCount: 2);
+            board.RegisterActivePipe(pipe6);
+
+            // Pipe #7: [(18, 12), (19, 12), (19, 11)], 3 uses
+            var pipe7Cells = new List<Vector2Int> { new Vector2Int(18, 12), new Vector2Int(19, 12), new Vector2Int(19, 11) };
+            var pipe7Go = new GameObject("Pipe7");
+            spawnedObjs.Add(pipe7Go);
+            var pipe7 = pipe7Go.AddComponent<PipeController>();
+            pipe7.Initialize(pipe7Cells, rawPipeCount: 3);
+            board.RegisterActivePipe(pipe7);
+
+            // Destination Hole #72: ColorID 3 (Green), capacity 3
+            var hole = CreateHole("Hole_72", 3, new Vector2Int(19, 7), capacity: 3);
+
+            // Queue_Record_75_3: ColorID 3, body [(13, 14), (13, 15)], heading down
+            var q = CreateQueue("Record_75_3", 3, new List<Vector2Int> { new Vector2Int(13, 14), new Vector2Int(13, 15) });
+
+            // 1. Validate forward move route
+            var group = new List<AntQueueController> { q };
+            var pendingHoles = new Dictionary<HoleController, int>();
+            var pendingPipes = new Dictionary<PipeController, int>();
+            bool isValid = board.ValidateForwardMove(q, group, pendingHoles, out var forwardDir, out var targetHole, out var entrance, out var blockedReason, out List<PipeController> traversedPipes, out var routeCells, pendingPipes);
+
+            Assert.IsTrue(isValid, $"Move validation failed: {blockedReason}");
+            Assert.AreEqual("None", blockedReason);
+            Assert.AreEqual(Vector2Int.down, forwardDir);
+            Assert.AreEqual(hole, targetHole);
+            Assert.AreEqual(2, traversedPipes.Count, "Route must traverse both Pipe 6 and Pipe 7 sequentially.");
+            Assert.AreEqual(pipe6, traversedPipes[0]);
+            Assert.AreEqual(pipe7, traversedPipes[1]);
+
+            // 2. Launch movement atomically
+            bool moved = board.TryStartMove(q);
+            Assert.IsTrue(moved, "TryStartMove must accept multi-pipe movement for Record_75_3.");
+            Assert.IsTrue(q.IsMoving);
+            Assert.AreEqual(2, q.TraversedPipes.Count);
+            Assert.AreEqual(1, pipe6.ActiveReservations, "Pipe 6 must be reserved.");
+            Assert.AreEqual(1, pipe7.ActiveReservations, "Pipe 7 must be reserved.");
+            Assert.AreEqual(2, hole.AvailableCapacity, "Hole capacity must be reserved by 1.");
+
+            // 3. Complete queue passage
+            board.OnQueueCompleted(q);
+            Assert.AreEqual(1, pipe6.RemainingUses, "Pipe 6 remaining uses must decrease from 2 to 1.");
+            Assert.AreEqual(0, pipe6.ActiveReservations);
+            Assert.AreEqual(2, pipe7.RemainingUses, "Pipe 7 remaining uses must decrease from 3 to 2.");
+            Assert.AreEqual(0, pipe7.ActiveReservations);
+        }
+
+        [Test]
+        public void MultiPipeRoute_CycleDetected_Blocked()
+        {
+            board.SetGridDimensions(20, 20);
+
+            // Pipe A: from (5, 5) heading up to (5, 8) then right to (7, 8)
+            var pipeACells = new List<Vector2Int> { new Vector2Int(5, 5), new Vector2Int(5, 6), new Vector2Int(5, 7), new Vector2Int(5, 8), new Vector2Int(6, 8), new Vector2Int(7, 8) };
+            var pipeA = CreatePipe(pipeACells, 2);
+
+            // Pipe B: from (8, 8) heading right then down then left back to (5, 4) entering Pipe A again!
+            var pipeBCells = new List<Vector2Int> { new Vector2Int(8, 8), new Vector2Int(9, 8), new Vector2Int(9, 4), new Vector2Int(5, 4) };
+            var pipeB = CreatePipe(pipeBCells, 2);
+
+            var q = CreateQueue("CycleQ", 0, new List<Vector2Int> { new Vector2Int(5, 3), new Vector2Int(5, 2) });
+            var group = new List<AntQueueController> { q };
+            var pendingHoles = new Dictionary<HoleController, int>();
+
+            bool isValid = board.ValidateForwardMove(q, group, pendingHoles, out _, out _, out _, out var blockedReason, out List<PipeController> _, out _);
+            Assert.IsFalse(isValid);
+            Assert.AreEqual("PipeCycleDetected", blockedReason, "Looping pipes must be detected and blocked to prevent hangs.");
+        }
+
+        [Test]
+        public void MultiPipeRoute_ReservationRollbackOnExhaustedSecondPipe()
+        {
+            board.SetGridDimensions(20, 20);
+
+            // Pipe 1 has 1 use
+            var pipe1Cells = new List<Vector2Int> { new Vector2Int(5, 5), new Vector2Int(6, 5) };
+            var pipe1 = CreatePipe(pipe1Cells, 1);
+
+            // Pipe 2 has 0 uses (exhausted)
+            var pipe2Cells = new List<Vector2Int> { new Vector2Int(8, 5), new Vector2Int(9, 5) };
+            var pipe2 = CreatePipe(pipe2Cells, 0);
+
+            CreateHole("Hole", 0, new Vector2Int(12, 5), 2);
+            var q = CreateQueue("Q", 0, new List<Vector2Int> { new Vector2Int(4, 5), new Vector2Int(3, 5) });
+
+            bool moved = board.TryStartMove(q);
+            Assert.IsFalse(moved, "Move must fail when second pipe has no available uses.");
+            Assert.AreEqual(0, pipe1.ActiveReservations, "First pipe reservation must be rolled back on failure.");
+            Assert.AreEqual(0, pipe2.ActiveReservations);
+        }
+
+        [Test]
+        public void AntQueueVisualSettings_SharedConfiguration_AppliesProperly()
+        {
+            var settings = AntQueueVisualSettings.Instance;
+            Assert.IsNotNull(settings, "AntQueueVisualSettings.Instance must be accessible.");
+            Assert.Greater(settings.LeaderVisualScale, 0.2f);
+            Assert.Greater(settings.WorkerVisualScale, 0.2f);
+            Assert.Greater(settings.MovementSpacingMultiplier, 0.5f);
+
+            // Rebuild scene queues should not throw
+            Assert.DoesNotThrow(() => settings.RebuildAllSceneQueues());
+        }
+
+        [Test]
+        public void AntUnit_ProgressiveHoleEntry_ConcealsProgressively()
+        {
+            var unitGo = new GameObject("TestAntUnit");
+            spawnedObjs.Add(unitGo);
+            var unit = unitGo.AddComponent<AntUnit>();
+            unit.Setup(AntColor.Green, head: false);
+
+            Assert.IsTrue(unit.gameObject.activeSelf);
+            Assert.Greater(unit.VisualLength, 0.5f);
+
+            // Verify visibility can be toggled without error
+            unit.SetVisualVisibility(false);
+            unit.SetVisualVisibility(true);
+            Assert.IsTrue(unit.gameObject.activeSelf);
         }
     }
 }

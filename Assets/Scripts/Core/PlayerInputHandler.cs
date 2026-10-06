@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -10,14 +11,38 @@ public class PlayerInputHandler : MonoBehaviour
     private bool canInteract = true;
     private int movingQueuesCount = 0;
 
-    private bool isPointerDown = false;
-    private bool isCameraDragging = false;
-    private Vector2 pointerDownScreenPos;
+    public static PlayerInputHandler Instance { get; private set; }
+    public bool CanInteract => canInteract;
+    public void SetInteractable(bool value) => canInteract = value;
+
+    private class TouchTrack
+    {
+        public int fingerId;
+        public Vector2 downPos;
+        public float downTime;
+        public bool isDragging;
+        public bool isPinch;
+    }
+
+    private readonly Dictionary<int, TouchTrack> activeTouches = new Dictionary<int, TouchTrack>();
+    private bool isPinchActive = false;
+
+    // Mouse tracking for Desktop / Editor
+    private bool isMouseDown = false;
+    private bool isMouseDragging = false;
+    private Vector2 mouseDownPos;
 
     public static Vector3 MouseWorldPosition { get; private set; } = Vector3.zero;
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(this);
+            return;
+        }
+        Instance = this;
+
         EnsureCamera();
         AntQueueController.OnQueueMoveStarted += HandleMoveStarted;
         AntQueueController.OnQueueMoveCompleted += HandleMoveCompleted;
@@ -44,6 +69,7 @@ public class PlayerInputHandler : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (Instance == this) Instance = null;
         AntQueueController.OnQueueMoveStarted -= HandleMoveStarted;
         AntQueueController.OnQueueMoveCompleted -= HandleMoveCompleted;
     }
@@ -102,28 +128,41 @@ public class PlayerInputHandler : MonoBehaviour
             }
         }
 
+        // Block input if modal active or not in Playing state
         if ((GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) ||
             (GameUIManager.Instance != null && GameUIManager.Instance.IsAnyModalActive()))
         {
-            if (isCameraDragging)
+            bool wasDragging = isMouseDragging;
+            foreach (var t in activeTouches.Values)
+            {
+                if (t.isDragging) { wasDragging = true; break; }
+            }
+            if (wasDragging)
             {
                 BoardCameraController.Instance?.OnDragEnd();
             }
-            isPointerDown = false;
-            isCameraDragging = false;
+            isMouseDown = false;
+            isMouseDragging = false;
+            activeTouches.Clear();
+            isPinchActive = false;
             return;
         }
 
-        // Two-finger pinch-to-zoom on mobile
+        if (Input.touchCount > 0)
+        {
+            HandleTouchInput();
+        }
+        else
+        {
+            HandleMouseInput();
+        }
+    }
+
+    private void HandleTouchInput()
+    {
+        // 1. Two-finger pinch-to-zoom detection on mobile
         if (Input.touchCount >= 2)
         {
-            if (isCameraDragging)
-            {
-                BoardCameraController.Instance?.OnDragEnd();
-                isCameraDragging = false;
-            }
-            isPointerDown = false;
-
             Touch touch0 = Input.GetTouch(0);
             Touch touch1 = Input.GetTouch(1);
 
@@ -134,130 +173,154 @@ public class PlayerInputHandler : MonoBehaviour
             float touchDeltaMag = (touch0.position - touch1.position).magnitude;
 
             float deltaMagnitudeDiff = prevTouchDeltaMag - touchDeltaMag;
-            if (Mathf.Abs(deltaMagnitudeDiff) > 0.5f && BoardCameraController.Instance != null)
+            if (Mathf.Abs(deltaMagnitudeDiff) > 1.2f)
             {
-                float zoomDelta = (deltaMagnitudeDiff / Mathf.Max(1, Screen.height)) * BoardCameraController.Instance.ZoomSensitivity * 16f;
-                BoardCameraController.Instance.AdjustZoom(zoomDelta);
-            }
-            return;
-        }
+                isPinchActive = true;
+                if (activeTouches.TryGetValue(touch0.fingerId, out var tt0)) tt0.isPinch = true;
+                if (activeTouches.TryGetValue(touch1.fingerId, out var tt1)) tt1.isPinch = true;
 
-        HandleUnifiedPointerInput();
-    }
-
-    private void HandleUnifiedPointerInput()
-    {
-        bool pointerDown = false;
-        bool pointerHeld = false;
-        bool pointerUp = false;
-        Vector2 pointerPos = Vector2.zero;
-        int pointerId = -1;
-
-        if (Input.touchCount == 1)
-        {
-            Touch touch = Input.GetTouch(0);
-            pointerPos = touch.position;
-            pointerId = touch.fingerId;
-
-            if (touch.phase == TouchPhase.Began) 
-            {
-                pointerDown = true;
-            }
-            else if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary) 
-            {
-                pointerHeld = true;
-            }
-            else if (touch.phase == TouchPhase.Ended) 
-            {
-                pointerUp = true;
-            }
-            else if (touch.phase == TouchPhase.Canceled)
-            {
-                // Cancelled Android touches must NEVER trigger taps
-                isPointerDown = false;
-                if (isCameraDragging)
+                if (BoardCameraController.Instance != null)
                 {
-                    BoardCameraController.Instance?.OnDragEnd();
-                    isCameraDragging = false;
+                    float zoomDelta = (deltaMagnitudeDiff / Mathf.Max(1, Screen.height)) * BoardCameraController.Instance.ZoomSensitivity * 16f;
+                    BoardCameraController.Instance.AdjustZoom(zoomDelta);
                 }
-                return;
             }
         }
         else
         {
-            pointerPos = Input.mousePosition;
-            if (Input.GetMouseButtonDown(0)) pointerDown = true;
-            else if (Input.GetMouseButton(0)) pointerHeld = true;
-            if (Input.GetMouseButtonUp(0)) pointerUp = true;
+            isPinchActive = false;
         }
 
-        if (pointerDown)
+        // 2. Individual touch tracking per finger
+        for (int i = 0; i < Input.touchCount; i++)
         {
-            bool isOverUI = false;
-            if (EventSystem.current != null)
-            {
-                if (Input.touchCount > 0)
-                    isOverUI = EventSystem.current.IsPointerOverGameObject(pointerId);
-                else
-                    isOverUI = EventSystem.current.IsPointerOverGameObject();
-            }
+            Touch touch = Input.GetTouch(i);
+            int id = touch.fingerId;
 
+            if (touch.phase == TouchPhase.Began)
+            {
+                bool isOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(id);
+                if (!isOverUI)
+                {
+                    activeTouches[id] = new TouchTrack
+                    {
+                        fingerId = id,
+                        downPos = touch.position,
+                        downTime = Time.unscaledTime,
+                        isDragging = false,
+                        isPinch = false
+                    };
+                }
+            }
+            else if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary)
+            {
+                if (activeTouches.TryGetValue(id, out var track))
+                {
+                    if (!track.isPinch && !isPinchActive)
+                    {
+                        float dist = Vector2.Distance(touch.position, track.downPos);
+                        if (!track.isDragging && dist >= dragThresholdPixels)
+                        {
+                            track.isDragging = true;
+                            if (BoardCameraController.Instance != null)
+                            {
+                                BoardCameraController.Instance.OnDragStart(track.downPos);
+                                BoardCameraController.Instance.OnDrag(touch.position);
+                            }
+                        }
+                        else if (track.isDragging)
+                        {
+                            BoardCameraController.Instance?.OnDrag(touch.position);
+                        }
+                    }
+                }
+            }
+            else if (touch.phase == TouchPhase.Ended)
+            {
+                if (activeTouches.TryGetValue(id, out var track))
+                {
+                    if (track.isDragging)
+                    {
+                        BoardCameraController.Instance?.OnDragEnd();
+                    }
+                    else if (!track.isPinch && !isPinchActive)
+                    {
+                        // Independent tap on this finger!
+                        ProcessClickOrTap(track.downPos);
+                    }
+                    activeTouches.Remove(id);
+                }
+            }
+            else if (touch.phase == TouchPhase.Canceled)
+            {
+                if (activeTouches.TryGetValue(id, out var track))
+                {
+                    if (track.isDragging)
+                    {
+                        BoardCameraController.Instance?.OnDragEnd();
+                    }
+                    activeTouches.Remove(id);
+                }
+            }
+        }
+
+        if (activeTouches.Count < 2)
+        {
+            isPinchActive = false;
+        }
+    }
+
+    private void HandleMouseInput()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            bool isOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
             if (!isOverUI)
             {
-                isPointerDown = true;
-                isCameraDragging = false;
-                pointerDownScreenPos = pointerPos;
+                isMouseDown = true;
+                isMouseDragging = false;
+                mouseDownPos = Input.mousePosition;
             }
         }
-
-        if (isPointerDown && pointerHeld)
+        else if (isMouseDown && Input.GetMouseButton(0))
         {
-            if (!isCameraDragging)
+            Vector2 mousePos = Input.mousePosition;
+            if (!isMouseDragging)
             {
-                float moveDist = Vector2.Distance(pointerPos, pointerDownScreenPos);
+                float moveDist = Vector2.Distance(mousePos, mouseDownPos);
                 if (moveDist >= dragThresholdPixels)
                 {
-                    isCameraDragging = true;
+                    isMouseDragging = true;
                     if (BoardCameraController.Instance != null)
                     {
-                        BoardCameraController.Instance.OnDragStart(pointerDownScreenPos);
-                        BoardCameraController.Instance.OnDrag(pointerPos);
+                        BoardCameraController.Instance.OnDragStart(mouseDownPos);
+                        BoardCameraController.Instance.OnDrag(mousePos);
                     }
                 }
             }
             else
             {
-                if (BoardCameraController.Instance != null)
-                {
-                    BoardCameraController.Instance.OnDrag(pointerPos);
-                }
+                BoardCameraController.Instance?.OnDrag(mousePos);
             }
         }
-
-        if (pointerUp)
+        else if (isMouseDown && Input.GetMouseButtonUp(0))
         {
-            if (isPointerDown)
+            if (isMouseDragging)
             {
-                if (isCameraDragging)
-                {
-                    if (BoardCameraController.Instance != null)
-                    {
-                        BoardCameraController.Instance.OnDragEnd();
-                    }
-                }
-                else
-                {
-                    // TAP GESTURE: process ant selection / move
-                    ProcessClickOrTap(pointerDownScreenPos);
-                }
+                BoardCameraController.Instance?.OnDragEnd();
             }
-            isPointerDown = false;
-            isCameraDragging = false;
+            else
+            {
+                ProcessClickOrTap(mouseDownPos);
+            }
+            isMouseDown = false;
+            isMouseDragging = false;
         }
     }
 
     public void ProcessClickOrTap(Vector2 screenPos)
     {
+        if (!canInteract) return;
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) return;
         EnsureCamera();
         if (mainCamera == null) return;
@@ -295,6 +358,28 @@ public class PlayerInputHandler : MonoBehaviour
             }
         }
 
+        // Prevent repeated taps on an already moving or returning queue from launching it twice.
+        // If a busy queue was tapped, check if there is an idle stationary queue at that grid cell underneath it.
+        if (targetQueue != null && (targetQueue.IsMoving || targetQueue.MoveState != AntQueueController.QueueMoveState.Idle))
+        {
+            if (BoardManager.Instance != null && gridCoord.x != -9999)
+            {
+                var stationaryCandidate = BoardManager.Instance.GetQueueOccupying(gridCoord);
+                if (stationaryCandidate != null && !stationaryCandidate.IsMoving && stationaryCandidate.MoveState == AntQueueController.QueueMoveState.Idle)
+                {
+                    targetQueue = stationaryCandidate;
+                }
+                else
+                {
+                    return;
+                }
+            }
+            else
+            {
+                return;
+            }
+        }
+
         bool canMove = false;
         if (targetQueue != null && BoardManager.Instance != null)
         {
@@ -304,8 +389,13 @@ public class PlayerInputHandler : MonoBehaviour
         // Concise diagnostic log per click
         Debug.Log($"[INPUT] screen={screenPos} world={worldHitPos} grid={gridCoord} queue={(targetQueue != null ? targetQueue.QueueId : "null")} movingQueuesCount={movingQueuesCount} canMove={canMove}");
 
-        if (targetQueue != null)
+        if (targetQueue != null && !targetQueue.IsMoving && targetQueue.MoveState == AntQueueController.QueueMoveState.Idle)
         {
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlayQueueSelect();
+            }
+
             targetQueue.TryStartMove();
         }
     }

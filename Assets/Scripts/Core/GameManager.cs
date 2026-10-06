@@ -29,11 +29,14 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float remainingTimer;
     [SerializeField] private int playerLives = 3;
     [SerializeField] private bool timerStarted = false;
+    private bool isGameOverDeferred = false;
+    private string deferredGameOverReason = "";
 
     public GameState CurrentState => currentState;
     public float RemainingTimer => remainingTimer;
     public int PlayerLives => playerLives;
     public bool IsTimerStarted => timerStarted;
+    public bool IsGameOverDeferred => isGameOverDeferred;
 
     public static event Action<GameState> OnGameStateChanged;
     public static event Action<float> OnTimerUpdated;
@@ -57,6 +60,14 @@ public class GameManager : MonoBehaviour
 
     private bool isFinishingAfterTimeout = false;
     public bool IsFinishingAfterTimeout => isFinishingAfterTimeout;
+
+    public void SetTestingState(GameState state, int lives)
+    {
+        currentState = state;
+        playerLives = lives;
+        isGameOverDeferred = false;
+        deferredGameOverReason = "";
+    }
 
     private void Awake()
     {
@@ -125,6 +136,7 @@ public class GameManager : MonoBehaviour
     private void EvaluateTimeoutOrFinishingGrace()
     {
         if (currentState != GameState.Playing) return;
+        if (isGameOverDeferred) return; // Failure sequence is finishing; do not show duplicate fail overlay
 
         // Check if all remaining work is already moving on accepted rescue routes:
         // Must satisfy:
@@ -138,7 +150,7 @@ public class GameManager : MonoBehaviour
             bool allActiveAreMoving = true;
             foreach (var q in bm.ActiveQueues)
             {
-                if (q == null || !q.IsMoving || q.IsLocked)
+                if (q == null || !q.IsMoving || q.IsLocked || q.MoveState != AntQueueController.QueueMoveState.MovingToRescue)
                 {
                     allActiveAreMoving = false;
                     break;
@@ -193,6 +205,12 @@ public class GameManager : MonoBehaviour
         currentState = GameState.NotStarted;
         timerStarted = false;
         isFinishingAfterTimeout = false;
+        isGameOverDeferred = false;
+        deferredGameOverReason = "";
+        if (PlayerInputHandler.Instance != null)
+        {
+            PlayerInputHandler.Instance.SetInteractable(true);
+        }
         remainingTimer = level.TimeLimitInSeconds;
         playerLives = 3;
 
@@ -233,23 +251,49 @@ public class GameManager : MonoBehaviour
 
     /// <summary>
     /// Deducts exactly one life per invalid move attempt or gameplay collision.
-    /// If lives reach 0, immediately triggers LevelLost.
+    /// If deferGameOver is true and lives reach 0, allows in-flight recoil/return animation to finish before showing fail screen.
     /// </summary>
-    public void LoseLife(InvalidMoveReason reason = InvalidMoveReason.NoValidPath)
+    public void LoseLife(InvalidMoveReason reason = InvalidMoveReason.NoValidPath, bool deferGameOver = false)
     {
         if (currentState != GameState.Playing) return;
 
         int livesBefore = playerLives;
         playerLives = Mathf.Max(0, playerLives - 1);
-        Debug.Log($"[InvalidMove] Reason={reason} LivesBefore={livesBefore} LivesAfter={playerLives}");
+        Debug.Log($"[InvalidMove] Reason={reason} LivesBefore={livesBefore} LivesAfter={playerLives} DeferGameOver={deferGameOver}");
 
         OnLivesUpdated?.Invoke(playerLives);
 
         if (playerLives <= 0)
         {
             playerLives = 0;
-            Debug.Log("[LevelFailed] Reason=LivesDepleted");
-            TriggerGameOver("Lives depleted!");
+            if (deferGameOver)
+            {
+                isGameOverDeferred = true;
+                deferredGameOverReason = "Lives depleted!";
+                Debug.Log("[LevelFailed] Reason=LivesDepleted (Deferred until failed return finishes)");
+                if (PlayerInputHandler.Instance != null)
+                {
+                    PlayerInputHandler.Instance.SetInteractable(false);
+                }
+            }
+            else
+            {
+                Debug.Log("[LevelFailed] Reason=LivesDepleted");
+                TriggerGameOver("Lives depleted!");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Called when an ant queue completes its return motion after a failed move attempt.
+    /// If the last heart was lost during impact, triggers LevelLost now that return has cleanly finished.
+    /// </summary>
+    public void NotifyFailedMoveReturnCompleted(AntQueueController queue)
+    {
+        if (isGameOverDeferred && currentState == GameState.Playing)
+        {
+            isGameOverDeferred = false;
+            TriggerGameOver(deferredGameOverReason);
         }
     }
 
@@ -355,6 +399,12 @@ public class GameManager : MonoBehaviour
     public void RestartLevel()
     {
         timerStarted = false;
+        isGameOverDeferred = false;
+        deferredGameOverReason = "";
+        if (PlayerInputHandler.Instance != null)
+        {
+            PlayerInputHandler.Instance.SetInteractable(true);
+        }
         if (LevelManager.Instance != null)
         {
             LevelManager.Instance.RestartCurrentLevel();

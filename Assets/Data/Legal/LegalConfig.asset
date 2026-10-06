@@ -1,0 +1,147 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1a1f0a03801994488ccf802427ff7f4, type: 3}
+  m_Name: LegalConfig
+  m_EditorClassIdentifier: SlitherAnts.Runtime::AntsJam.Legal.LegalConfig
+  termsOfServiceVersion: 1.0.0
+  termsOfServiceTitle: Terms of Service
+  termsOfServiceContent: 'COLOR ANTS JAM - TERMS OF SERVICE
+
+    Version 1.0.0
+
+
+    1.
+    ACCEPTANCE OF TERMS
+
+    By accessing and playing Color Ants Jam, you agree to
+    be bound by these Terms of Service. If you do not agree to these terms, please
+    do not use the application.
+
+
+    2. LICENSE & GAMEPLAY
+
+    Color Ants Jam grants
+    you a personal, non-exclusive, non-transferable, revocable license to use the
+    game for personal, non-commercial entertainment purposes.
+
+
+    3. VIRTUAL ITEMS
+    & PROGRESSION
+
+    Game progression, levels, scores, and any virtual elements
+    are purely in-game features. They possess no real-world monetary value and cannot
+    be exchanged for cash or real assets.
+
+
+    4. USER CONDUCT
+
+    You agree not
+    to modify, reverse engineer, decompile, or exploit the game application, its
+    assets, or its code.
+
+
+    5. DISCLAIMER & LIMITATION OF LIABILITY
+
+    The game
+    is provided "as is" without warranty of any kind. Under no circumstances shall
+    the creators be liable for any indirect, incidental, or consequential damages
+    resulting from your use of the application.
+
+
+    6. CONTACT & INQUIRIES
+
+    For
+    inquiries regarding these Terms of Service, please contact support at support@colorantsjam.game.'
+  termsOfServiceUrl: 
+  privacyPolicyVersion: 1.0.0
+  privacyPolicyTitle: Privacy Policy
+  privacyPolicyContent: 'COLOR ANTS JAM - PRIVACY POLICY
+
+    Version 1.0.0
+
+
+    1.
+    OVERVIEW
+
+    We respect your privacy and are committed to safeguarding player
+    data. Color Ants Jam is designed as an offline-first puzzle game.
+
+
+    2. DATA
+    COLLECTION & STORAGE
+
+    - Local Gameplay Data: Progression, completed levels,
+    and settings (such as sounds and vibrations) are stored locally on your device
+    via PlayerPrefs.
+
+    - Personal Information: Color Ants Jam does not collect
+    your name, email, physical address, or phone number during normal offline gameplay.
+
+
+    3.
+    ADVERTISING & THIRD-PARTY SERVICES
+
+    If third-party advertising or analytics
+    services are integrated in future updates, player consent will be requested in
+    compliance with applicable privacy regulations (such as GDPR and CCPA).
+
+
+    4.
+    DATA REQUESTS & DELETION
+
+    You have the right to request information regarding
+    your data or request deletion of any stored data. Please contact us via support@colorantsjam.game.
+
+
+    5.
+    CHANGES TO THIS POLICY
+
+    We may update this Privacy Policy from time to time.
+    Any material changes will be reflected with an updated version number and date.'
+  privacyPolicyUrl: 
+  accountDeletionTitle: Account Deletion and Data Request
+  accountDeletionContent: 'ACCOUNT DELETION & DATA REQUEST
+
+
+    Color Ants Jam stores
+    your level progression, preferences, and completion records locally on your device.
+
+
+    HOW
+    TO DELETE YOUR DATA:
+
+    1. Local Data: You can clear all game data at any time
+    through your device settings: Settings > Apps > Color Ants Jam > Storage > Clear
+    Data, or by uninstalling the application.
+
+    2. Inquiries & Remote Data: To
+    request confirmation or deletion of any service-related records, contact support
+    at:
+
+    support@colorantsjam.game
+
+
+    Please include your device platform
+    and any details regarding your request. We process all verifiable requests promptly.'
+  accountDeletionContact: support@colorantsjam.game
+  accountDeletionUrl: 
+  isPersonalizedAdsAvailable: 0
+  personalizedAdsUnavailableReason: Personalized advertising and tracking are currently
+    disabled. No advertising SDK or consent provider is active.
+  isPlayerIdAvailable: 0
+  configuredPlayerId: 
+  welcomeMessage: Kindly take some time to review our Terms of Service and Privacy
+    Policy. By clicking the "ACCEPT" button below, you agree to our Terms of Service
+    and acknowledge that the Privacy Policy applies.
+  welcomeUpdateNotice: If you are a returning player, please note that these have
+    been recently updated.
+  isTermsRecentlyUpdated: 0

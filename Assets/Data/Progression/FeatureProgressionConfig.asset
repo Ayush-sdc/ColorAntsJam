@@ -18,9 +18,9 @@ MonoBehaviour:
     introductionLevel: 7
     startMilestoneLevel: 1
     displayOrder: 1
-    previewIcon: {fileID: 21300000, guid: a944b5ce36ff40941909aa0d1c8604b2, type: 3}
-    tutorialArtwork: {fileID: 21300000, guid: 51ae43b4968747f45994df45936b89e1, type: 3}
-    tutorialPrefab: {fileID: 0}
+    previewIcon: {fileID: 21300000, guid: 35ce3006071bb434985d84ce540f1a75, type: 3}
+    tutorialArtwork: {fileID: 21300000, guid: 230448a24f10e2b49be75b8d9d17db83, type: 3}
+    tutorialPrefab: {fileID: 3526708993113731884, guid: 4e7212903bb04404c9fca4dc848e6e82, type: 3}
     tutorialTitle: Linked Ants!
     tutorialDescription: Linked ant queues move together.
   - featureId: stacked_ants
@@ -28,9 +28,9 @@ MonoBehaviour:
     introductionLevel: 15
     startMilestoneLevel: 7
     displayOrder: 2
-    previewIcon: {fileID: 21300000, guid: 976d586fdfa3a994faaa9377dc5d2a69, type: 3}
-    tutorialArtwork: {fileID: 21300000, guid: 34b59c775ba12294bb9daca9f864058d, type: 3}
-    tutorialPrefab: {fileID: 0}
+    previewIcon: {fileID: 21300000, guid: 0e1f9aa8092423343ac9c99edddf1a8e, type: 3}
+    tutorialArtwork: {fileID: 21300000, guid: 92730c80f968ddd4891e03751595c8f6, type: 3}
+    tutorialPrefab: {fileID: 7263000574899971406, guid: a4c19e97b26a7674e86bbf17b7d1d794, type: 3}
     tutorialTitle: Stacked Ants!
     tutorialDescription: Send stacked ant queues to the holes in order.
   - featureId: pipes
@@ -38,9 +38,9 @@ MonoBehaviour:
     introductionLevel: 21
     startMilestoneLevel: 15
     displayOrder: 3
-    previewIcon: {fileID: 21300000, guid: 2bc1d5db0ae776546b756a936f4f09fc, type: 3}
-    tutorialArtwork: {fileID: 21300000, guid: b5681727fde93584aa54ab259db7dd40, type: 3}
-    tutorialPrefab: {fileID: 0}
+    previewIcon: {fileID: 21300000, guid: 6a564e312776a784f9ed2899beee1066, type: 3}
+    tutorialArtwork: {fileID: 21300000, guid: c44b69365cdb95c49ba32e5e15c63103, type: 3}
+    tutorialPrefab: {fileID: 8045425240104810160, guid: 38453964f27f5624693362acd673cea6, type: 3}
     tutorialTitle: Pipe!
     tutorialDescription: Pass ant queues through the pipe to break it.
   - featureId: locked_ants
@@ -48,9 +48,9 @@ MonoBehaviour:
     introductionLevel: 30
     startMilestoneLevel: 21
     displayOrder: 4
-    previewIcon: {fileID: 21300000, guid: 5f0531eb97a5c014c97eec97fed4b241, type: 3}
-    tutorialArtwork: {fileID: 21300000, guid: bd4df176cf259714fbce60a79b31595f, type: 3}
-    tutorialPrefab: {fileID: 0}
+    previewIcon: {fileID: 21300000, guid: 69d2576440a2c6941ae014233c08213e, type: 3}
+    tutorialArtwork: {fileID: 21300000, guid: b8cc426d9a217da4fa09076ff9258e79, type: 3}
+    tutorialPrefab: {fileID: 3398973142744927686, guid: ed439d1c92aa34044b7cd0e334dd13df, type: 3}
     tutorialTitle: Locked Ants!
     tutorialDescription: Rescue the required number of ant queues to unlock it.
   allFeaturesCompletedIcon: {fileID: 21300000, guid: d1575c920407a8a4d84bea4d75c5b459, type: 3}

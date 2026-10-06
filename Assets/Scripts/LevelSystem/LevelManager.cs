@@ -5,7 +5,7 @@ public class LevelManager : MonoBehaviour
 {
     public static LevelManager Instance { get; private set; }
 
-    private const string CurrentLevelPrefKey = "CurrentLevel";
+    public const string CurrentLevelPrefKey = "CurrentLevel";
 
     [Header("Configuration")]
     [Tooltip("Reference to the production LevelDatabase ScriptableObject containing handmade levels.")]

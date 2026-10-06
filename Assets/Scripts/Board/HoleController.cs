@@ -206,6 +206,50 @@ public class HoleController : MonoBehaviour
         return totalBounds;
     }
 
+    public MeshRenderer RimMeshRenderer => rimMeshRenderer;
+
+    public float OuterWidth
+    {
+        get
+        {
+            if (rimMeshRenderer != null && rimMeshRenderer.bounds.size.x > 0.01f)
+                return rimMeshRenderer.bounds.size.x;
+            float cs = (BoardManager.Instance != null && BoardManager.Instance.CellSize > 0f) ? BoardManager.Instance.CellSize : 1.0f;
+            int w = widthCells > 0 ? widthCells : 1;
+            return Mathf.Max(0.50f * cs, w * cs - 0.08f * cs);
+        }
+    }
+
+    public float OuterHeight
+    {
+        get
+        {
+            if (rimMeshRenderer != null && rimMeshRenderer.bounds.size.z > 0.01f)
+                return rimMeshRenderer.bounds.size.z;
+            float cs = (BoardManager.Instance != null && BoardManager.Instance.CellSize > 0f) ? BoardManager.Instance.CellSize : 1.0f;
+            int h = heightCells > 0 ? heightCells : 1;
+            return Mathf.Max(0.50f * cs, h * cs - 0.08f * cs);
+        }
+    }
+
+    /// <summary>
+    /// Gets the outer rim bounding box on the floor plane for collision proxy calculations.
+    /// </summary>
+    public Bounds GetOuterRimBounds()
+    {
+        if (rimMeshRenderer != null && rimMeshRenderer.bounds.size.sqrMagnitude > 0.01f)
+        {
+            return rimMeshRenderer.bounds;
+        }
+
+        float cs = (BoardManager.Instance != null && BoardManager.Instance.CellSize > 0f) ? BoardManager.Instance.CellSize : 1.0f;
+        int w = widthCells > 0 ? widthCells : 1;
+        int h = heightCells > 0 ? heightCells : 1;
+        float outerW = Mathf.Max(0.50f * cs, w * cs - 0.08f * cs);
+        float outerH = Mathf.Max(0.50f * cs, h * cs - 0.08f * cs);
+        return new Bounds(transform.position, new Vector3(outerW, 0.2f, outerH));
+    }
+
     public int ParallelRows => parallelRows;
     public int WidthCells => widthCells;
     public int HeightCells => heightCells;
@@ -237,6 +281,7 @@ public class HoleController : MonoBehaviour
     {
         if (IsPrefabAsset()) return;
         EnsureVisuals();
+        CleanupActiveEntryEffects();
     }
 
     private void Start()
@@ -872,12 +917,7 @@ public class HoleController : MonoBehaviour
     {
         // Visual swallow only. DO NOT decrement queue count per ant.
         PlaySwallowEffect();
-        SpawnSwallowVFX();
-
-        if (SoundManager.Instance != null && Application.isPlaying)
-        {
-            SoundManager.Instance.PlaySwallow();
-        }
+        // Smoke/glow VFX and hole-entry audio removed per user specification.
     }
 
     public void OnEntireQueueEnteredHole(AntQueueController queue = null)
@@ -911,11 +951,7 @@ public class HoleController : MonoBehaviour
         UpdateBadgeDisplay();
 
         CheckCompletion();
-
-        if (SoundManager.Instance != null && Application.isPlaying)
-        {
-            SoundManager.Instance.PlaySwallow();
-        }
+        // Hole-entry audio removed per user specification.
     }
 
     private void CheckCompletion()
@@ -1033,19 +1069,23 @@ public class HoleController : MonoBehaviour
 
     private void SpawnSwallowVFX()
     {
-        if (!Application.isPlaying)
-            return;
+        // Spawning of ant_dis / Nest FX smoke and glow bursts removed per user specification.
+    }
 
-        if (swallowVfxPrefab == null)
+    /// <summary>
+    /// Cleans up any active or pooled ant-entry/rescue effects in the scene so they cannot reappear.
+    /// </summary>
+    public static void CleanupActiveEntryEffects()
+    {
+        if (!Application.isPlaying) return;
+        var allObjects = GameObject.FindObjectsOfType<GameObject>();
+        for (int i = 0; i < allObjects.Length; i++)
         {
-            swallowVfxPrefab = Resources.Load<GameObject>("Ants/Prefabs/ant_dis");
-        }
-
-        if (swallowVfxPrefab != null)
-        {
-            Vector3 spawnPos = transform.position + new Vector3(0f, 0.15f, 0f);
-            GameObject fx = Instantiate(swallowVfxPrefab, spawnPos, Quaternion.identity);
-            Destroy(fx, 1.2f);
+            var go = allObjects[i];
+            if (go != null && (go.name.Contains("ant_dis") || go.name.Contains("Nest FX") || go.name.Contains("Ant_Dis")))
+            {
+                Destroy(go);
+            }
         }
     }
 

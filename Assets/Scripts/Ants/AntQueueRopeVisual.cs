@@ -171,7 +171,7 @@ namespace AntsJam.Ropes
                 for (int i = 0; i < units.Count; i++)
                 {
                     var u = units[i];
-                    if (u != null && u.gameObject.activeInHierarchy)
+                    if (u != null && u.gameObject.activeInHierarchy && !u.IsVisuallyHidden)
                     {
                         if (headUnit == null) headUnit = u;
                         tailUnit = u;

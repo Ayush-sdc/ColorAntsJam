@@ -38,8 +38,10 @@ public class BoardCameraController : MonoBehaviour
     [SerializeField] private float defaultZoom = 10.0f;
     [Tooltip("Minimum allowable zoom (closest view)")]
     [SerializeField] private float minZoom = 5.5f;
-    [Tooltip("Maximum allowable zoom (farthest view)")]
-    [SerializeField] private float maxZoom = 26.0f;
+    [Tooltip("Maximum allowable zoom (farthest view) - modest zoom-out (~1.2x default zoom, e.g. 12.0 for default 10.0)")]
+    [SerializeField] private float maxZoom = 12.0f;
+    [Tooltip("Multiplier for max zoom relative to default zoom (default 1.2 = 20% zoom out)")]
+    [SerializeField] private float maxZoomMultiplier = 1.2f;
     [Tooltip("Zoom sensitivity multiplier for mouse wheel and mobile pinch gestures")]
     [SerializeField] private float zoomSensitivity = 1.0f;
     [SerializeField] private float currentZoom = 10.0f;
@@ -105,9 +107,10 @@ public class BoardCameraController : MonoBehaviour
     public float CameraPitch => cameraPitch;
     public float PerspectiveFov => perspectiveFov;
     public float CameraHeight => cameraHeight;
-    public float DefaultZoom { get => defaultZoom; set => defaultZoom = value; }
+    public float DefaultZoom { get => defaultZoom; set { defaultZoom = value; EnforceMaxZoomLimit(); } }
     public float MinZoom { get => minZoom; set => minZoom = value; }
     public float MaxZoom { get => maxZoom; set => maxZoom = value; }
+    public float MaxZoomMultiplier { get => maxZoomMultiplier; set { maxZoomMultiplier = value; EnforceMaxZoomLimit(); } }
     public float ZoomSensitivity { get => zoomSensitivity; set => zoomSensitivity = value; }
     public float PanSensitivity { get => panSensitivity; set => panSensitivity = value; }
     public float PanMarginX { get => panMarginX; set => panMarginX = value; }
@@ -136,15 +139,40 @@ public class BoardCameraController : MonoBehaviour
         }
         instance = this;
 
+        EnforceMaxZoomLimit();
         EnsureReferences();
         ApplyEngineState();
+
+        currentZoom = defaultZoom;
+        ApplyZoomToCamera(currentZoom);
+    }
+
+    private void OnValidate()
+    {
+        EnforceMaxZoomLimit();
+    }
+
+    public void EnforceMaxZoomLimit()
+    {
+        float modestCap = defaultZoom * maxZoomMultiplier;
+        if (maxZoom > modestCap + 0.05f || maxZoom <= 0f)
+        {
+            maxZoom = Mathf.Round(modestCap * 10f) / 10f;
+        }
     }
 
     private void OnEnable()
     {
         if (instance == null) instance = this;
+        EnforceMaxZoomLimit();
         EnsureReferences();
         ApplyEngineState();
+
+        if (currentZoom <= 0.01f)
+        {
+            currentZoom = defaultZoom;
+        }
+        ApplyZoomToCamera(currentZoom);
     }
 
     private void OnDestroy()
@@ -308,14 +336,31 @@ public class BoardCameraController : MonoBehaviour
 
     private void ApplyZoomToCamera(float zoom)
     {
-        if (mainCamera != null && mainCamera.orthographic)
+        if (mainCamera != null)
         {
-            mainCamera.orthographicSize = zoom;
+            if (mainCamera.orthographic)
+            {
+                mainCamera.orthographicSize = zoom;
+            }
+            else
+            {
+                // In perspective mode, zoom scales FOV proportionally to (zoom / defaultZoom)
+                float ratio = defaultZoom > 0f ? (zoom / defaultZoom) : 1f;
+                mainCamera.fieldOfView = Mathf.Clamp(perspectiveFov * ratio, 20f, perspectiveFov * maxZoomMultiplier);
+            }
         }
 
         if (useCinemachine && gameplayCamera != null)
         {
-            gameplayCamera.Lens.OrthographicSize = zoom;
+            if (projectionMode == CameraProjectionMode.Orthographic)
+            {
+                gameplayCamera.Lens.OrthographicSize = zoom;
+            }
+            else
+            {
+                float ratio = defaultZoom > 0f ? (zoom / defaultZoom) : 1f;
+                gameplayCamera.Lens.FieldOfView = Mathf.Clamp(perspectiveFov * ratio, 20f, perspectiveFov * maxZoomMultiplier);
+            }
         }
     }
 
@@ -327,6 +372,7 @@ public class BoardCameraController : MonoBehaviour
     {
         if (IsModalBlocked()) return;
 
+        EnforceMaxZoomLimit();
         float targetZoom = Mathf.Clamp(currentZoom + zoomDelta, minZoom, maxZoom);
         if (Mathf.Abs(targetZoom - currentZoom) > 0.001f)
         {
@@ -339,6 +385,7 @@ public class BoardCameraController : MonoBehaviour
     /// </summary>
     public void SetZoom(float newZoom)
     {
+        EnforceMaxZoomLimit();
         currentZoom = Mathf.Clamp(newZoom, minZoom, maxZoom);
         ApplyZoomToCamera(currentZoom);
 
@@ -528,12 +575,13 @@ public class BoardCameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// Optional testing/debug action: calculates the zoom required to fit the entire board on screen
-    /// below the HUD at once, without altering the normal gameplay default starting view.
+    /// Explicitly editor/debug-only overview action: calculates the zoom required to fit the entire board on screen
+    /// below the HUD at once. Does NOT alter normal player gameplay controls or runtime player zoom limits.
     /// </summary>
     [ContextMenu("Fit Board Below HUD (Debug Action)")]
     public void FitBoard()
     {
+#if UNITY_EDITOR
         if (currentActiveLevel == null && BoardManager.Instance != null && BoardManager.Instance.CurrentLevel != null)
         {
             currentActiveLevel = BoardManager.Instance.CurrentLevel;
@@ -548,11 +596,14 @@ public class BoardCameraController : MonoBehaviour
 
             float requiredOrthoW = boardBounds.size.x / (2f * aspect * usableFracW);
             float requiredOrthoH = boardBounds.size.z / (2f * usableFracH);
-            float fitOrtho = Mathf.Clamp(Mathf.Max(requiredOrthoW, requiredOrthoH), minZoom, maxZoom);
+            float fitOrtho = Mathf.Max(requiredOrthoW, requiredOrthoH);
 
-            SetZoom(fitOrtho);
+            currentZoom = fitOrtho;
+            ApplyZoomToCamera(currentZoom);
+            RecalculateFramingAndPanLimits();
             ResetToCenter();
         }
+#endif
     }
 
     public void OnDragStart(Vector2 screenPos)

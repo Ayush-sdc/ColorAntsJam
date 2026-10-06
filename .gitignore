@@ -68,3 +68,9 @@ test_parity_output.txt
 level6_queues_analysis.txt
 __pycache__/
 *.pyc
+crop_*.png
+make_evidence_video.py
+overlays generated/
+Assets/TestEvidence/FailedMoveFrames/
+Assets/TestEvidence/FailedMoveFrames.meta
+

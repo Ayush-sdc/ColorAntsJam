@@ -130,11 +130,16 @@ public class BoardManager : MonoBehaviour
     private bool isSettingUpBoard = false;
     public bool IsSettingUpBoard => isSettingUpBoard;
 
-    public const int MAX_CONCURRENT_MOVING_QUEUES = 4;
+    [Header("Queue Movement Configuration")]
+    [Tooltip("Global movement speed multiplier for ant queues. Defaults to 1.5x for noticeably faster movement.")]
+    [Range(0.5f, 4.0f)]
+    [SerializeField] private float movementSpeedMultiplier = 1.5f;
+    public float MovementSpeedMultiplier { get => movementSpeedMultiplier; set => movementSpeedMultiplier = value; }
+
     private readonly HashSet<AntQueueController> movingQueues = new HashSet<AntQueueController>();
 
     public int MovingQueuesCount => movingQueues.Count;
-    public bool CanStartQueueMove => movingQueues.Count < MAX_CONCURRENT_MOVING_QUEUES;
+    public bool CanStartQueueMove => true;
     public bool IsQueueMoving(AntQueueController queue) => queue != null && movingQueues.Contains(queue);
     public IEnumerable<AntQueueController> MovingQueues => movingQueues;
     public void AddMovingQueueForTesting(AntQueueController queue) { if (queue != null) movingQueues.Add(queue); }
@@ -739,7 +744,10 @@ public class BoardManager : MonoBehaviour
     {
         foreach (var q in activeQueues)
         {
-            if (q == null || q == ignoreQueue || q.IsMoving) continue;
+            if (q == null || q == ignoreQueue) continue;
+            // Only queues currently moving to rescue vacate their starting grid cells.
+            // Queues performing a failed move attempt (approach, impact, returning) preserve their starting logical footprint.
+            if (q.MoveState == AntQueueController.QueueMoveState.MovingToRescue) continue;
             if (q.Occupies(coord))
             {
                 return q;
@@ -1039,51 +1047,64 @@ public class BoardManager : MonoBehaviour
         return denseRoute;
     }
 
-    /// <summary>
-    /// Checks whether the given queue can legally move straight forward into its matching holder.
-    /// Does NOT use BFS, A*, or any pathfinding.
-    /// Only holes/holders and other ant queues may block movement.
-    /// </summary>
-    public bool ValidateForwardMove(
-        AntQueueController queue, 
-        List<AntQueueController> group,
-        Dictionary<HoleController, int> pendingReservations,
-        out Vector2Int forwardDir, 
-        out HoleController targetHole, 
-        out Vector2Int entranceCell, 
-        out string blockedReason)
+    [System.Serializable]
+    public struct MoveValidationResult
     {
-        return ValidateForwardMove(queue, group, pendingReservations, out forwardDir, out targetHole, out entranceCell, out blockedReason, out _, out _);
+        public bool IsValid;
+        public string FailureReason;
+        public AntQueueController BlockerQueue;
+        public Vector3 ContactPosition;
+        public float SafeTravelDistance;
+        public List<Vector3> ApproachRoute;
+        public Vector2Int ForwardDir;
+        public HoleController TargetHole;
+        public Vector2Int EntranceCell;
+        public List<PipeController> TraversedPipes;
+        public List<Vector2Int> RouteCells;
+
+        public bool IsBlockedByStationaryQueue => BlockerQueue != null && FailureReason == "OccupiedByStationaryQueue";
+        public bool IsBlockedByWrongColorHole => TargetHole != null && (FailureReason == "WrongColorHole" || FailureReason == "WrongColorHolder");
+        public bool IsAnimatedWrongMove => IsBlockedByStationaryQueue || IsBlockedByWrongColorHole;
     }
 
-    public bool ValidateForwardMove(
-        AntQueueController queue, 
-        List<AntQueueController> group,
-        Dictionary<HoleController, int> pendingReservations,
-        out Vector2Int forwardDir, 
-        out HoleController targetHole, 
-        out Vector2Int entranceCell, 
-        out string blockedReason,
-        out PipeController traversedPipe,
-        out List<Vector2Int> routeCells,
+    /// <summary>
+    /// Classifies and validates a forward move attempt, returning structured information:
+    /// - Whether rescue is valid
+    /// - Failure reason
+    /// - First blocking object
+    /// - Visible contact position
+    /// - Safe travel distance and route up to contact
+    /// </summary>
+    public MoveValidationResult ValidateQueueMove(
+        AntQueueController queue,
+        List<AntQueueController> group = null,
+        Dictionary<HoleController, int> pendingReservations = null,
         Dictionary<PipeController, int> pendingPipeReservations = null)
     {
-        forwardDir = Vector2Int.zero;
-        targetHole = null;
-        entranceCell = Vector2Int.zero;
-        blockedReason = "None";
-        traversedPipe = null;
-        routeCells = new List<Vector2Int>();
+        var result = new MoveValidationResult
+        {
+            IsValid = false,
+            FailureReason = "None",
+            BlockerQueue = null,
+            ContactPosition = Vector3.zero,
+            SafeTravelDistance = 0f,
+            ApproachRoute = new List<Vector3>(),
+            ForwardDir = Vector2Int.zero,
+            TargetHole = null,
+            EntranceCell = Vector2Int.zero,
+            TraversedPipes = new List<PipeController>(),
+            RouteCells = new List<Vector2Int>()
+        };
 
         if (queue == null || queue.CurrentBodyCoordinates == null || queue.CurrentBodyCoordinates.Count == 0)
         {
-            blockedReason = "NullOrEmptyCoordinates";
-            return false;
+            result.FailureReason = "NullOrEmptyCoordinates";
+            return result;
         }
 
         Vector2Int head = queue.CurrentBodyCoordinates[0];
+        Vector2Int forwardDir = Vector2Int.zero;
 
-        // Derive forward direction: head - neck or forwardDirection property
         if (queue.CurrentBodyCoordinates.Count >= 2)
         {
             Vector2Int neck = queue.CurrentBodyCoordinates[1];
@@ -1102,13 +1123,14 @@ public class BoardManager : MonoBehaviour
                 forwardDir = fwdWorld.z > 0 ? Vector2Int.up : Vector2Int.down;
         }
 
-        // Must be one of the four cardinal directions
         if (!((forwardDir.x == 0 && Mathf.Abs(forwardDir.y) == 1) || (forwardDir.y == 0 && Mathf.Abs(forwardDir.x) == 1)))
         {
             Debug.LogError($"[ForwardMove] Non-cardinal forward direction {forwardDir} for Queue={queue.QueueId}");
-            blockedReason = "NonCardinalDirection";
-            return false;
+            result.FailureReason = "NonCardinalDirection";
+            return result;
         }
+
+        result.ForwardDir = forwardDir;
 
         HoleController destinationHolder = null;
         Vector2Int entrance = Vector2Int.zero;
@@ -1117,27 +1139,59 @@ public class BoardManager : MonoBehaviour
         int maxSteps = (width * height * 2) + 100;
         int steps = 0;
 
+        Vector3 headWorldPos = (queue.Units != null && queue.Units.Count > 0 && queue.Units[0] != null) 
+            ? queue.Units[0].transform.position 
+            : GridToWorldPosition(head);
+
         while (IsInBounds(curr) && steps++ < maxSteps)
         {
             // 1. Moving into own body? (Accounts for trailing body cells vacated as queue advances)
-            if (queue.OccupiesAtStep(curr, steps, routeCells))
+            if (queue.OccupiesAtStep(curr, steps, result.RouteCells))
             {
-                blockedReason = "BlockedByOwnBody";
-                return false;
+                result.FailureReason = "BlockedByOwnBody";
+                return result;
             }
 
             // 2. Moving into stationary queue?
-            // Once a queue starts moving (q.IsMoving), it is no longer a stationary obstacle.
             var otherQueue = GetQueueOccupying(curr, queue);
             if (otherQueue != null && (group == null || !group.Contains(otherQueue)))
             {
-                blockedReason = "OccupiedByStationaryQueue";
-                return false;
-            }
+                result.FailureReason = "OccupiedByStationaryQueue";
+                result.BlockerQueue = otherQueue;
 
-            // Confirmed gameplay rule: Once queues have started moving, they do not collide with each other.
-            // Moving queues may overlap, cross, or follow the exact same path.
-            // Such overlap does not block movement, cancel rescue, or lose lives.
+                Vector3 currentDirWorld = new Vector3(currentDir.x, 0f, currentDir.y).normalized;
+                Vector3 blockerCellWorld = GridToWorldPosition(curr);
+                blockerCellWorld.y = headWorldPos.y;
+
+                float distToBlockerCell = Vector3.Distance(headWorldPos, blockerCellWorld);
+                float sweepMaxDist = distToBlockerCell + 2.0f;
+
+                List<Vector3> candidateRoute;
+                if (result.TraversedPipes == null || result.TraversedPipes.Count == 0)
+                {
+                    Vector3 candidateEnd = headWorldPos + currentDirWorld * sweepMaxDist;
+                    candidateEnd.y = headWorldPos.y;
+                    candidateRoute = GenerateApproachRouteToContact(queue, headWorldPos, null, candidateEnd, currentDir);
+                }
+                else
+                {
+                    Vector3 exitEnd = blockerCellWorld + currentDirWorld * 2.0f;
+                    exitEnd.y = headWorldPos.y;
+                    candidateRoute = GenerateApproachRouteToContact(queue, headWorldPos, result.TraversedPipes, exitEnd, currentDir);
+                }
+
+                // Compute exact swept contact distance with guaranteed zero mesh penetration
+                float contactDist = AntCollisionHelper.ComputeSweptContactDistance(
+                    queue, candidateRoute, otherQueue, AntCollisionHelper.DefaultClearance);
+
+                result.SafeTravelDistance = contactDist;
+                result.ApproachRoute = TruncateRouteToDistance(candidateRoute, contactDist);
+                result.ContactPosition = (result.ApproachRoute != null && result.ApproachRoute.Count > 0)
+                    ? result.ApproachRoute[result.ApproachRoute.Count - 1]
+                    : headWorldPos;
+
+                return result;
+            }
 
             // 4. Hit a Hole?
             HoleController h = GetHoleAt(curr);
@@ -1145,7 +1199,7 @@ public class BoardManager : MonoBehaviour
             {
                 destinationHolder = h;
                 entrance = curr;
-                routeCells.Add(curr);
+                result.RouteCells.Add(curr);
                 break;
             }
 
@@ -1153,26 +1207,36 @@ public class BoardManager : MonoBehaviour
             PipeController p = GetPipeAt(curr);
             if (p != null)
             {
+                if (result.TraversedPipes.Contains(p) || result.TraversedPipes.Count >= 8)
+                {
+                    result.FailureReason = "PipeCycleDetected";
+                    return result;
+                }
+
                 int pipeRes = 0;
                 if (pendingPipeReservations != null && pendingPipeReservations.TryGetValue(p, out int prCount))
                 {
                     pipeRes = prCount;
                 }
 
-                // Can only enter if entrance matches, direction matches, and pipe has remaining unreserved uses
-                if (traversedPipe != null || !p.CanEnterFrom(curr, currentDir) || (p.RemainingUses - p.ActiveReservations - pipeRes <= 0))
+                int thisMovePriorCount = 0;
+                for (int pi = 0; pi < result.TraversedPipes.Count; pi++)
                 {
-                    blockedReason = "BlockedByPipeObstacle";
-                    return false;
+                    if (result.TraversedPipes[pi] == p) thisMovePriorCount++;
                 }
 
-                // Legally enters pipe!
-                traversedPipe = p;
+                if (!p.CanEnterFrom(curr, currentDir) || (p.RemainingUses - p.ActiveReservations - pipeRes - thisMovePriorCount <= 0))
+                {
+                    result.FailureReason = "BlockedByPipeObstacle";
+                    return result;
+                }
+
+                result.TraversedPipes.Add(p);
                 if (p.Cells != null)
                 {
                     foreach (var pCell in p.Cells)
                     {
-                        routeCells.Add(pCell);
+                        result.RouteCells.Add(pCell);
                     }
                 }
 
@@ -1183,20 +1247,54 @@ public class BoardManager : MonoBehaviour
                 continue;
             }
 
-            routeCells.Add(curr);
+            result.RouteCells.Add(curr);
             curr += currentDir;
         }
 
         if (destinationHolder == null)
         {
-            blockedReason = "OutOfBoundsNoHolder";
-            return false;
+            result.FailureReason = "OutOfBoundsNoHolder";
+            return result;
         }
 
         if (destinationHolder.ColorID != queue.ColorID)
         {
-            blockedReason = "WrongColorHolder";
-            return false;
+            result.FailureReason = "WrongColorHole";
+            result.TargetHole = destinationHolder;
+            result.EntranceCell = entrance;
+
+            Vector3 currentDirWorld = new Vector3(currentDir.x, 0f, currentDir.y).normalized;
+            Vector3 entranceCellWorld = GridToWorldPosition(entrance);
+            entranceCellWorld.y = headWorldPos.y;
+
+            float distToEntrance = Vector3.Distance(headWorldPos, entranceCellWorld);
+            float sweepMaxDist = distToEntrance + 2.0f;
+
+            List<Vector3> candidateRoute;
+            if (result.TraversedPipes == null || result.TraversedPipes.Count == 0)
+            {
+                Vector3 candidateEnd = headWorldPos + currentDirWorld * sweepMaxDist;
+                candidateEnd.y = headWorldPos.y;
+                candidateRoute = GenerateApproachRouteToContact(queue, headWorldPos, null, candidateEnd, currentDir);
+            }
+            else
+            {
+                Vector3 exitEnd = entranceCellWorld + currentDirWorld * 2.0f;
+                exitEnd.y = headWorldPos.y;
+                candidateRoute = GenerateApproachRouteToContact(queue, headWorldPos, result.TraversedPipes, exitEnd, currentDir);
+            }
+
+            // Compute exact swept contact distance with guaranteed zero rim penetration
+            float contactDist = AntCollisionHelper.ComputeSweptContactDistanceWithHole(
+                queue, candidateRoute, destinationHolder, AntCollisionHelper.DefaultClearance);
+
+            result.SafeTravelDistance = contactDist;
+            result.ApproachRoute = TruncateRouteToDistance(candidateRoute, contactDist);
+            result.ContactPosition = (result.ApproachRoute != null && result.ApproachRoute.Count > 0)
+                ? result.ApproachRoute[result.ApproachRoute.Count - 1]
+                : headWorldPos;
+
+            return result;
         }
 
         int alreadyReserved = 0;
@@ -1208,14 +1306,208 @@ public class BoardManager : MonoBehaviour
         int available = destinationHolder.AvailableCapacity - alreadyReserved;
         if (available <= 0)
         {
-            blockedReason = "MatchingHolderFull";
-            return false;
+            result.FailureReason = "MatchingHolderFull";
+            return result;
         }
 
-        targetHole = destinationHolder;
-        entranceCell = entrance;
-        blockedReason = "None";
-        return true;
+        result.IsValid = true;
+        result.TargetHole = destinationHolder;
+        result.EntranceCell = entrance;
+        return result;
+    }
+
+    public List<Vector3> GenerateApproachRouteToContact(AntQueueController queue, Vector3 headWorldPos, List<PipeController> traversedPipes, Vector3 contactPos, Vector2Int finalDir)
+    {
+        float stepSize = 0.04f;
+        List<Vector3> route = new List<Vector3>();
+
+        if (traversedPipes == null || traversedPipes.Count == 0)
+        {
+            Vector3 fwd = new Vector3(finalDir.x, 0f, finalDir.y).normalized;
+            float dist = Vector3.Dot(contactPos - headWorldPos, fwd);
+            if (dist < 0f) dist = 0f;
+            int steps = Mathf.Max(1, Mathf.RoundToInt(dist / stepSize));
+            for (int s = 0; s <= steps; s++)
+            {
+                float t = (float)s / steps;
+                Vector3 pt = headWorldPos + fwd * (dist * t);
+                pt.y = headWorldPos.y;
+                route.Add(pt);
+            }
+            return route;
+        }
+
+        Vector3 currentLegStart = headWorldPos;
+        for (int pIdx = 0; pIdx < traversedPipes.Count; pIdx++)
+        {
+            PipeController p = traversedPipes[pIdx];
+            if (p == null) continue;
+
+            Vector3 pipeEntPos = GridToWorldPosition(p.EntranceCell);
+            pipeEntPos.y = headWorldPos.y;
+            float distToPipe = Vector3.Distance(currentLegStart, pipeEntPos);
+            int stepsToPipe = Mathf.Max(1, Mathf.RoundToInt(distToPipe / stepSize));
+            for (int s = 0; s < stepsToPipe; s++)
+            {
+                float t = (float)s / stepsToPipe;
+                Vector3 pt = Vector3.Lerp(currentLegStart, pipeEntPos, t);
+                pt.y = headWorldPos.y;
+                route.Add(pt);
+            }
+
+            List<Vector3> pipeWaypoints = p.GetCenterlineWaypoints(headWorldPos.y);
+            if (pipeWaypoints != null && pipeWaypoints.Count >= 2)
+            {
+                for (int i = 0; i < pipeWaypoints.Count - 1; i++)
+                {
+                    Vector3 p0 = pipeWaypoints[i];
+                    Vector3 p1 = pipeWaypoints[i + 1];
+                    p0.y = headWorldPos.y;
+                    p1.y = headWorldPos.y;
+                    float segDist = Vector3.Distance(p0, p1);
+                    int segSteps = Mathf.Max(1, Mathf.RoundToInt(segDist / stepSize));
+                    for (int s = 0; s < segSteps; s++)
+                    {
+                        float t = (float)s / segSteps;
+                        Vector3 pt = Vector3.Lerp(p0, p1, t);
+                        pt.y = headWorldPos.y;
+                        route.Add(pt);
+                    }
+                }
+            }
+            currentLegStart = GridToWorldPosition(p.ExitCell);
+            currentLegStart.y = headWorldPos.y;
+        }
+
+        // Final leg from last pipe exit to contactPos
+        Vector2Int exitDir = traversedPipes[traversedPipes.Count - 1].ExitDirection;
+        Vector3 exitFwd = new Vector3(exitDir.x, 0f, exitDir.y).normalized;
+        float finalDist = Vector3.Dot(contactPos - currentLegStart, exitFwd);
+        if (finalDist < 0f) finalDist = 0f;
+        int finalSteps = Mathf.Max(1, Mathf.RoundToInt(finalDist / stepSize));
+        for (int s = 0; s <= finalSteps; s++)
+        {
+            float t = (float)s / finalSteps;
+            Vector3 pt = currentLegStart + exitFwd * (finalDist * t);
+            pt.y = headWorldPos.y;
+            route.Add(pt);
+        }
+        return route;
+    }
+
+    public static float ComputeRouteLength(List<Vector3> route)
+    {
+        if (route == null || route.Count < 2) return 0f;
+        float dist = 0f;
+        for (int i = 0; i < route.Count - 1; i++)
+        {
+            dist += Vector3.Distance(route[i], route[i + 1]);
+        }
+        return dist;
+    }
+
+    public static List<Vector3> TruncateRouteToDistance(List<Vector3> fullRoute, float maxDist)
+    {
+        if (fullRoute == null || fullRoute.Count == 0) return new List<Vector3>();
+        if (fullRoute.Count == 1 || maxDist <= 0.001f)
+        {
+            return new List<Vector3> { fullRoute[0] };
+        }
+
+        List<Vector3> truncated = new List<Vector3>();
+        truncated.Add(fullRoute[0]);
+        float accumulated = 0f;
+        for (int i = 0; i < fullRoute.Count - 1; i++)
+        {
+            float seg = Vector3.Distance(fullRoute[i], fullRoute[i + 1]);
+            if (accumulated + seg <= maxDist)
+            {
+                truncated.Add(fullRoute[i + 1]);
+                accumulated += seg;
+            }
+            else
+            {
+                float remain = maxDist - accumulated;
+                if (remain > 0.002f)
+                {
+                    float t = seg > 0.0001f ? (remain / seg) : 0f;
+                    truncated.Add(Vector3.Lerp(fullRoute[i], fullRoute[i + 1], t));
+                }
+                break;
+            }
+        }
+        return truncated;
+    }
+
+    public List<Vector3> GenerateForwardRouteOfLength(AntQueueController queue, Vector2Int dir, List<PipeController> pipes, float maxDist)
+    {
+        Vector3 headWorldPos = (queue.Units != null && queue.Units.Count > 0 && queue.Units[0] != null) 
+            ? queue.Units[0].transform.position 
+            : GridToWorldPosition(queue.CurrentBodyCoordinates[0]);
+
+        if (pipes == null || pipes.Count == 0)
+        {
+            Vector3 fwd = new Vector3(dir.x, 0f, dir.y).normalized;
+            Vector3 endPos = headWorldPos + fwd * maxDist;
+            endPos.y = headWorldPos.y;
+            return GenerateApproachRouteToContact(queue, headWorldPos, null, endPos, dir);
+        }
+        else
+        {
+            var fullRoute = GeneratePipeFreeWorldPath(queue, dir, pipes, queue.DestinationHole, queue.HoleEntranceCoordinate);
+            return TruncateRouteToDistance(fullRoute, maxDist);
+        }
+    }
+
+    public bool ValidateForwardMove(
+        AntQueueController queue, 
+        List<AntQueueController> group,
+        Dictionary<HoleController, int> pendingReservations,
+        out Vector2Int forwardDir, 
+        out HoleController targetHole, 
+        out Vector2Int entranceCell, 
+        out string blockedReason)
+    {
+        return ValidateForwardMove(queue, group, pendingReservations, out forwardDir, out targetHole, out entranceCell, out blockedReason, out List<PipeController> _, out List<Vector2Int> _);
+    }
+
+    public bool ValidateForwardMove(
+        AntQueueController queue, 
+        List<AntQueueController> group,
+        Dictionary<HoleController, int> pendingReservations,
+        out Vector2Int forwardDir, 
+        out HoleController targetHole, 
+        out Vector2Int entranceCell, 
+        out string blockedReason,
+        out List<PipeController> traversedPipes,
+        out List<Vector2Int> routeCells,
+        Dictionary<PipeController, int> pendingPipeReservations = null)
+    {
+        var res = ValidateQueueMove(queue, group, pendingReservations, pendingPipeReservations);
+        forwardDir = res.ForwardDir;
+        targetHole = res.TargetHole;
+        entranceCell = res.EntranceCell;
+        blockedReason = res.FailureReason;
+        traversedPipes = res.TraversedPipes;
+        routeCells = res.RouteCells;
+        return res.IsValid;
+    }
+
+    public bool ValidateForwardMove(
+        AntQueueController queue, 
+        List<AntQueueController> group,
+        Dictionary<HoleController, int> pendingReservations,
+        out Vector2Int forwardDir, 
+        out HoleController targetHole, 
+        out Vector2Int entranceCell, 
+        out string blockedReason,
+        out PipeController traversedPipe,
+        out List<Vector2Int> routeCells,
+        Dictionary<PipeController, int> pendingPipeReservations = null)
+    {
+        bool result = ValidateForwardMove(queue, group, pendingReservations, out forwardDir, out targetHole, out entranceCell, out blockedReason, out List<PipeController> pipes, out routeCells, pendingPipeReservations);
+        traversedPipe = (pipes != null && pipes.Count > 0) ? pipes[0] : null;
+        return result;
     }
 
     /// <summary>
@@ -1243,30 +1535,47 @@ public class BoardManager : MonoBehaviour
         Vector3 entryPoint = headWorldPos + entryForward * distToRim;
         entryPoint.y = headWorldPos.y;
 
-        float leaderVisualLength = (queue != null && queue.Units.Count > 0 && queue.Units[0] != null) ? queue.Units[0].VisualLength : AntVisualConfig.Instance.LeaderVisualLength;
-        float minDespawnDist = leaderVisualLength * cs + 0.25f * cs;
-        Vector3 despawnPoint = entryPoint + entryForward * minDespawnDist;
-        despawnPoint.y = (targetHole != null ? targetHole.transform.position.y : headWorldPos.y) - 0.20f;
+        // Real opening of hole: outer rim thickness
+        float rimThickness = targetHole != null ? Mathf.Clamp((targetHole.InitialCapacity >= 2 && targetHole.WidthCells == 1 && targetHole.HeightCells == 1) ? 0.09f * cs : 0.12f * cs, 0.08f * cs, 0.24f * cs) : 0.10f * cs;
+        Vector3 openingPoint = entryPoint + entryForward * rimThickness;
+        openingPoint.y = headWorldPos.y;
+
+        // Descent into hole: plunge steeply inside front portion of pit, never reaching far edge
+        float descentForwardDist = 0.32f * cs;
+        float descentDepth = 0.45f * cs;
+        Vector3 descentBottom = openingPoint + entryForward * descentForwardDist;
+        descentBottom.y = headWorldPos.y - descentDepth;
+
+        Vector3 deepPitBottom = descentBottom + entryForward * (0.08f * cs) + Vector3.down * (0.25f * cs);
 
         List<Vector3> denseRoute = new List<Vector3>();
         float stepSize = 0.04f;
 
-        // 1. Straight approach phase: strictly along cardinal forwardDir to the rim with ZERO lateral displacement
-        int approachSteps = Mathf.Max(1, Mathf.RoundToInt(distToRim / stepSize));
+        // 1. Straight approach phase: strictly along cardinal forwardDir to opening with ZERO lateral displacement
+        int approachSteps = Mathf.Max(1, Mathf.RoundToInt(Vector3.Distance(headWorldPos, openingPoint) / stepSize));
         for (int s = 0; s < approachSteps; s++)
         {
             float t = (float)s / approachSteps;
-            Vector3 pt = Vector3.Lerp(headWorldPos, entryPoint, t);
+            Vector3 pt = Vector3.Lerp(headWorldPos, openingPoint, t);
             pt.y = headWorldPos.y;
             denseRoute.Add(pt);
         }
 
-        // 2. Hole-entry descent phase: continues strictly in cardinal forwardDir, descending in Y into pit
-        int despawnSteps = Mathf.Max(1, Mathf.RoundToInt(minDespawnDist / stepSize));
-        for (int s = 0; s <= despawnSteps; s++)
+        // 2. Hole-entry descent phase: plunges steeply down into opening
+        int descentSteps = Mathf.Max(1, Mathf.RoundToInt(Vector3.Distance(openingPoint, descentBottom) / stepSize));
+        for (int s = 0; s < descentSteps; s++)
         {
-            float t = (float)s / despawnSteps;
-            Vector3 pt = Vector3.Lerp(entryPoint, despawnPoint, t);
+            float t = (float)s / descentSteps;
+            Vector3 pt = Vector3.Lerp(openingPoint, descentBottom, t);
+            denseRoute.Add(pt);
+        }
+
+        // 3. Tail buffer deep inside pit
+        int deepSteps = Mathf.Max(1, Mathf.RoundToInt(Vector3.Distance(descentBottom, deepPitBottom) / stepSize));
+        for (int s = 0; s <= deepSteps; s++)
+        {
+            float t = (float)s / deepSteps;
+            Vector3 pt = Vector3.Lerp(descentBottom, deepPitBottom, t);
             denseRoute.Add(pt);
         }
 
@@ -1274,10 +1583,15 @@ public class BoardManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Generates a continuous world-space trajectory guiding an ant queue through a pipe to its destination hole.
+    /// Generates a continuous world-space trajectory guiding an ant queue through all sequential pipes to its destination hole.
     /// </summary>
-    public List<Vector3> GeneratePipeFreeWorldPath(AntQueueController queue, Vector2Int forwardDir, PipeController pipe, HoleController targetHole, Vector2Int entranceCell)
+    public List<Vector3> GeneratePipeFreeWorldPath(AntQueueController queue, Vector2Int forwardDir, IReadOnlyList<PipeController> pipes, HoleController targetHole, Vector2Int entranceCell)
     {
+        if (pipes == null || pipes.Count == 0)
+        {
+            return GenerateStraightFreeWorldPath(queue, forwardDir, targetHole, entranceCell);
+        }
+
         Vector3 headWorldPos = queue.Units != null && queue.Units.Count > 0 && queue.Units[0] != null 
             ? queue.Units[0].transform.position 
             : (queue.CurrentBodyCoordinates != null && queue.CurrentBodyCoordinates.Count > 0 ? GridToWorldPosition(queue.CurrentBodyCoordinates[0]) : queue.transform.position);
@@ -1286,80 +1600,111 @@ public class BoardManager : MonoBehaviour
         float stepSize = 0.04f;
         List<Vector3> denseRoute = new List<Vector3>();
 
-        // 1. From headWorldPos to pipe entrance (strictly along forwardDir)
-        Vector3 pipeEntrancePos = GridToWorldPosition(pipe.EntranceCell);
-        pipeEntrancePos.y = headWorldPos.y;
-        float distToPipe = Vector3.Distance(headWorldPos, pipeEntrancePos);
-        int stepsToPipe = Mathf.Max(1, Mathf.RoundToInt(distToPipe / stepSize));
-        for (int s = 0; s < stepsToPipe; s++)
+        Vector3 currentLegStart = headWorldPos;
+        for (int pIdx = 0; pIdx < pipes.Count; pIdx++)
         {
-            float t = (float)s / stepsToPipe;
-            Vector3 pt = Vector3.Lerp(headWorldPos, pipeEntrancePos, t);
-            pt.y = headWorldPos.y;
-            denseRoute.Add(pt);
-        }
+            PipeController p = pipes[pIdx];
+            if (p == null) continue;
 
-        // 2. Along pipe centerline waypoints (including smooth curved elbow geometry at corners)
-        List<Vector3> pipeWaypoints = pipe != null ? pipe.GetCenterlineWaypoints(headWorldPos.y) : null;
-        if (pipeWaypoints != null && pipeWaypoints.Count >= 2)
-        {
-            for (int i = 0; i < pipeWaypoints.Count - 1; i++)
+            // Straight leg to pipe entrance
+            Vector3 pipeEntPos = GridToWorldPosition(p.EntranceCell);
+            pipeEntPos.y = headWorldPos.y;
+            float distToPipe = Vector3.Distance(currentLegStart, pipeEntPos);
+            int stepsToPipe = Mathf.Max(1, Mathf.RoundToInt(distToPipe / stepSize));
+            for (int s = 0; s < stepsToPipe; s++)
             {
-                Vector3 p0 = pipeWaypoints[i];
-                Vector3 p1 = pipeWaypoints[i + 1];
-                p0.y = headWorldPos.y;
-                p1.y = headWorldPos.y;
-                float segDist = Vector3.Distance(p0, p1);
-                int segSteps = Mathf.Max(1, Mathf.RoundToInt(segDist / stepSize));
-                for (int s = 0; s < segSteps; s++)
+                float t = (float)s / stepsToPipe;
+                Vector3 pt = Vector3.Lerp(currentLegStart, pipeEntPos, t);
+                pt.y = headWorldPos.y;
+                denseRoute.Add(pt);
+            }
+
+            // Pipe centerline waypoints (smooth curved elbows at corners)
+            List<Vector3> pipeWaypoints = p.GetCenterlineWaypoints(headWorldPos.y);
+            if (pipeWaypoints != null && pipeWaypoints.Count >= 2)
+            {
+                for (int i = 0; i < pipeWaypoints.Count - 1; i++)
                 {
-                    float t = (float)s / segSteps;
-                    Vector3 pt = Vector3.Lerp(p0, p1, t);
-                    pt.y = headWorldPos.y;
-                    denseRoute.Add(pt);
+                    Vector3 p0 = pipeWaypoints[i];
+                    Vector3 p1 = pipeWaypoints[i + 1];
+                    p0.y = headWorldPos.y;
+                    p1.y = headWorldPos.y;
+                    float segDist = Vector3.Distance(p0, p1);
+                    int segSteps = Mathf.Max(1, Mathf.RoundToInt(segDist / stepSize));
+                    for (int s = 0; s < segSteps; s++)
+                    {
+                        float t = (float)s / segSteps;
+                        Vector3 pt = Vector3.Lerp(p0, p1, t);
+                        pt.y = headWorldPos.y;
+                        denseRoute.Add(pt);
+                    }
                 }
+                currentLegStart = GridToWorldPosition(p.ExitCell);
+                currentLegStart.y = headWorldPos.y;
+            }
+            else
+            {
+                currentLegStart = GridToWorldPosition(p.ExitCell);
+                currentLegStart.y = headWorldPos.y;
             }
         }
 
-        // 3. From pipe exit to hole (strictly straight in exitForward with zero lateral shift)
-        Vector2Int exitDir = pipe.ExitDirection;
+        // Final leg from last pipe exit to destination hole
+        PipeController lastPipe = pipes[pipes.Count - 1];
+        Vector2Int exitDir = lastPipe.ExitDirection;
         Vector3 exitForward = new Vector3(exitDir.x, 0f, exitDir.y).normalized;
-        Vector3 pipeExitPos = GridToWorldPosition(pipe.ExitCell);
-        pipeExitPos.y = headWorldPos.y;
 
         Vector3 entrancePos = GridToWorldPosition(entranceCell);
         entrancePos.y = headWorldPos.y;
 
-        float totalExitDist = Vector3.Dot(entrancePos - pipeExitPos, exitForward);
+        float totalExitDist = Vector3.Dot(entrancePos - currentLegStart, exitForward);
         float distToRim = Mathf.Max(0.05f * cs, totalExitDist - 0.50f * cs);
 
-        Vector3 entryPoint = pipeExitPos + exitForward * distToRim;
+        Vector3 entryPoint = currentLegStart + exitForward * distToRim;
         entryPoint.y = headWorldPos.y;
 
-        float leaderVisualLength = (queue != null && queue.Units.Count > 0 && queue.Units[0] != null) ? queue.Units[0].VisualLength : AntVisualConfig.Instance.LeaderVisualLength;
-        float minDespawnDist = leaderVisualLength * cs + 0.25f * cs;
-        Vector3 despawnPoint = entryPoint + exitForward * minDespawnDist;
-        despawnPoint.y = (targetHole != null ? targetHole.transform.position.y : headWorldPos.y) - 0.20f;
+        float rimThickness = targetHole != null ? Mathf.Clamp((targetHole.InitialCapacity >= 2 && targetHole.WidthCells == 1 && targetHole.HeightCells == 1) ? 0.09f * cs : 0.12f * cs, 0.08f * cs, 0.24f * cs) : 0.10f * cs;
+        Vector3 openingPoint = entryPoint + exitForward * rimThickness;
+        openingPoint.y = headWorldPos.y;
 
-        int stepsToHole = Mathf.Max(1, Mathf.RoundToInt(distToRim / stepSize));
-        for (int s = 0; s < stepsToHole; s++)
+        int stepsToOpening = Mathf.Max(1, Mathf.RoundToInt(Vector3.Distance(currentLegStart, openingPoint) / stepSize));
+        for (int s = 0; s < stepsToOpening; s++)
         {
-            float t = (float)s / stepsToHole;
-            Vector3 pt = Vector3.Lerp(pipeExitPos, entryPoint, t);
+            float t = (float)s / stepsToOpening;
+            Vector3 pt = Vector3.Lerp(currentLegStart, openingPoint, t);
             pt.y = headWorldPos.y;
             denseRoute.Add(pt);
         }
 
-        // 4. Hole swallowing into pit (strictly continuing along exitForward, descending in Y)
-        int despawnSteps = Mathf.Max(1, Mathf.RoundToInt(minDespawnDist / stepSize));
-        for (int s = 0; s <= despawnSteps; s++)
+        // Hole-entry descent phase: plunges steeply down into opening
+        float descentForwardDist = 0.32f * cs;
+        float descentDepth = 0.45f * cs;
+        Vector3 descentBottom = openingPoint + exitForward * descentForwardDist;
+        descentBottom.y = headWorldPos.y - descentDepth;
+
+        int descentSteps = Mathf.Max(1, Mathf.RoundToInt(Vector3.Distance(openingPoint, descentBottom) / stepSize));
+        for (int s = 0; s < descentSteps; s++)
         {
-            float t = (float)s / despawnSteps;
-            Vector3 pt = Vector3.Lerp(entryPoint, despawnPoint, t);
+            float t = (float)s / descentSteps;
+            Vector3 pt = Vector3.Lerp(openingPoint, descentBottom, t);
+            denseRoute.Add(pt);
+        }
+
+        Vector3 deepPitBottom = descentBottom + exitForward * (0.08f * cs) + Vector3.down * (0.25f * cs);
+        int deepSteps = Mathf.Max(1, Mathf.RoundToInt(Vector3.Distance(descentBottom, deepPitBottom) / stepSize));
+        for (int s = 0; s <= deepSteps; s++)
+        {
+            float t = (float)s / deepSteps;
+            Vector3 pt = Vector3.Lerp(descentBottom, deepPitBottom, t);
             denseRoute.Add(pt);
         }
 
         return denseRoute;
+    }
+
+    public List<Vector3> GeneratePipeFreeWorldPath(AntQueueController queue, Vector2Int forwardDir, PipeController pipe, HoleController targetHole, Vector2Int entranceCell)
+    {
+        return GeneratePipeFreeWorldPath(queue, forwardDir, pipe != null ? new List<PipeController> { pipe } : null, targetHole, entranceCell);
     }
 
     /// <summary>
@@ -1369,7 +1714,7 @@ public class BoardManager : MonoBehaviour
     /// </summary>
     public bool TryStartMove(AntQueueController queue)
     {
-        if (queue == null || queue.IsMoving || movingQueues.Contains(queue)) return false;
+        if (queue == null || queue.IsMoving || queue.MoveState != AntQueueController.QueueMoveState.Idle || movingQueues.Contains(queue)) return false;
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) return false;
 
         var group = GetConnectedGroup(queue);
@@ -1391,22 +1736,10 @@ public class BoardManager : MonoBehaviour
             }
         }
 
-        // Concurrency check: Maximum 4 queues can move simultaneously.
-        // A single linked group of ANY size (> 4) is allowed to move when movingQueues.Count == 0!
-        if (movingQueues.Count > 0 && movingQueues.Count + group.Count > MAX_CONCURRENT_MOVING_QUEUES)
-        {
-            Debug.Log($"[QueueMoveBlocked] Queue={queue.QueueId} Reason=ConcurrentMoveLimit GroupSize={group.Count} MovingQueues={movingQueues.Count} HeartPenalty=False");
-            foreach (var member in group)
-            {
-                if (member != null) member.PlayBlockedShake();
-            }
-            return false;
-        }
-
         // Check if any member in the group is already moving
         foreach (var member in group)
         {
-            if (member == null || member.IsMoving || movingQueues.Contains(member)) return false;
+            if (member == null || member.IsMoving || member.MoveState != AntQueueController.QueueMoveState.Idle || movingQueues.Contains(member)) return false;
         }
 
         // Central global rule: AUTOMATIC PATHFINDING = OFF
@@ -1415,68 +1748,136 @@ public class BoardManager : MonoBehaviour
             var groupDirections = new Dictionary<AntQueueController, Vector2Int>();
             var groupTargetHoles = new Dictionary<AntQueueController, HoleController>();
             var groupEntranceCells = new Dictionary<AntQueueController, Vector2Int>();
-            var groupPipes = new Dictionary<AntQueueController, PipeController>();
+            var groupPipes = new Dictionary<AntQueueController, List<PipeController>>();
             var groupRouteCells = new Dictionary<AntQueueController, List<Vector2Int>>();
+            var groupResults = new Dictionary<AntQueueController, MoveValidationResult>();
             var pendingReservations = new Dictionary<HoleController, int>();
             var pendingPipeReservations = new Dictionary<PipeController, int>();
             bool allValid = true;
+            bool hasAnimatedWrongMove = false;
             AntQueueController firstBlockedMember = null;
             string failureReason = "";
 
             foreach (var member in group)
             {
-                if (ValidateForwardMove(member, group, pendingReservations, out var dir, out var hole, out var entrance, out var blockedReason, out var pipe, out var rCells, pendingPipeReservations))
+                var res = ValidateQueueMove(member, group, pendingReservations, pendingPipeReservations);
+                groupResults[member] = res;
+
+                if (res.IsValid)
                 {
-                    groupDirections[member] = dir;
-                    groupTargetHoles[member] = hole;
-                    groupEntranceCells[member] = entrance;
-                    groupPipes[member] = pipe;
-                    groupRouteCells[member] = rCells;
+                    groupDirections[member] = res.ForwardDir;
+                    groupTargetHoles[member] = res.TargetHole;
+                    groupEntranceCells[member] = res.EntranceCell;
+                    groupPipes[member] = res.TraversedPipes;
+                    groupRouteCells[member] = res.RouteCells;
 
-                    if (!pendingReservations.ContainsKey(hole))
+                    if (!pendingReservations.ContainsKey(res.TargetHole))
                     {
-                        pendingReservations[hole] = 0;
+                        pendingReservations[res.TargetHole] = 0;
                     }
-                    pendingReservations[hole]++;
+                    pendingReservations[res.TargetHole]++;
 
-                    if (pipe != null)
+                    if (res.TraversedPipes != null)
                     {
-                        if (!pendingPipeReservations.ContainsKey(pipe))
+                        foreach (var p in res.TraversedPipes)
                         {
-                            pendingPipeReservations[pipe] = 0;
+                            if (p != null)
+                            {
+                                if (!pendingPipeReservations.ContainsKey(p))
+                                {
+                                    pendingPipeReservations[p] = 0;
+                                }
+                                pendingPipeReservations[p]++;
+                            }
                         }
-                        pendingPipeReservations[pipe]++;
                     }
                 }
                 else
                 {
                     allValid = false;
-                    firstBlockedMember = member;
-                    failureReason = blockedReason;
-                    break;
+                    if (firstBlockedMember == null)
+                    {
+                        firstBlockedMember = member;
+                        failureReason = res.FailureReason;
+                    }
+                    if (res.IsAnimatedWrongMove)
+                    {
+                        hasAnimatedWrongMove = true;
+                    }
                 }
             }
 
             // Confirmed gameplay rule: Linked queues may cross, overlap, or share routes.
-            // (GroupRoutesCross rejection removed per confirmed movement rules)
-
             if (!allValid)
             {
                 if (firstBlockedMember != null)
                 {
-                    Debug.Log($"[ForwardMoveBlocked] Queue={firstBlockedMember.QueueId} Reason={failureReason} PathfindingFallback=False");
+                    Debug.Log($"[ForwardMoveBlocked] Queue={firstBlockedMember.QueueId} Reason={failureReason} HasAnimatedWrongMove={hasAnimatedWrongMove} PathfindingFallback=False");
                 }
+
+                if (!hasAnimatedWrongMove)
+                {
+                    // Locked queue, full same-color holder, or missing destination -> preserve existing shake and immediate life loss
+                    foreach (var member in group)
+                    {
+                        if (member != null) member.TriggerBlockedFeedback();
+                    }
+
+                    if (GameManager.Instance != null)
+                    {
+                        GameManager.Instance.LoseLife(InvalidMoveReason.NoValidPath);
+                    }
+                    return false;
+                }
+
+                // Blocked by stationary queue or wrong-color hole -> execute animated wrong-move sequence!
+                // Determine earliest genuine collision distance for the group
+                float minSafeDist = float.MaxValue;
+                AntQueueController earliestCollisionMember = null;
+                AntQueueController primaryBlocker = null;
+                HoleController primaryBlockerHole = null;
 
                 foreach (var member in group)
                 {
-                    if (member != null) member.TriggerBlockedFeedback();
+                    var res = groupResults[member];
+                    if (res.IsAnimatedWrongMove)
+                    {
+                        if (res.SafeTravelDistance < minSafeDist)
+                        {
+                            minSafeDist = res.SafeTravelDistance;
+                            earliestCollisionMember = member;
+                            primaryBlocker = res.BlockerQueue;
+                            primaryBlockerHole = res.IsBlockedByWrongColorHole ? res.TargetHole : null;
+                        }
+                    }
                 }
 
-                // Deduct exactly ONE life for this player move attempt (invalid move)
-                if (GameManager.Instance != null)
+                if (minSafeDist == float.MaxValue) minSafeDist = 0.5f;
+
+                foreach (var member in group)
                 {
-                    GameManager.Instance.LoseLife(InvalidMoveReason.NoValidPath);
+                    var res = groupResults[member];
+                    List<Vector3> memberApproachRoute;
+                    if (res.IsAnimatedWrongMove && res.ApproachRoute != null && res.ApproachRoute.Count > 1)
+                    {
+                        memberApproachRoute = TruncateRouteToDistance(res.ApproachRoute, minSafeDist);
+                    }
+                    else
+                    {
+                        memberApproachRoute = GenerateForwardRouteOfLength(member, res.ForwardDir, res.TraversedPipes, minSafeDist);
+                    }
+
+                    bool isEarliestTrigger = (member == earliestCollisionMember);
+                    member.StartFailedMove(
+                        memberApproachRoute,
+                        primaryBlocker,
+                        isEarliestTrigger,
+                        res.TraversedPipes,
+                        null,
+                        primaryBlockerHole);
                 }
+
+                UpdateParallelRopes();
                 return false;
             }
 
@@ -1546,18 +1947,24 @@ public class BoardManager : MonoBehaviour
             bool pipeReservationFailed = false;
             foreach (var member in group)
             {
-                var pipe = groupPipes[member];
-                if (pipe != null)
+                if (groupPipes.TryGetValue(member, out var pipes) && pipes != null)
                 {
-                    if (pipe.TryReserveUse())
+                    foreach (var pipe in pipes)
                     {
-                        successfullyReservedPipes.Add(pipe);
+                        if (pipe != null)
+                        {
+                            if (pipe.TryReserveUse())
+                            {
+                                successfullyReservedPipes.Add(pipe);
+                            }
+                            else
+                            {
+                                pipeReservationFailed = true;
+                                break;
+                            }
+                        }
                     }
-                    else
-                    {
-                        pipeReservationFailed = true;
-                        break;
-                    }
+                    if (pipeReservationFailed) break;
                 }
             }
 
@@ -1587,14 +1994,20 @@ public class BoardManager : MonoBehaviour
                     var dir = groupDirections[member];
                     var hole = groupTargetHoles[member];
                     var entrance = groupEntranceCells[member];
-                    var pipe = groupPipes[member];
+                    var pipes = groupPipes[member];
                     var rCells = groupRouteCells[member];
 
                     member.DestinationHole = hole;
                     member.ForwardDirection = dir;
                     member.HoleEntranceCoordinate = entrance;
-                    member.TraversedPipe = pipe;
-                    if (pipe != null) pipe.IsPipeInUse = true;
+                    member.TraversedPipes = (pipes != null) ? new List<PipeController>(pipes) : new List<PipeController>();
+                    if (pipes != null)
+                    {
+                        foreach (var pipe in pipes)
+                        {
+                            if (pipe != null) pipe.IsPipeInUse = true;
+                        }
+                    }
 
                     // Reserve transit cells
                     foreach (var c in rCells)
@@ -1604,9 +2017,9 @@ public class BoardManager : MonoBehaviour
                     queueReservedRouteCells[member] = new List<Vector2Int>(rCells);
 
                     List<Vector3> route;
-                    if (pipe != null)
+                    if (pipes != null && pipes.Count > 0)
                     {
-                        route = GeneratePipeFreeWorldPath(member, dir, pipe, hole, entrance);
+                        route = GeneratePipeFreeWorldPath(member, dir, pipes, hole, entrance);
                     }
                     else
                     {
@@ -1881,7 +2294,20 @@ public class BoardManager : MonoBehaviour
             }
 
             // Pipe usage decrement
-            if (queue.TraversedPipe != null)
+            if (queue.TraversedPipes != null && queue.TraversedPipes.Count > 0)
+            {
+                foreach (var p in queue.TraversedPipes)
+                {
+                    if (p != null)
+                    {
+                        p.ConsumeUse();
+                        p.IsPipeInUse = false;
+                    }
+                }
+                queue.TraversedPipes.Clear();
+                queue.TraversedPipe = null;
+            }
+            else if (queue.TraversedPipe != null)
             {
                 queue.TraversedPipe.ConsumeUse();
                 queue.TraversedPipe.IsPipeInUse = false;
@@ -1940,8 +2366,22 @@ public class BoardManager : MonoBehaviour
                 }
                 queueReservedRouteCells.Remove(queue);
             }
-            if (queue.TraversedPipe != null)
+            if (queue.TraversedPipes != null && queue.TraversedPipes.Count > 0)
             {
+                foreach (var p in queue.TraversedPipes)
+                {
+                    if (p != null)
+                    {
+                        p.ReleaseReservedUse();
+                        p.IsPipeInUse = false;
+                    }
+                }
+                queue.TraversedPipes.Clear();
+                queue.TraversedPipe = null;
+            }
+            else if (queue.TraversedPipe != null)
+            {
+                queue.TraversedPipe.ReleaseReservedUse();
                 queue.TraversedPipe.IsPipeInUse = false;
                 queue.TraversedPipe = null;
             }
@@ -2014,6 +2454,7 @@ public class BoardManager : MonoBehaviour
     public void ClearBoard()
     {
         ClearLinkedRopes();
+        HoleController.CleanupActiveEntryEffects();
 
         foreach (var q in activeQueues)
         {

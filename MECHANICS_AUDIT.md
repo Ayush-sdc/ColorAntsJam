@@ -117,6 +117,43 @@
 - **Modal Input Protection:** Gestures and taps are blocked while modals (settings, tutorials, level complete) are open.
 - **View Preservation:** Camera position and zoom level are preserved across moves, rescues, and modal closures (does not snap back or zoom out).
 
+### O. Multi-Pipe Route Traversal & Level 23 `Queue_Record_75_3` Root Cause
+- **Problem Statement:** In Level 23, green queue `Queue_Record_75_3` (ColorID 3, body `[(13, 14), (13, 15)]`, head facing down `(0, -1)`) failed to traverse its legitimate route to matching Hole #72 (`(19, 7)`).
+- **Exact BlockedReason Identified:** `"BlockedByPipeObstacle"`.
+- **Root Cause:** In `BoardManager.cs:ValidateForwardMove`, the traversal loop contained `if (traversedPipe != null || !p.CanEnterFrom(curr, currentDir) ...)`. Because only a single pipe traversal was supported and stored (`traversedPipe`), encountering a second pipe along the route unconditionally failed validation, treating Pipe #7 as an obstacle!
+- **Route Trace:**
+  - Entrance 1: Pipe #6 at `(13, 13)` entered in direction `(0, -1)`, interior `(13, 12)`, exit `(14, 12)` heading right `(1, 0)`.
+  - Floor Transit: Straight travel from `(15, 12)` to `(17, 12)` heading `(1, 0)`.
+  - Entrance 2: Pipe #7 at `(18, 12)` entered in direction `(1, 0)`, interior `(19, 12)`, exit `(19, 11)` heading down `(0, -1)`.
+  - Destination: Hole #72 at `(19, 7)..(18, 9)`, ColorID 3, initial capacity 3.
+- **Resolution & Architecture:**
+  1. General route validation stores ordered `List<PipeController> traversedPipes`.
+  2. Infinite loop / cycle detection added via `HashSet<PipeController>` returning `"PipeCycleDetected"` if a route loops through the same pipe twice.
+  3. Atomic multi-pipe reservation in `TryStartMove`: reserves capacity on all required pipes with atomic rollback if any pipe lacks capacity.
+  4. Composite world spline generation in `GeneratePipeFreeWorldPath` routes seamlessly through all sequential pipes.
+  5. Usage accounting: exactly 1 use consumed per completed queue passage (`BoardManager.OnQueueCompleted`), not per individual ant unit.
+  6. Audit across all levels: Level 23 confirmed to contain 3 queues requiring multi-pipe traversal (Queue 0: Pipes 5 & 8; Queue 1: Pipes 6 & 7; Queue 75: Pipes 6 & 7). All 3 now validate and complete.
+
+### P. Ant Queue Visual Spacing Architecture
+- **Problem Statement:** Gaps between ants within each queue caused queues to read as disconnected individuals rather than a continuous slithering group.
+- **Investigation:** Logical grid cell spacing is fixed at 1.0 unit. Prefab ant visual models had worker visual scale of 0.315f (visual length ~0.84 units), leaving ~0.16 unit lengthwise gaps.
+- **Resolution:**
+  1. Created `AntQueueVisualSettings` ScriptableObject asset (`Assets/Resources/AntQueueVisualSettings.asset`) providing independent controls for `leaderVisualScale` (0.38f), `workerVisualScale` (0.35f), `unitPivotOffset`, and `movementSpacingMultiplier` (1.0f).
+  2. Created custom Inspector `AntQueueVisualSettingsEditor` with an "Apply & Rebuild Scene Queues" button to tune spacing in Editor without touching code.
+  3. Preserves logical grid cells, ant count, queue footprint, and tail coordinates. Neighboring queues maintain 0.44 unit lateral clearance, preventing visual merging.
+  4. Dynamic trail sampling during motion uses `movementSpacingMultiplier * cellSize`, guaranteeing zero jump, spread, or bunching when queues start moving.
+
+### Q. Progressive Hole Entry Plunge & Concealment
+- **Problem Statement:** Ants previously popped out of existence at the rim boundary plane before visibly entering the hole opening.
+- **Resolution:**
+  1. Ants visibly reach and enter the actual hole opening.
+  2. Leader and follower ants plunge steeply downward into the pit opening (`0.32f * cs` forward, `y` drops to `-0.35f`) with progressive scale reduction (`(1.0f - pitDescent)`).
+  3. Units submerge/conceal only once fully inside the pit (`pitDescent >= 0.95f` or `y <= initialAntY - 0.34f`).
+  4. Units do not traverse across the pit or emerge beyond the opposite rim on small $1\times 1$ holes.
+  5. Followers plunge and conceal sequentially in order.
+  6. Visual state is fully restored on pool reuse / level restart (`ResetWalkVisual()`).
+  7. Visual entry is decoupled from game accounting: queue completes only after the final ant enters, consuming 1 hole slot and decrementing active locks by 1.
+
 ---
 
 ## 3. Categorized Verification Status
@@ -137,10 +174,17 @@
 - Level 14 `Queue_Record_42_10` legal move execution (5/5 Moving Queue & Level 14 Tests PASS).
 - Settings pause ownership, modal animations, and PlayerPrefs persistence (4/4 UI Verification Tests PASS).
 - Swept toroidal pipe bends and source-derived multi-use badge counters.
+- Multi-pipe route validation, atomic reservations, rollback, cycle detection, and single-use consumption (Level 23 Record_75_3 PASS).
+- Shared `AntQueueVisualSettings` configuration and spacing consistency (Test 2 PASS).
+- Progressive hole entry plunge and progressive concealment without early rim pop or far-edge emergence (Test 3 PASS).
 - EditMode integration test suite (23/23 PASS in `SlitherAnts.Tests.Editor.dll`).
 - Camera Overhaul and Rope Visual Lifecycle verification suite (7/7 PASS in `FeatureUIPlayModeTests.cs`).
+- Level 23 Multi-Pipe and Visual Verification suite (3/3 PASS in `FeatureUIPlayModeTests.cs`).
 
 ### Verified Visual Assets (Game View 1080x1920 in Assets/TestEvidence/Screenshots/)
+- `Evidence_Record_75_3_TraversingRoute.png`: Level 23 `Queue_Record_75_3` traversing its multi-pipe route (Pipe 6 -> Pipe 7 -> Hole 72).
+- `Evidence_QueueSpacing_StaticAndMoving.png`: Queue spacing showing tight cohesive ant groups with clear lateral clearance and zero motion bunching.
+- `Evidence_SmallHoleEntry_ProgressiveConceal.png`: Ant visibly entering small hole opening and progressively descending into the pit without popping on the rim.
 - `Evidence_NormalLevel1_ZeroRopes.png`: Normal Level 1 showing 0 ropes and comfortable closer view.
 - `Evidence_Level7_LinkedConnectors.png`: Level 7 showing exactly 14 leader-to-leader connectors for 12 linked groups.
 - `Evidence_Level7_RopeDismissedOnHoleEntry.png`: Rope visual dismissed upon hole entry without lingering objects.

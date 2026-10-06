@@ -29,9 +29,18 @@ public static class UIOverlaysSetup
         // 3. Setup Scene Overlays in active scene
         SetupSceneOverlays(config);
 
+        // 4. Run Tutorial & Legal Setup
+        TutorialAndLegalSetup.RunFullSetup();
+
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("[UIOverlaysSetup] Full UI setup completed successfully!");
+    }
+
+    [MenuItem("Tools/Slither Ants Jam/Tests/Run Tutorial and Legal Tests")]
+    public static void RunTutorialAndLegalTests()
+    {
+        TutorialAndLegalPlayModeTests.RunFullTestSuite();
     }
 
     public static void ConfigureAllSprites()
@@ -48,6 +57,10 @@ public static class UIOverlaysSetup
             "Assets/UI/Sprites/Features/Icon_Pipe.png",
             "Assets/UI/Sprites/Features/Icon_LockedAnts.png",
             "Assets/UI/Sprites/Features/Icon_AllFeaturesCompleted.png",
+            "Assets/UI/Sprites/Features/Preview_LinkedAnts.png",
+            "Assets/UI/Sprites/Features/Preview_StackedAnts.png",
+            "Assets/UI/Sprites/Features/Preview_Pipes.png",
+            "Assets/UI/Sprites/Features/Preview_LockedAnts.png",
             "Assets/UI/Sprites/Tutorials/Tutorial_RadialRays.png",
             "Assets/UI/Sprites/Tutorials/Tutorial_Panel.png",
             "Assets/UI/Sprites/Tutorials/Tutorial_OkButton.png",
@@ -55,7 +68,8 @@ public static class UIOverlaysSetup
             "Assets/UI/Sprites/LevelCompleted/Next_Button.png",
             "Assets/UI/Sprites/LevelCompleted/ProgressBar_Bg.png",
             "Assets/UI/Sprites/LevelCompleted/ProgressBar_Fill.png",
-            "Assets/UI/Sprites/LevelCompleted/Icon_Glow.png"
+            "Assets/UI/Sprites/LevelCompleted/Icon_Glow.png",
+            "Assets/UI/Sprites/CampaignCompleted/PlayAgain_Button_Bg.png"
         };
 
         foreach (var path in spritePaths)
@@ -123,17 +137,25 @@ public static class UIOverlaysSetup
             Debug.Log($"[UIOverlaysSetup] Created new FeatureProgressionConfig at {ProgressionAssetPath}");
         }
 
-        Sprite iconLinked = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Icon_LinkedAnts.png");
-        Sprite illLinked = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Illustration_LinkedAnts.png");
+        Sprite iconLinked = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Preview_LinkedAnts.png") 
+            ?? AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Icon_LinkedAnts.png");
+        Sprite illLinked = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Tutorials/FeatureOverlays/Feature_Linked_Ants.png");
+        GameObject prefabLinked = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/Tutorials/FeatureOverlay_LinkedAnts.prefab");
 
-        Sprite iconStacked = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Icon_StackedAnts.png");
-        Sprite illStacked = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Illustration_StackedAnts.png");
+        Sprite iconStacked = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Preview_StackedAnts.png") 
+            ?? AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Icon_StackedAnts.png");
+        Sprite illStacked = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Tutorials/FeatureOverlays/Feature_Stacked_Ants.png");
+        GameObject prefabStacked = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/Tutorials/FeatureOverlay_StackedAnts.prefab");
 
-        Sprite iconPipe = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Icon_Pipe.png");
-        Sprite illPipe = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Illustration_Pipe.png");
+        Sprite iconPipe = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Preview_Pipes.png") 
+            ?? AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Icon_Pipe.png");
+        Sprite illPipe = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Tutorials/FeatureOverlays/Feature_Pipe.png");
+        GameObject prefabPipe = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/Tutorials/FeatureOverlay_Pipes.prefab");
 
-        Sprite iconLocked = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Icon_LockedAnts.png");
-        Sprite illLocked = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Illustration_LockedAnts.png");
+        Sprite iconLocked = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Preview_LockedAnts.png") 
+            ?? AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Icon_LockedAnts.png");
+        Sprite illLocked = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Tutorials/FeatureOverlays/Feature_Locked_Ants.png");
+        GameObject prefabLocked = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/Tutorials/FeatureOverlay_LockedAnts.prefab");
 
         Sprite iconCompleted = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Icon_AllFeaturesCompleted.png");
 
@@ -148,7 +170,8 @@ public static class UIOverlaysSetup
                 tutorialTitle: "Linked Ants!",
                 tutorialDescription: "Linked ant queues move together.",
                 previewIcon: iconLinked,
-                tutorialArtwork: illLinked
+                tutorialArtwork: illLinked,
+                tutorialPrefab: prefabLinked
             ),
             new FeatureDefinition(
                 "stacked_ants",
@@ -159,7 +182,8 @@ public static class UIOverlaysSetup
                 tutorialTitle: "Stacked Ants!",
                 tutorialDescription: "Send stacked ant queues to the holes in order.",
                 previewIcon: iconStacked,
-                tutorialArtwork: illStacked
+                tutorialArtwork: illStacked,
+                tutorialPrefab: prefabStacked
             ),
             new FeatureDefinition(
                 "pipes",
@@ -170,7 +194,8 @@ public static class UIOverlaysSetup
                 tutorialTitle: "Pipe!",
                 tutorialDescription: "Pass ant queues through the pipe to break it.",
                 previewIcon: iconPipe,
-                tutorialArtwork: illPipe
+                tutorialArtwork: illPipe,
+                tutorialPrefab: prefabPipe
             ),
             new FeatureDefinition(
                 "locked_ants",
@@ -181,7 +206,8 @@ public static class UIOverlaysSetup
                 tutorialTitle: "Locked Ants!",
                 tutorialDescription: "Rescue the required number of ant queues to unlock it.",
                 previewIcon: iconLocked,
-                tutorialArtwork: illLocked
+                tutorialArtwork: illLocked,
+                tutorialPrefab: prefabLocked
             )
         };
 
@@ -224,14 +250,18 @@ public static class UIOverlaysSetup
         // 3. HardLevelIntroOverlay
         var hiOverlay = SetupHardLevelIntroOverlay(canvasObj.transform);
 
+        // 4. CampaignCompletedOverlay
+        var ccOverlay = SetupCampaignCompletedOverlay(canvasObj.transform, defaultFont);
+
         // Wire references into GameUIManager
-        uiManager.SetOverlayReferences(lcOverlay, ftModal, hiOverlay, config);
+        uiManager.SetOverlayReferences(lcOverlay, ftModal, hiOverlay, config, ccOverlay);
         EditorUtility.SetDirty(uiManager);
 
         // Save prefabs
         SaveAsPrefab(lcOverlay.gameObject, $"{PrefabsFolder}/LevelCompletedOverlay.prefab");
         SaveAsPrefab(ftModal.gameObject, $"{PrefabsFolder}/FeatureTutorialModal.prefab");
         SaveAsPrefab(hiOverlay.gameObject, $"{PrefabsFolder}/HardLevelIntroOverlay.prefab");
+        SaveAsPrefab(ccOverlay.gameObject, $"{PrefabsFolder}/CampaignCompletedOverlay.prefab");
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
@@ -337,7 +367,7 @@ public static class UIOverlaysSetup
         progFillImg.type = Image.Type.Filled;
         progFillImg.fillMethod = Image.FillMethod.Horizontal;
         progFillImg.fillOrigin = (int)Image.OriginHorizontal.Left;
-        progFillImg.fillAmount = 0.5f;
+        progFillImg.fillAmount = 0f;
         progFillImg.raycastTarget = false;
 
         // Percent Text
@@ -354,7 +384,7 @@ public static class UIOverlaysSetup
         percentTxt.fontStyle = FontStyle.Bold;
         percentTxt.alignment = TextAnchor.MiddleCenter;
         percentTxt.color = Color.white;
-        percentTxt.text = "77%";
+        percentTxt.text = "0%";
         var percentOutline = percentObj.AddComponent<Outline>();
         percentOutline.effectColor = new Color(0.05f, 0.15f, 0.35f, 0.9f);
         percentOutline.effectDistance = new Vector2(1.5f, -1.5f);
@@ -578,6 +608,17 @@ public static class UIOverlaysSetup
         okOutline.effectColor = new Color(0.12f, 0.40f, 0.15f, 0.9f);
         okOutline.effectDistance = new Vector2(1.8f, -1.8f);
 
+        // Custom Prefab Container (for full flattened tutorial compositions)
+        GameObject containerObj = new GameObject("CustomPrefabContainer", typeof(RectTransform));
+        containerObj.transform.SetParent(obj.transform, false);
+        var containerRt = containerObj.GetComponent<RectTransform>();
+        containerRt.anchorMin = Vector2.zero;
+        containerRt.anchorMax = Vector2.one;
+        containerRt.offsetMin = Vector2.zero;
+        containerRt.offsetMax = Vector2.zero;
+        containerRt.localScale = Vector3.one;
+        containerRt.SetAsLastSibling();
+
         // Attach FeatureTutorialModal component
         var controller = obj.GetComponent<FeatureTutorialModal>();
         if (controller == null) controller = obj.AddComponent<FeatureTutorialModal>();
@@ -589,6 +630,7 @@ public static class UIOverlaysSetup
         so.FindProperty("titleOutline").objectReferenceValue = titleOutline;
         so.FindProperty("radialRaysImage").objectReferenceValue = raysImg;
         so.FindProperty("illustrationImage").objectReferenceValue = illImg;
+        so.FindProperty("customPrefabContainer").objectReferenceValue = containerRt;
         so.FindProperty("descriptionPanel").objectReferenceValue = panelImg;
         so.FindProperty("descriptionText").objectReferenceValue = descTxt;
         so.FindProperty("okButton").objectReferenceValue = okBtn;
@@ -660,6 +702,150 @@ public static class UIOverlaysSetup
         so.FindProperty("popInDuration").floatValue = 0.35f;
         so.FindProperty("holdDuration").floatValue = 1.15f;
         so.FindProperty("fadeOutDuration").floatValue = 0.30f;
+        so.ApplyModifiedProperties();
+
+        obj.SetActive(false);
+        return controller;
+    }
+
+    private static CampaignCompletedOverlay SetupCampaignCompletedOverlay(Transform canvasTrans, Font font)
+    {
+        Transform existing = canvasTrans.Find("CampaignCompletedOverlay");
+        GameObject obj;
+        if (existing != null)
+        {
+            obj = existing.gameObject;
+        }
+        else
+        {
+            obj = new GameObject("CampaignCompletedOverlay", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            obj.transform.SetParent(canvasTrans, false);
+        }
+
+        // Full screen rect
+        var rt = obj.GetComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+
+        var bgImg = obj.GetComponent<Image>();
+        bgImg.color = new Color(0.02f, 0.03f, 0.06f, 0.92f);
+        bgImg.raycastTarget = true;
+
+        // Clean existing children
+        for (int i = obj.transform.childCount - 1; i >= 0; i--)
+        {
+            UnityEngine.Object.DestroyImmediate(obj.transform.GetChild(i).gameObject);
+        }
+
+        // ContentRoot
+        GameObject contentRoot = new GameObject("ContentRoot", typeof(RectTransform));
+        contentRoot.transform.SetParent(obj.transform, false);
+        var contentRt = contentRoot.GetComponent<RectTransform>();
+        contentRt.anchorMin = new Vector2(0.5f, 0.5f);
+        contentRt.anchorMax = new Vector2(0.5f, 0.5f);
+        contentRt.sizeDelta = new Vector2(800f, 1200f);
+        contentRt.anchoredPosition = Vector2.zero;
+
+        // Title Text: "ALL LEVELS COMPLETED!"
+        GameObject titleObj = new GameObject("TitleText", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+        titleObj.transform.SetParent(contentRoot.transform, false);
+        var titleRt = titleObj.GetComponent<RectTransform>();
+        titleRt.anchoredPosition = new Vector2(0f, 320f);
+        titleRt.sizeDelta = new Vector2(740f, 100f);
+        var titleTxt = titleObj.GetComponent<Text>();
+        titleTxt.font = font;
+        titleTxt.fontSize = 42;
+        titleTxt.fontStyle = FontStyle.Bold;
+        titleTxt.alignment = TextAnchor.MiddleCenter;
+        titleTxt.color = new Color(1.0f, 0.85f, 0.25f, 1.0f); // Bright celebratory gold
+        titleTxt.text = "ALL LEVELS COMPLETED!";
+        var titleOutline = titleObj.AddComponent<Outline>();
+        titleOutline.effectColor = new Color(0.70f, 0.28f, 0.02f, 0.95f);
+        titleOutline.effectDistance = new Vector2(2.5f, -2.5f);
+
+        // Radial Rays behind the cute ants
+        GameObject raysObj = new GameObject("RadialRays", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        raysObj.transform.SetParent(contentRoot.transform, false);
+        var raysRt = raysObj.GetComponent<RectTransform>();
+        raysRt.anchoredPosition = new Vector2(0f, 80f);
+        raysRt.sizeDelta = new Vector2(560f, 560f);
+        var raysImg = raysObj.GetComponent<Image>();
+        raysImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Tutorials/Tutorial_RadialRays.png");
+        raysImg.color = new Color(1f, 0.9f, 0.5f, 0.65f);
+        raysImg.raycastTarget = false;
+
+        // Celebratory Illustration using existing cute ants
+        GameObject illustObj = new GameObject("Illustration", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        illustObj.transform.SetParent(contentRoot.transform, false);
+        var illustRt = illustObj.GetComponent<RectTransform>();
+        illustRt.anchoredPosition = new Vector2(0f, 80f);
+        illustRt.sizeDelta = new Vector2(460f, 380f);
+        var illustImg = illustObj.GetComponent<Image>();
+        illustImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/Features/Illustration_LinkedAnts.png");
+        illustImg.preserveAspect = true;
+        illustImg.raycastTarget = false;
+
+        // Message Text: "You rescued every ant queue!"
+        GameObject msgObj = new GameObject("MessageText", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+        msgObj.transform.SetParent(contentRoot.transform, false);
+        var msgRt = msgObj.GetComponent<RectTransform>();
+        msgRt.anchoredPosition = new Vector2(0f, -140f);
+        msgRt.sizeDelta = new Vector2(650f, 60f);
+        var msgTxt = msgObj.GetComponent<Text>();
+        msgTxt.font = font;
+        msgTxt.fontSize = 28;
+        msgTxt.fontStyle = FontStyle.Bold;
+        msgTxt.alignment = TextAnchor.MiddleCenter;
+        msgTxt.color = Color.white;
+        msgTxt.text = "You rescued every ant queue!";
+        var msgOutline = msgObj.AddComponent<Outline>();
+        msgOutline.effectColor = new Color(0.08f, 0.25f, 0.55f, 0.9f);
+        msgOutline.effectDistance = new Vector2(1.8f, -1.8f);
+
+        // PLAY AGAIN Button
+        GameObject playAgainBtnObj = new GameObject("PlayAgainButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        playAgainBtnObj.transform.SetParent(contentRoot.transform, false);
+        var playAgainBtnRt = playAgainBtnObj.GetComponent<RectTransform>();
+        playAgainBtnRt.anchoredPosition = new Vector2(0f, -250f);
+        playAgainBtnRt.sizeDelta = new Vector2(376f, 128f);
+        var playAgainImg = playAgainBtnObj.GetComponent<Image>();
+        playAgainImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Sprites/CampaignCompleted/PlayAgain_Button_Bg.png");
+        playAgainImg.preserveAspect = true;
+        playAgainImg.raycastTarget = true;
+        var playAgainBtn = playAgainBtnObj.GetComponent<Button>();
+
+        GameObject playAgainTxtObj = new GameObject("ButtonText", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+        playAgainTxtObj.transform.SetParent(playAgainBtnObj.transform, false);
+        var playAgainTxtRt = playAgainTxtObj.GetComponent<RectTransform>();
+        playAgainTxtRt.anchorMin = Vector2.zero;
+        playAgainTxtRt.anchorMax = Vector2.one;
+        playAgainTxtRt.offsetMin = Vector2.zero;
+        playAgainTxtRt.offsetMax = Vector2.zero;
+        var playAgainTxt = playAgainTxtObj.GetComponent<Text>();
+        playAgainTxt.font = font;
+        playAgainTxt.fontSize = 32;
+        playAgainTxt.fontStyle = FontStyle.Bold;
+        playAgainTxt.alignment = TextAnchor.MiddleCenter;
+        playAgainTxt.color = Color.white;
+        playAgainTxt.text = "PLAY AGAIN";
+        var playAgainOutline = playAgainTxtObj.AddComponent<Outline>();
+        playAgainOutline.effectColor = new Color(0.10f, 0.40f, 0.12f, 0.95f);
+        playAgainOutline.effectDistance = new Vector2(2f, -2f);
+
+        var controller = obj.GetComponent<CampaignCompletedOverlay>();
+        if (controller == null) controller = obj.AddComponent<CampaignCompletedOverlay>();
+
+        SerializedObject so = new SerializedObject(controller);
+        so.FindProperty("backdropDim").objectReferenceValue = bgImg;
+        so.FindProperty("contentRoot").objectReferenceValue = contentRt;
+        so.FindProperty("titleText").objectReferenceValue = titleTxt;
+        so.FindProperty("radialRays").objectReferenceValue = raysImg;
+        so.FindProperty("illustrationImage").objectReferenceValue = illustImg;
+        so.FindProperty("messageText").objectReferenceValue = msgTxt;
+        so.FindProperty("playAgainButton").objectReferenceValue = playAgainBtn;
+        so.FindProperty("playAgainButtonText").objectReferenceValue = playAgainTxt;
         so.ApplyModifiedProperties();
 
         obj.SetActive(false);

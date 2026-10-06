@@ -57,6 +57,24 @@ public class AntUnit : MonoBehaviour
         }
     }
 
+    public bool IsVisuallyHidden => isVisuallyHidden;
+    private bool isVisuallyHidden = false;
+
+    public void SetVisualVisibility(bool visible)
+    {
+        isVisuallyHidden = !visible;
+        EnsureVisualRoot();
+        if (visualRoot != null)
+        {
+            visualRoot.gameObject.SetActive(visible);
+        }
+    }
+
+    private void OnEnable()
+    {
+        SetVisualVisibility(true);
+    }
+
     private void OnDisable()
     {
         StopWalkAnimation();
@@ -88,6 +106,7 @@ public class AntUnit : MonoBehaviour
         this.isInitialized = true;
 
         BuildVisuals();
+        SetVisualVisibility(true);
     }
 
     private float walkTimer = 0f;
@@ -154,11 +173,21 @@ public class AntUnit : MonoBehaviour
 
     public void ResetWalkVisual()
     {
+        SetVisualVisibility(true);
+        transform.localScale = Vector3.one;
         if (visualRoot != null)
         {
             visualRoot.localPosition = Vector3.zero;
             visualRoot.localRotation = Quaternion.identity;
             visualRoot.localScale = Vector3.one;
+        }
+        if (modelRoot != null)
+        {
+            var visualSettings = AntQueueVisualSettings.Instance;
+            float scale = isHead ? visualSettings.LeaderVisualScale : visualSettings.WorkerVisualScale;
+            Vector3 offset = isHead ? visualSettings.LeaderPivotOffset : visualSettings.WorkerPivotOffset;
+            modelRoot.localPosition = offset;
+            modelRoot.localScale = Vector3.one * scale;
         }
     }
 
@@ -187,10 +216,11 @@ public class AntUnit : MonoBehaviour
 
         GameObject visualInstance = Instantiate(prefab, visualRoot);
         visualInstance.name = isHead ? "ChubbyAntColors" : "WorkerAnt";
-        visualInstance.transform.localPosition = Vector3.zero;
-        visualInstance.transform.localRotation = Quaternion.identity;
+        var visualSettings = AntQueueVisualSettings.Instance;
+        float scale = isHead ? visualSettings.LeaderVisualScale : visualSettings.WorkerVisualScale;
+        Vector3 offset = isHead ? visualSettings.LeaderPivotOffset : visualSettings.WorkerPivotOffset;
 
-        float scale = isHead ? config.LeaderScale : config.WorkerScale;
+        visualInstance.transform.localPosition = offset;
         visualInstance.transform.localScale = Vector3.one * scale;
         modelRoot = visualInstance.transform;
 

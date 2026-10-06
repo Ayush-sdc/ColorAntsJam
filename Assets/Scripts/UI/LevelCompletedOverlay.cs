@@ -30,6 +30,8 @@ namespace AntsJam.UI
         private Sequence winSequence;
         private Action onNextClickedCallback;
 
+        public Image ProgressBarFill => progressBarFill;
+        public Text ProgressPercentText => progressPercentText;
         public bool IsShowing => gameObject.activeSelf;
 
         private void Awake()
@@ -38,11 +40,24 @@ namespace AntsJam.UI
             {
                 nextButton.onClick.AddListener(HandleNextButtonClicked);
             }
+            SetBarFill(0f);
+        }
+
+        private void OnEnable()
+        {
+            SetBarFill(0f);
+        }
+
+        private void OnDisable()
+        {
+            winSequence?.Kill();
+            winSequence = null;
         }
 
         private void OnDestroy()
         {
             winSequence?.Kill();
+            winSequence = null;
         }
 
         public void Setup(FeatureProgressionConfig config, Action onNext)
@@ -53,10 +68,21 @@ namespace AntsJam.UI
 
         /// <summary>
         /// Displays the Level Completed overlay with saved feature progression animation.
+        /// Guaranteed to initialize displayed fill & percentage to 0% and animate upward to target.
         /// </summary>
         public void Show(int justCompletedLevel, int prevHighestCompleted)
         {
+            // Cancel any previous fill tween before starting another
+            winSequence?.Kill();
+            winSequence = null;
+
             isProcessingNext = false;
+            if (nextButton != null) nextButton.interactable = true;
+
+            // Before the overlay becomes visible, initialize displayed fill and displayed percentage to zero
+            SetBarFill(0f);
+
+            // Make visible only after presentation state is zeroed out (prevents 1-frame flash)
             gameObject.SetActive(true);
             transform.SetAsLastSibling();
 
@@ -65,16 +91,48 @@ namespace AntsJam.UI
                 progressionConfig = FeatureProgressionConfig.Instance;
             }
 
-            // Calculate progression before and after this level completion
-            float prevProgress = 0f;
+            // Presentation is determined by justCompletedLevel's position within its milestone range:
+            // Levels 1–6: Linked Ants (completedLevel / 6)
+            // Levels 7–14: Stacked Ants ((completedLevel - 6) / 8)
+            // Levels 15–20: Pipes ((completedLevel - 14) / 6)
+            // Levels 21–29: Locked Ants ((completedLevel - 20) / 9)
+            // Level 30 onward: hide the feature progress section
+            // Do not globally hide the bar merely because the profile previously reached level 30+.
+            bool showFeatureProgress = justCompletedLevel < 30;
             float newProgress = 0f;
             FeatureDefinition upcomingFeature = null;
-            bool isAllUnlocked = false;
 
-            if (progressionConfig != null)
+            if (showFeatureProgress)
             {
-                prevProgress = progressionConfig.CalculateProgress(prevHighestCompleted, out _, out _);
-                newProgress = progressionConfig.CalculateProgress(justCompletedLevel, out upcomingFeature, out isAllUnlocked);
+                string targetFeatureId;
+                float rawProgress;
+
+                if (justCompletedLevel <= 6)
+                {
+                    targetFeatureId = "linked_ants";
+                    rawProgress = justCompletedLevel / 6f;
+                }
+                else if (justCompletedLevel <= 14)
+                {
+                    targetFeatureId = "stacked_ants";
+                    rawProgress = (justCompletedLevel - 6) / 8f;
+                }
+                else if (justCompletedLevel <= 20)
+                {
+                    targetFeatureId = "pipes";
+                    rawProgress = (justCompletedLevel - 14) / 6f;
+                }
+                else // 21..29
+                {
+                    targetFeatureId = "locked_ants";
+                    rawProgress = (justCompletedLevel - 20) / 9f;
+                }
+
+                newProgress = Mathf.Clamp01(rawProgress);
+                if (progressionConfig != null)
+                {
+                    upcomingFeature = progressionConfig.GetFeature(targetFeatureId);
+                }
             }
 
             // Configure button label (check if campaign complete)
@@ -97,32 +155,59 @@ namespace AntsJam.UI
                 }
             }
 
-            // Configure Feature preview icon
-            if (isAllUnlocked || upcomingFeature == null)
+            // Configure element visibility and layout based on level
+            Transform progContainer = progressBarBg != null && progressBarBg.transform.parent != null && progressBarBg.transform.parent != contentRoot
+                ? progressBarBg.transform.parent
+                : (progressBarBg != null ? progressBarBg.transform : null);
+
+            if (showFeatureProgress)
             {
-                if (nextFeatureLabel != null) nextFeatureLabel.text = "Features Mastered!";
+                if (nextFeatureLabel != null)
+                {
+                    nextFeatureLabel.gameObject.SetActive(true);
+                    if (upcomingFeature != null)
+                    {
+                        nextFeatureLabel.text = $"Next Feature: {upcomingFeature.DisplayName}";
+                    }
+                }
+
+                if (progContainer != null) progContainer.gameObject.SetActive(true);
+                if (progressBarBg != null) progressBarBg.gameObject.SetActive(true);
+                if (progressBarFill != null) progressBarFill.gameObject.SetActive(true);
+                if (progressPercentText != null) progressPercentText.gameObject.SetActive(true);
+                if (featureIconGlow != null) featureIconGlow.gameObject.SetActive(true);
+
                 if (featureIcon != null)
                 {
-                    featureIcon.sprite = progressionConfig != null ? progressionConfig.AllFeaturesCompletedIcon : null;
-                    featureIcon.gameObject.SetActive(featureIcon.sprite != null);
+                    if (upcomingFeature != null && upcomingFeature.PreviewIcon != null)
+                    {
+                        featureIcon.sprite = upcomingFeature.PreviewIcon;
+                    }
+                    featureIcon.gameObject.SetActive(true);
                 }
+
+                if (titleImage != null) titleImage.rectTransform.anchoredPosition = new Vector2(0f, 290f);
+                if (nextButton != null) nextButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, -220f);
             }
             else
             {
-                if (nextFeatureLabel != null) nextFeatureLabel.text = $"Next Feature: {upcomingFeature.DisplayName}";
-                if (featureIcon != null)
-                {
-                    featureIcon.sprite = upcomingFeature.PreviewIcon;
-                    featureIcon.gameObject.SetActive(featureIcon.sprite != null);
-                }
+                // Level 30+: Hide progress bar, percent text, next feature label, icon, glow
+                if (nextFeatureLabel != null) nextFeatureLabel.gameObject.SetActive(false);
+                if (progContainer != null) progContainer.gameObject.SetActive(false);
+                if (progressBarBg != null) progressBarBg.gameObject.SetActive(false);
+                if (progressBarFill != null) progressBarFill.gameObject.SetActive(false);
+                if (progressPercentText != null) progressPercentText.gameObject.SetActive(false);
+                if (featureIconGlow != null) featureIconGlow.gameObject.SetActive(false);
+                if (featureIcon != null) featureIcon.gameObject.SetActive(false);
+
+                // Reposition remaining elements cleanly to close the gap
+                if (titleImage != null) titleImage.rectTransform.anchoredPosition = new Vector2(0f, 120f);
+                if (nextButton != null) nextButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, -120f);
             }
 
-            // Set initial fill to prevProgress
-            SetBarFill(prevProgress);
-
             // Pop-in entrance animation
-            winSequence?.Kill();
             winSequence = DOTween.Sequence();
+            winSequence.SetUpdate(true);
 
             if (backdropDim != null)
             {
@@ -137,41 +222,53 @@ namespace AntsJam.UI
                 winSequence.Join(contentRoot.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutBack));
             }
 
-            // Feature icon pulse/glow
-            if (featureIconGlow != null)
+            if (showFeatureProgress)
             {
-                featureIconGlow.transform.localScale = Vector3.one * 0.85f;
-                winSequence.Join(featureIconGlow.transform.DOScale(Vector3.one * 1.15f, 0.6f).SetEase(Ease.InOutSine).SetLoops(4, LoopType.Yoyo));
-            }
-
-            // Animate progress fill from prevProgress to newProgress
-            float currentAnimatedFill = prevProgress;
-            winSequence.Insert(fillStartDelay, DOTween.To(() => currentAnimatedFill, x =>
-            {
-                currentAnimatedFill = x;
-                SetBarFill(currentAnimatedFill);
-            }, newProgress, fillAnimationDuration).SetEase(Ease.OutCubic));
-
-            // If milestone reached (100%), celebrate with punch scale
-            if (newProgress >= 0.999f && prevProgress < 0.999f)
-            {
-                winSequence.InsertCallback(fillStartDelay + fillAnimationDuration, () =>
+                // Feature icon pulse/glow
+                if (featureIconGlow != null)
                 {
-                    if (featureIcon != null)
+                    featureIconGlow.transform.localScale = Vector3.one * 0.85f;
+                    winSequence.Join(featureIconGlow.transform.DOScale(Vector3.one * 1.15f, 0.6f).SetEase(Ease.InOutSine).SetLoops(4, LoopType.Yoyo));
+                }
+
+                // Animate progress fill strictly upward from 0% to newProgress (saved progression target)
+                float currentAnimatedFill = 0f;
+                SetBarFill(0f);
+
+                if (newProgress > 0f)
+                {
+                    winSequence.Insert(fillStartDelay, DOTween.To(() => currentAnimatedFill, x =>
                     {
-                        featureIcon.transform.DOPunchScale(Vector3.one * 0.25f, 0.30f, 10, 0.6f).SetUpdate(true);
-                    }
-                    if (progressPercentText != null)
+                        currentAnimatedFill = x;
+                        SetBarFill(currentAnimatedFill);
+                    }, newProgress, fillAnimationDuration).SetEase(Ease.OutCubic));
+                }
+                else
+                {
+                    SetBarFill(0f);
+                }
+
+                // If milestone reached (100%), celebrate with punch scale
+                if (newProgress >= 0.999f)
+                {
+                    winSequence.InsertCallback(fillStartDelay + (newProgress > 0f ? fillAnimationDuration : 0f), () =>
                     {
-                        progressPercentText.transform.DOPunchScale(Vector3.one * 0.20f, 0.25f, 8, 0.5f).SetUpdate(true);
-                    }
-                });
+                        if (featureIcon != null)
+                        {
+                            featureIcon.transform.DOPunchScale(Vector3.one * 0.25f, 0.30f, 10, 0.6f).SetUpdate(true);
+                        }
+                        if (progressPercentText != null)
+                        {
+                            progressPercentText.transform.DOPunchScale(Vector3.one * 0.20f, 0.25f, 8, 0.5f).SetUpdate(true);
+                        }
+                    });
+                }
             }
 
             winSequence.SetUpdate(true);
         }
 
-        private void SetBarFill(float ratio)
+        public void SetBarFill(float ratio)
         {
             ratio = Mathf.Clamp01(ratio);
 
@@ -230,6 +327,8 @@ namespace AntsJam.UI
         private void DismissAndProceed()
         {
             winSequence?.Kill();
+            winSequence = null;
+            SetBarFill(0f);
             gameObject.SetActive(false);
             if (nextButton != null) nextButton.interactable = true;
 

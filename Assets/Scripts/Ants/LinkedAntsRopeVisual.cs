@@ -125,11 +125,11 @@ namespace AntsJam.Ropes
                 return false;
             }
 
-            // If head unit is inactive or descending into the hole pit below floor level
+            // If head unit is inactive, visually hidden, or descending into the hole pit below floor level
             if (queue.Units != null && queue.Units.Count > 0)
             {
                 var headUnit = queue.Units[0];
-                if (headUnit == null || !headUnit.gameObject.activeInHierarchy || headUnit.transform.position.y < -0.05f)
+                if (headUnit == null || !headUnit.gameObject.activeInHierarchy || headUnit.transform.position.y < -0.05f || headUnit.IsVisuallyHidden)
                 {
                     return true;
                 }
@@ -201,18 +201,10 @@ namespace AntsJam.Ropes
             if (isDisappearing) return;
             isDisappearing = true;
 
-            if (ropeTransform != null && Application.isPlaying)
-            {
-                ropeTransform.DOKill();
-                ropeTransform.DOScale(Vector3.zero, 0.15f).SetEase(Ease.InQuad).OnComplete(() =>
-                {
-                    Cleanup();
-                });
-            }
-            else
-            {
-                Cleanup();
-            }
+            // Immediately disable renderer so no floating rope remains visible
+            if (ropeRenderer != null) ropeRenderer.enabled = false;
+
+            Cleanup();
         }
 
         public void Cleanup()

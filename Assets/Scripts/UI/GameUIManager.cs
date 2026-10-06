@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using DG.Tweening;
 using AntsJam.Progression;
 using AntsJam.UI;
+using AntsJam.Legal;
 
 public class GameUIManager : MonoBehaviour
 {
@@ -25,10 +26,12 @@ public class GameUIManager : MonoBehaviour
     [Header("Feature Progression & Overlays")]
     [SerializeField] private FeatureProgressionConfig progressionConfig;
     [SerializeField] private LevelCompletedOverlay levelCompletedOverlay;
+    [SerializeField] private CampaignCompletedOverlay campaignCompletedOverlay;
     [SerializeField] private FeatureTutorialModal featureTutorialModal;
     [SerializeField] private HardLevelIntroOverlay hardLevelIntroOverlay;
 
     public LevelCompletedOverlay LevelCompletedOverlay => levelCompletedOverlay;
+    public CampaignCompletedOverlay CampaignCompletedOverlay => campaignCompletedOverlay;
     public FeatureTutorialModal FeatureTutorialModal => featureTutorialModal;
     public HardLevelIntroOverlay HardLevelIntroOverlay => hardLevelIntroOverlay;
     public FeatureProgressionConfig ProgressionConfig { get => progressionConfig; set => progressionConfig = value; }
@@ -66,6 +69,19 @@ public class GameUIManager : MonoBehaviour
     [SerializeField] private Sprite switchKnobOn;
     [SerializeField] private Sprite switchKnobOff;
 
+    [Header("Legal & Welcome Overlays")]
+    [SerializeField] private LegalConfig legalConfig;
+    [SerializeField] private LegalTermsModal legalTermsModal;
+    [SerializeField] private LegalDocumentModal legalDocumentModal;
+    [SerializeField] private WelcomeOverlay welcomeOverlay;
+    [SerializeField] private Button legalTermsButton;
+
+    public LegalConfig LegalConfig { get => legalConfig; set => legalConfig = value; }
+    public LegalTermsModal LegalTermsModal => legalTermsModal;
+    public LegalDocumentModal LegalDocumentModal => legalDocumentModal;
+    public WelcomeOverlay WelcomeOverlay => welcomeOverlay;
+    public Button LegalTermsButton => legalTermsButton;
+
     [Header("Buttons")]
     [SerializeField] private Button restartButton;
     [SerializeField] private Button gearSettingsButton;
@@ -76,6 +92,9 @@ public class GameUIManager : MonoBehaviour
     private readonly Color colorToggleOff = new Color(0.55f, 0.58f, 0.62f);
     private bool isSettingsAnimating = false;
     private Sequence failSequence;
+
+    private int currentLevelLoadId = 0;
+    private int featureOverlayShownForLoadId = -1;
 
     public static GameUIManager Instance { get; private set; }
 
@@ -131,7 +150,11 @@ public class GameUIManager : MonoBehaviour
         if (backdropCloseButton != null) backdropCloseButton.onClick.AddListener(CloseSettingsModal);
         if (soundToggleButton != null) soundToggleButton.onClick.AddListener(ToggleSound);
         if (vibrationToggleButton != null) vibrationToggleButton.onClick.AddListener(ToggleVibration);
-        if (privacyPolicyButton != null) privacyPolicyButton.onClick.AddListener(OpenPrivacyPolicy);
+        if (privacyPolicyButton != null) privacyPolicyButton.onClick.AddListener(OpenLegalTermsModal);
+        if (legalTermsButton != null) legalTermsButton.onClick.AddListener(OpenLegalTermsModal);
+
+        EnsureLegalReferencesConfigured();
+
         if (musicToggleButton != null) musicToggleButton.onClick.AddListener(ToggleMusic);
         if (settingsRestartButton != null)
         {
@@ -225,14 +248,45 @@ public class GameUIManager : MonoBehaviour
 
     private void Update()
     {
-        // Android Back button / Escape key dismisses Settings modal
+        // Android Back button / Escape key dismisses modals according to stack hierarchy
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (settingsModal != null && settingsModal.activeSelf)
+            if (legalDocumentModal != null && legalDocumentModal.IsShowing)
+            {
+                legalDocumentModal.CloseModal();
+            }
+            else if (legalTermsModal != null && legalTermsModal.IsShowing)
+            {
+                legalTermsModal.CloseModal();
+            }
+            else if (settingsModal != null && settingsModal.activeSelf)
             {
                 CloseSettingsModal();
             }
         }
+    }
+
+    public void EnsureLegalReferencesConfigured()
+    {
+        var activeLegalCfg = legalConfig != null ? legalConfig : LegalConfig.Instance;
+        if (legalTermsModal != null) legalTermsModal.Setup(activeLegalCfg, legalDocumentModal);
+        if (welcomeOverlay != null) welcomeOverlay.Setup(activeLegalCfg, legalDocumentModal);
+    }
+
+    public void OpenLegalTermsModal()
+    {
+        EnsureLegalReferencesConfigured();
+        if (legalTermsModal == null) return;
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayTap();
+        }
+
+        GameManager.Instance?.PauseGame();
+        legalTermsModal.Show(() =>
+        {
+            // Dismissing legal terms returns directly to settings modal with game still paused!
+        });
     }
 
     public void CloseSettingsModal()
@@ -379,24 +433,30 @@ public class GameUIManager : MonoBehaviour
 
     public bool IsAnyModalActive(bool excludeSettings = false)
     {
-        return (levelCompletedOverlay != null && levelCompletedOverlay.IsShowing) ||
+        return (campaignCompletedOverlay != null && campaignCompletedOverlay.IsShowing) ||
+               (levelCompletedOverlay != null && levelCompletedOverlay.IsShowing) ||
                (featureTutorialModal != null && featureTutorialModal.IsShowing) ||
                (hardLevelIntroOverlay != null && hardLevelIntroOverlay.IsShowing) ||
+               (welcomeOverlay != null && welcomeOverlay.IsShowing) ||
+               (legalTermsModal != null && legalTermsModal.IsShowing) ||
+               (legalDocumentModal != null && legalDocumentModal.IsShowing) ||
                (losePanel != null && losePanel.activeSelf) ||
                (!excludeSettings && settingsModal != null && settingsModal.activeSelf);
     }
 
     private void HandleLevelLoaded(Level level)
     {
+        currentLevelLoadId++;
         if (levelNumberText != null) levelNumberText.text = level != null ? level.LevelNumber.ToString() : "1";
 
         failSequence?.Kill();
         if (winPanel != null) winPanel.SetActive(false);
         if (levelCompletedOverlay != null) levelCompletedOverlay.gameObject.SetActive(false);
+        if (campaignCompletedOverlay != null) campaignCompletedOverlay.gameObject.SetActive(false);
         if (losePanel != null) losePanel.SetActive(false);
         if (settingsModal != null) settingsModal.SetActive(false);
 
-        // Introductory sequence: Hard Intro (if applicable) -> Feature Tutorials (if due) -> Gameplay
+        // Introductory sequence: Welcome (first launch/updated terms) -> Hard Intro -> Feature Tutorials -> Gameplay
         StartIntroductorySequence(level);
     }
 
@@ -404,6 +464,26 @@ public class GameUIManager : MonoBehaviour
     {
         if (level == null) return;
 
+        EnsureLegalReferencesConfigured();
+        var lConfig = legalConfig != null ? legalConfig : LegalConfig.Instance;
+        if (lConfig != null && !LegalManager.HasAcceptedCurrentTerms(lConfig))
+        {
+            GameManager.Instance?.PauseGame();
+            if (welcomeOverlay != null)
+            {
+                welcomeOverlay.Show(() =>
+                {
+                    ContinueIntroductorySequence(level);
+                });
+                return;
+            }
+        }
+
+        ContinueIntroductorySequence(level);
+    }
+
+    private void ContinueIntroductorySequence(Level level)
+    {
         bool isHard = level.ShowHardIntro || level.LevelDifficulty >= 2 || level.Difficulty == "2" || level.Difficulty == "Hard";
 
         if (isHard)
@@ -438,41 +518,40 @@ public class GameUIManager : MonoBehaviour
 
     private void CheckAndShowTutorials(Level level)
     {
-        var cfg = progressionConfig != null ? progressionConfig : FeatureProgressionConfig.Instance;
-        var pending = cfg != null ? cfg.GetPendingTutorials(level.LevelNumber) : null;
-
-        // Check actual mechanic presence on the level rather than assuming old hard-coded introduction levels
-        if (cfg != null && level != null && level.AntQueues != null)
+        if (level == null)
         {
-            bool hasLockedAnts = false;
-            foreach (var q in level.AntQueues)
-            {
-                if (q.IsLocked || q.LockAmount > 0)
-                {
-                    hasLockedAnts = true;
-                    break;
-                }
-            }
-
-            if (hasLockedAnts && !cfg.IsTutorialAcknowledged("locked_ants"))
-            {
-                var lockedFeat = cfg.GetFeature("locked_ants");
-                if (lockedFeat != null)
-                {
-                    if (pending == null) pending = new List<AntsJam.Progression.FeatureDefinition>();
-                    if (!pending.Contains(lockedFeat))
-                    {
-                        pending.Insert(0, lockedFeat);
-                    }
-                }
-            }
+            FinishIntroAndResume();
+            return;
         }
 
-        if (pending != null && pending.Count > 0 && featureTutorialModal != null)
+        var cfg = progressionConfig != null ? progressionConfig : FeatureProgressionConfig.Instance;
+        
+        // Feature overlays are required EVERY time their designated level is entered:
+        // - Level 7: Linked Ants
+        // - Level 15: Stacked Ants
+        // - Level 21: Pipes
+        // - Level 30: Locked Ants
+        // Show on normal progression, replay, level selection, restart, and saved level load after Welcome.
+        // Do not suppress these overlays using persistent "tutorial already seen" flags.
+        // Show only once per individual level-load/restart event to avoid retriggering on Settings close or pause.
+        FeatureDefinition milestoneFeature = null;
+        if (cfg != null)
         {
+            if (level.LevelNumber == 7) milestoneFeature = cfg.GetFeature("linked_ants");
+            else if (level.LevelNumber == 15) milestoneFeature = cfg.GetFeature("stacked_ants");
+            else if (level.LevelNumber == 21) milestoneFeature = cfg.GetFeature("pipes");
+            else if (level.LevelNumber == 30) milestoneFeature = cfg.GetFeature("locked_ants");
+        }
+
+        bool shouldShowMilestone = (milestoneFeature != null) && (featureOverlayShownForLoadId != currentLevelLoadId);
+
+        if (shouldShowMilestone && featureTutorialModal != null)
+        {
+            featureOverlayShownForLoadId = currentLevelLoadId;
             GameManager.Instance?.PauseGame();
-            featureTutorialModal.ShowTutorials(pending, () =>
+            featureTutorialModal.ShowTutorials(new List<FeatureDefinition> { milestoneFeature }, () =>
             {
+                UpdateTutorialForLevel(level);
                 FinishIntroAndResume();
             });
         }
@@ -732,7 +811,27 @@ public class GameUIManager : MonoBehaviour
             int prevHighest = LevelManager.Instance != null ? LevelManager.Instance.HighestCompletedLevel : 0;
             LevelManager.Instance?.RecordLevelCompleted(currentLevel);
 
-            if (levelCompletedOverlay != null)
+            int maxLevels = LevelManager.Instance != null && LevelManager.Instance.ActiveDatabase != null
+                ? LevelManager.Instance.ActiveDatabase.LevelCount
+                : 45;
+
+            bool isFinalCampaignLevel = currentLevel >= maxLevels;
+
+            if (isFinalCampaignLevel && campaignCompletedOverlay != null)
+            {
+                campaignCompletedOverlay.Show(() =>
+                {
+                    // Replay campaign from Level 1 without deleting saved completion, settings, or tutorials
+                    if (LevelManager.Instance != null)
+                    {
+                        PlayerPrefs.SetInt(LevelManager.CurrentLevelPrefKey, 1);
+                        PlayerPrefs.Save();
+                        LevelManager.Instance.LoadLevel(1);
+                    }
+                    GameManager.Instance?.ResumeGame();
+                });
+            }
+            else if (levelCompletedOverlay != null)
             {
                 levelCompletedOverlay.Setup(progressionConfig, () =>
                 {
@@ -751,6 +850,7 @@ public class GameUIManager : MonoBehaviour
         {
             if (winPanel != null) winPanel.SetActive(false);
             if (levelCompletedOverlay != null) levelCompletedOverlay.gameObject.SetActive(false);
+            if (campaignCompletedOverlay != null) campaignCompletedOverlay.gameObject.SetActive(false);
         }
 
         if (losePanel != null)
@@ -806,11 +906,21 @@ public class GameUIManager : MonoBehaviour
         failSequence.SetUpdate(true);
     }
 
-    public void SetOverlayReferences(LevelCompletedOverlay lc, FeatureTutorialModal ft, HardLevelIntroOverlay hi, FeatureProgressionConfig cfg)
+    public void SetOverlayReferences(LevelCompletedOverlay lc, FeatureTutorialModal ft, HardLevelIntroOverlay hi, FeatureProgressionConfig cfg, CampaignCompletedOverlay cc = null)
     {
         this.levelCompletedOverlay = lc;
         this.featureTutorialModal = ft;
         this.hardLevelIntroOverlay = hi;
         this.progressionConfig = cfg;
+        if (cc != null) this.campaignCompletedOverlay = cc;
+    }
+
+    public void SetLegalReferences(LegalConfig cfg, LegalTermsModal ltm, LegalDocumentModal ldm, WelcomeOverlay wo, Button termsBtn = null)
+    {
+        this.legalConfig = cfg;
+        this.legalTermsModal = ltm;
+        this.legalDocumentModal = ldm;
+        this.welcomeOverlay = wo;
+        if (termsBtn != null) this.legalTermsButton = termsBtn;
     }
 }

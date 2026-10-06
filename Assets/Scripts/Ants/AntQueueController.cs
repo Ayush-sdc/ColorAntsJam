@@ -29,6 +29,34 @@ public class AntQueueController : MonoBehaviour
     [SerializeField] private AntQueueController lowerQueueLayer;
     [SerializeField] private bool isDormantStacked = false;
 
+    public enum QueueMoveState
+    {
+        Idle,
+        MovingToRescue,
+        FailedMoveApproach,
+        Impact,
+        Returning
+    }
+
+    [Header("Movement State")]
+    [SerializeField] private QueueMoveState moveState = QueueMoveState.Idle;
+    public QueueMoveState MoveState => moveState;
+
+    [Header("Failed Move Feedback")]
+    [Tooltip("Forward speed towards stationary obstacle during a failed move attempt.")]
+    [SerializeField] private float approachSpeed = 6.8f;
+    [Tooltip("Pause duration at collision impact before reversing.")]
+    [SerializeField] private float impactPause = 0.18f;
+    [Tooltip("Recoil bounce distance at contact impact.")]
+    [SerializeField] private float recoilAmount = 0.16f;
+    [Tooltip("Reverse speed retracing traveled path back to origin.")]
+    [SerializeField] private float returnSpeed = 6.0f;
+
+    public float ApproachSpeed { get => approachSpeed; set => approachSpeed = value; }
+    public float ImpactPause { get => impactPause; set => impactPause = value; }
+    public float RecoilAmount { get => recoilAmount; set => recoilAmount = value; }
+    public float ReturnSpeed { get => returnSpeed; set => returnSpeed = value; }
+
     [Header("Runtime State")]
     [SerializeField] private bool isMoving = false;
     [SerializeField] private List<Vector2Int> currentBodyCoordinates = new List<Vector2Int>();
@@ -58,15 +86,37 @@ public class AntQueueController : MonoBehaviour
     public AntColor SecondAntColor => ReferenceColorMapper.ToAntColor(secondColor);
     public AntQueueController LowerQueueLayer => lowerQueueLayer;
     public bool IsDormantStacked => isDormantStacked;
+    public IReadOnlyList<Vector2Int> CurrentBodyCoordinates => currentBodyCoordinates;
+    public HoleController DestinationHole { get => destinationHole; set => destinationHole = value; }
     public Vector2Int ForwardDirection { get => forwardDirection; set => forwardDirection = value; }
     public Vector2Int HoleEntranceCoordinate { get => holeEntranceCoordinate; set => holeEntranceCoordinate = value; }
-    public HoleController DestinationHole { get => destinationHole; set => destinationHole = value; }
-    public PipeController TraversedPipe { get; set; }
-    public IReadOnlyList<Vector2Int> CurrentBodyCoordinates => currentBodyCoordinates;
+    private List<PipeController> traversedPipes = new List<PipeController>();
+    public List<PipeController> TraversedPipes
+    {
+        get => traversedPipes;
+        set => traversedPipes = value != null ? value : new List<PipeController>();
+    }
+    public PipeController TraversedPipe
+    {
+        get => (traversedPipes != null && traversedPipes.Count > 0) ? traversedPipes[0] : null;
+        set
+        {
+            if (traversedPipes == null) traversedPipes = new List<PipeController>();
+            if (value == null)
+            {
+                traversedPipes.Clear();
+            }
+            else if (!traversedPipes.Contains(value))
+            {
+                traversedPipes.Clear();
+                traversedPipes.Add(value);
+            }
+        }
+    }
     public IReadOnlyList<Vector2Int> RemainingPath => remainingPath;
     public IReadOnlyList<AntUnit> Units => antUnits;
     private bool isLeaderInHole = false;
-    public bool IsLeaderInHole => isLeaderInHole;
+    public bool IsLeaderInHole { get => isLeaderInHole; set => isLeaderInHole = value; }
 
     [SerializeField] private AntsJam.Ropes.AntQueueRopeVisual ropeVisual;
     public AntsJam.Ropes.AntQueueRopeVisual RopeVisual => ropeVisual;
@@ -84,7 +134,7 @@ public class AntQueueController : MonoBehaviour
     public static event Action<AntQueueController> OnQueueMoveCompleted;
     public static event Action<AntQueueController> OnQueueBlockedFeedback;
 
-    private Vector3 GetWorldPositionForGrid(Vector2Int coord, float yOffset = 0f)
+    public Vector3 GetWorldPositionForGrid(Vector2Int coord, float yOffset = 0f)
     {
         if (BoardManager.Instance != null)
         {
@@ -432,7 +482,7 @@ public class AntQueueController : MonoBehaviour
     /// </summary>
     public bool TryStartMove()
     {
-        if (isMoving || isDormantStacked) return false;
+        if (isMoving || isDormantStacked || moveState != QueueMoveState.Idle) return false;
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) return false;
 
         if (IsLocked)
@@ -487,16 +537,38 @@ public class AntQueueController : MonoBehaviour
 
     [Header("Continuous Free Movement")]
     [SerializeField] private float moveSpeed = 6.8f;
+    [Tooltip("Movement speed multiplier. Default 1.5x for faster travel. Overridden by BoardManager / AntQueueVisualSettings if present.")]
+    [SerializeField] private float speedMultiplier = 1.5f;
     [SerializeField] private float segmentDistance = 0.85f;
+    public float SegmentDistance => segmentDistance;
     private readonly List<TrailPoint> trailHistory = new List<TrailPoint>();
     private float totalTrailDistance = 0f;
     private List<Vector3> currentSmoothRoute = new List<Vector3>();
+
+    public float MoveSpeed { get => moveSpeed; set => moveSpeed = value; }
+    public float SpeedMultiplier { get => speedMultiplier; set => speedMultiplier = value; }
+    public float EffectiveMoveSpeed
+    {
+        get
+        {
+            if (BoardManager.Instance != null)
+            {
+                return moveSpeed * BoardManager.Instance.MovementSpeedMultiplier;
+            }
+            if (AntQueueVisualSettings.Instance != null)
+            {
+                return moveSpeed * AntQueueVisualSettings.Instance.MovementSpeedMultiplier;
+            }
+            return moveSpeed * speedMultiplier;
+        }
+    }
 
     public IReadOnlyList<TrailPoint> TrailHistory => trailHistory;
 
     public void StartSmoothMovement(List<Vector3> worldPath, HoleController targetHole, Vector2Int entranceCell)
     {
         if (isMoving) return;
+        moveState = QueueMoveState.MovingToRescue;
         this.destinationHole = targetHole;
         this.holeEntranceCoordinate = entranceCell;
         this.currentSmoothRoute = (worldPath != null && worldPath.Count > 0) ? new List<Vector3>(worldPath) : new List<Vector3>();
@@ -555,10 +627,15 @@ public class AntQueueController : MonoBehaviour
 
         if (antUnits == null || antUnits.Count == 0) return;
 
+        float cs = (BoardManager.Instance != null && BoardManager.Instance.CellSize > 0f) ? BoardManager.Instance.CellSize : 1.0f;
+        segmentDistance = AntQueueVisualSettings.Instance.MovementSpacingMultiplier * cs;
         if (antUnits.Count > 1 && antUnits[0] != null && antUnits[1] != null)
         {
-            segmentDistance = Vector3.Distance(antUnits[0].transform.position, antUnits[1].transform.position);
-            if (segmentDistance < 0.1f) segmentDistance = 0.85f;
+            float actualDist = Vector3.Distance(antUnits[0].transform.position, antUnits[1].transform.position);
+            if (actualDist > 0.1f)
+            {
+                segmentDistance = actualDist;
+            }
         }
 
         // Build polyline from tail (N-1) up to head (0)
@@ -596,7 +673,7 @@ public class AntQueueController : MonoBehaviour
         }
     }
 
-    private void AddTrailPoint(Vector3 newPos, Vector3 forward)
+    private void AddTrailPoint(Vector3 newPos, Vector3 forward, bool allowTrimming = true)
     {
         if (trailHistory.Count == 0)
         {
@@ -616,11 +693,14 @@ public class AntQueueController : MonoBehaviour
             distance = totalTrailDistance
         });
 
-        // Trim old trail points that are far behind the tail
-        float tailDist = totalTrailDistance - (antUnits.Count + 3) * segmentDistance;
-        while (trailHistory.Count > 2 && trailHistory[1].distance < tailDist)
+        if (allowTrimming)
         {
-            trailHistory.RemoveAt(0);
+            // Trim old trail points that are far behind the tail
+            float tailDist = totalTrailDistance - (antUnits.Count + 3) * segmentDistance;
+            while (trailHistory.Count > 2 && trailHistory[1].distance < tailDist)
+            {
+                trailHistory.RemoveAt(0);
+            }
         }
     }
 
@@ -699,14 +779,16 @@ public class AntQueueController : MonoBehaviour
             yield break;
         }
 
+        float activeSpeed = EffectiveMoveSpeed;
         isMoving = true;
+        moveState = QueueMoveState.MovingToRescue;
         for (int i = 0; i < totalAnts; i++)
         {
             var u = units[i];
             if (u != null)
             {
                 u.IsMoving = true;
-                u.StartWalkAnimation(i, moveSpeed);
+                u.StartWalkAnimation(i, activeSpeed);
             }
         }
         OnQueueMoveStarted?.Invoke(this);
@@ -723,9 +805,18 @@ public class AntQueueController : MonoBehaviour
             ? destinationHole.GetHoleEntryPoint(holeEntranceCoordinate, forwardDirection, this) 
             : holeDespawnPoint;
 
+        Vector3 entryForward = new Vector3(forwardDirection.x, 0f, forwardDirection.y).normalized;
+        if (entryForward.sqrMagnitude < 0.001f && units.Count > 0 && units[0] != null)
+        {
+            entryForward = units[0].transform.forward;
+            entryForward.y = 0f;
+            entryForward.Normalize();
+        }
+
         int routeIndex = 0;
         Vector3 currentHeadPos = units[0] != null ? units[0].transform.position : transform.position;
 
+        bool[] hasEnteredHoleVisual = new bool[totalAnts];
         bool[] hasStartedDiving = new bool[totalAnts];
         int swallowedAntCount = 0;
         bool headReachedPit = false;
@@ -735,8 +826,9 @@ public class AntQueueController : MonoBehaviour
 
         while (swallowedAntCount < totalAnts)
         {
+            while (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.Paused) yield return null;
             float dt = Mathf.Min(Time.deltaTime, 0.05f);
-            float stepBudget = moveSpeed * dt;
+            float stepBudget = activeSpeed * dt;
 
             // 1. Advance head along route until HoleDespawnPoint is reached
             if (!headReachedPit)
@@ -745,7 +837,8 @@ public class AntQueueController : MonoBehaviour
                 if (!hasAcquiredHoleEntry && destinationHole != null)
                 {
                     float distToEntry = Vector3.Distance(currentHeadPos, holeEntryPoint);
-                    if (distToEntry < 0.45f)
+                    float distPastEntrance = Vector3.Dot(currentHeadPos - holeEntryPoint, entryForward);
+                    if (distToEntry < 0.60f || distPastEntrance >= -0.10f)
                     {
                         destinationHole.RequestHoleEntry(this);
                         hasAcquiredHoleEntry = true;
@@ -826,14 +919,52 @@ public class AntQueueController : MonoBehaviour
                     }
                     unit.transform.position = currentHeadPos;
 
-                    if (currentHeadPos.y < initialAntY - 0.03f)
+                    // Detect leading visual edge crossing into hole entrance
+                    if (!hasEnteredHoleVisual[0] && destinationHole != null)
+                    {
+                        float halfLen = unit.VisualLength * 0.5f;
+                        Vector3 leadingEdge = currentHeadPos + unit.transform.forward * halfLen;
+                        float distToEntry = Vector3.Distance(currentHeadPos, holeEntryPoint);
+                        if (distToEntry <= 2.5f)
+                        {
+                            float distPastEntrance = Vector3.Dot(leadingEdge - holeEntryPoint, entryForward);
+                            if (distPastEntrance >= 0f)
+                            {
+                                hasEnteredHoleVisual[0] = true;
+                                isLeaderInHole = true;
+                                if (!hasAcquiredHoleEntry)
+                                {
+                                    destinationHole.RequestHoleEntry(this);
+                                    hasAcquiredHoleEntry = true;
+                                }
+                                if (ropeVisual != null) ropeVisual.Cleanup();
+                            }
+                        }
+                    }
+
+                    if (currentHeadPos.y < initialAntY - 0.01f)
                     {
                         if (unit.IsWalkTweenActive)
                         {
                             unit.StopWalkAnimation();
                         }
-                        float pitDescent = Mathf.Clamp01((initialAntY - currentHeadPos.y) / 0.20f);
-                        unit.transform.localScale = Vector3.one * (1.0f - pitDescent * 0.70f);
+                        float pitDescent = Mathf.Clamp01((initialAntY - currentHeadPos.y) / 0.35f);
+                        float scaleMultiplier = Mathf.Clamp01(1.0f - pitDescent);
+                        unit.transform.localScale = Vector3.one * scaleMultiplier;
+
+                        if (pitDescent >= 0.95f || currentHeadPos.y <= initialAntY - 0.34f)
+                        {
+                            hasStartedDiving[0] = true;
+                            swallowedAntCount++;
+                            unit.SetVisualVisibility(false);
+                            if (destinationHole != null) destinationHole.OnAntEnteredHole();
+                            SafeDestroy(unit.gameObject);
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        unit.transform.localScale = Vector3.one;
                     }
 
                     if (currentBodyCoordinates != null && i < currentBodyCoordinates.Count && BoardManager.Instance != null)
@@ -857,15 +988,57 @@ public class AntQueueController : MonoBehaviour
                             unit.transform.rotation = Quaternion.LookRotation(followDir);
                         }
 
-                        // Smoothly descend into recessed dark pit and stop walk tween safely
-                        if (followPos.y < initialAntY - 0.03f)
+                        // Detect individual ant leading edge reaching entrance boundary
+                        if (!hasEnteredHoleVisual[i] && destinationHole != null)
+                        {
+                            float halfLen = unit.VisualLength * 0.5f;
+                            Vector3 leadingEdge = followPos + unit.transform.forward * halfLen;
+                            float distToEntry = Vector3.Distance(followPos, holeEntryPoint);
+                            if (distToEntry <= 2.5f)
+                            {
+                                float distPastEntrance = Vector3.Dot(leadingEdge - holeEntryPoint, entryForward);
+                                if (distPastEntrance >= 0f)
+                                {
+                                    hasEnteredHoleVisual[i] = true;
+                                    if (i == 0)
+                                    {
+                                        isLeaderInHole = true;
+                                        if (!hasAcquiredHoleEntry)
+                                        {
+                                            destinationHole.RequestHoleEntry(this);
+                                            hasAcquiredHoleEntry = true;
+                                        }
+                                        if (ropeVisual != null) ropeVisual.Cleanup();
+                                    }
+                                }
+                            }
+                        }
+
+                        // Smooth progressive descent and conceal into recessed pit
+                        if (followPos.y < initialAntY - 0.01f)
                         {
                             if (unit.IsWalkTweenActive)
                             {
                                 unit.StopWalkAnimation();
                             }
-                            float pitDescent = Mathf.Clamp01((initialAntY - followPos.y) / 0.20f);
-                            unit.transform.localScale = Vector3.one * (1.0f - pitDescent * 0.70f);
+                            float pitDescent = Mathf.Clamp01((initialAntY - followPos.y) / 0.35f);
+                            float scaleMultiplier = Mathf.Clamp01(1.0f - pitDescent);
+                            unit.transform.localScale = Vector3.one * scaleMultiplier;
+
+                            if (pitDescent >= 0.95f || followPos.y <= initialAntY - 0.34f)
+                            {
+                                hasStartedDiving[i] = true;
+                                swallowedAntCount++;
+                                unit.StopWalkAnimation();
+                                unit.SetVisualVisibility(false);
+                                if (destinationHole != null) destinationHole.OnAntEnteredHole();
+                                SafeDestroy(unit.gameObject);
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            unit.transform.localScale = Vector3.one;
                         }
 
                         if (currentBodyCoordinates != null && i < currentBodyCoordinates.Count && BoardManager.Instance != null)
@@ -881,6 +1054,7 @@ public class AntQueueController : MonoBehaviour
                     swallowedAntCount++;
 
                     unit.StopWalkAnimation();
+                    unit.SetVisualVisibility(false);
 
                     if (destinationHole != null)
                     {
@@ -905,6 +1079,7 @@ public class AntQueueController : MonoBehaviour
         // 3. Queue completion:
         // Only AFTER the LAST ant / tail has fully entered and completed swallow!
         isMoving = false;
+        moveState = QueueMoveState.Idle;
         foreach (var u in antUnits)
         {
             if (u != null)
@@ -934,6 +1109,270 @@ public class AntQueueController : MonoBehaviour
         destinationHole = null;
     }
 
+    [System.Serializable]
+    private struct UnitPose
+    {
+        public Vector3 localPosition;
+        public Quaternion localRotation;
+    }
+    private readonly List<UnitPose> initialUnitPoses = new List<UnitPose>();
+    private Coroutine failedMoveCoroutine = null;
+
+    /// <summary>
+    /// Executes the animated wrong-move sequence when blocked by an eligible stationary obstacle:
+    /// Idle -> FailedMoveApproach -> Impact -> Returning -> Idle.
+    /// Retraces traveled trail backwards naturally without teleportation.
+    /// </summary>
+    public void StartFailedMove(
+        List<Vector3> approachRoute,
+        AntQueueController blockerQueue,
+        bool isEarliestCollisionTrigger,
+        List<PipeController> pipesToReserve = null,
+        Action onReturnComplete = null,
+        HoleController blockerHole = null)
+    {
+        if (moveState != QueueMoveState.Idle) return;
+        if (failedMoveCoroutine != null) StopCoroutine(failedMoveCoroutine);
+        failedMoveCoroutine = StartCoroutine(FailedMoveRoutine(approachRoute, blockerQueue, isEarliestCollisionTrigger, pipesToReserve, onReturnComplete, blockerHole));
+    }
+
+    private IEnumerator FailedMoveRoutine(
+        List<Vector3> approachRoute,
+        AntQueueController blockerQueue,
+        bool isEarliestCollisionTrigger,
+        List<PipeController> pipesToReserve,
+        Action onReturnComplete,
+        HoleController blockerHole = null)
+    {
+        List<AntUnit> units = new List<AntUnit>(antUnits);
+        int totalAnts = units.Count;
+        if (totalAnts == 0)
+        {
+            moveState = QueueMoveState.Idle;
+            isMoving = false;
+            onReturnComplete?.Invoke();
+            yield break;
+        }
+
+        // 1. Save original visual state & unit poses
+        initialUnitPoses.Clear();
+        for (int i = 0; i < totalAnts; i++)
+        {
+            if (units[i] != null)
+            {
+                initialUnitPoses.Add(new UnitPose
+                {
+                    localPosition = units[i].transform.localPosition,
+                    localRotation = units[i].transform.localRotation
+                });
+            }
+        }
+
+        // Initialize trail with trimming disabled so entire path from initial tail to head is preserved
+        InitializeTrail();
+        float initialHeadDist = totalTrailDistance;
+
+        // Mark temporary pipe usage if route uses a pipe
+        if (pipesToReserve != null)
+        {
+            foreach (var p in pipesToReserve)
+            {
+                if (p != null) p.IsPipeInUse = true;
+            }
+        }
+
+        moveState = QueueMoveState.FailedMoveApproach;
+        isMoving = true;
+        for (int i = 0; i < totalAnts; i++)
+        {
+            if (units[i] != null)
+            {
+                units[i].IsMoving = true;
+                units[i].StartWalkAnimation(i, approachSpeed);
+            }
+        }
+
+        // 2. Approach Phase: advance head along approach route up to visible contact
+        int routeIndex = 0;
+        Vector3 currentHeadPos = units[0] != null ? units[0].transform.position : transform.position;
+        float virtualHeadDist = totalTrailDistance;
+
+        while (approachRoute != null && approachRoute.Count > 1 && routeIndex < approachRoute.Count - 1)
+        {
+            while (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.Paused) yield return null;
+
+            float dt = (Time.deltaTime > 0.0001f) ? Mathf.Min(Time.deltaTime, 0.05f) : 0.016f;
+            float stepBudget = approachSpeed * dt;
+
+            while (stepBudget > 0f && routeIndex < approachRoute.Count - 1)
+            {
+                Vector3 nextWp = approachRoute[routeIndex + 1];
+                float distToNext = Vector3.Distance(currentHeadPos, nextWp);
+
+                if (distToNext < 0.001f || stepBudget >= distToNext)
+                {
+                    stepBudget = Mathf.Max(0f, stepBudget - distToNext);
+                    currentHeadPos = nextWp;
+                    routeIndex++;
+
+                    Vector3 fwd = nextWp - approachRoute[Mathf.Max(0, routeIndex - 1)];
+                    fwd.y = 0f;
+                    if (fwd.sqrMagnitude < 0.001f) fwd = units[0] != null ? units[0].transform.forward : Vector3.forward;
+                    AddTrailPoint(currentHeadPos, fwd.normalized, allowTrimming: false);
+                }
+                else
+                {
+                    Vector3 fwd = nextWp - currentHeadPos;
+                    fwd.y = 0f;
+                    if (fwd.sqrMagnitude > 0.0001f)
+                    {
+                        currentHeadPos += fwd.normalized * stepBudget;
+                        AddTrailPoint(currentHeadPos, fwd.normalized, allowTrimming: false);
+                    }
+                    else
+                    {
+                        currentHeadPos = nextWp;
+                        routeIndex++;
+                    }
+                    stepBudget = 0f;
+                }
+            }
+
+            virtualHeadDist = totalTrailDistance;
+            UpdateUnitsAlongTrail(virtualHeadDist);
+            if (BoardManager.Instance != null && isConnected) BoardManager.Instance.UpdateParallelRopes();
+            yield return null;
+        }
+
+        // 3. Impact Phase
+        moveState = QueueMoveState.Impact;
+        float maxDistReached = totalTrailDistance;
+
+        // Recheck blocker before impact: if blocker queue moved or disappeared, cancel penalty!
+        // Holes are permanent stationary structures, so blockerHole is always valid
+        bool blockerStillStationary = (blockerHole != null) ||
+            (blockerQueue != null && !blockerQueue.IsMoving && blockerQueue.MoveState == QueueMoveState.Idle && blockerQueue.gameObject.activeInHierarchy);
+
+        if (isEarliestCollisionTrigger && blockerStillStationary)
+        {
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlayOuch();
+            }
+
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.LoseLife(InvalidMoveReason.NoValidPath, deferGameOver: true);
+            }
+
+            // Blocker (queue or hole) remains strictly stationary - no positional punch or displacement
+        }
+
+        // Recoil bump backwards
+        if (blockerStillStationary && recoilAmount > 0.01f)
+        {
+            float actualRecoil = Mathf.Min(recoilAmount, maxDistReached - initialHeadDist);
+            float recoilElapsed = 0f;
+            float recoilDuration = 0.08f;
+            float recoilStartDist = virtualHeadDist;
+            float recoilTargetDist = recoilStartDist - actualRecoil;
+
+            while (recoilElapsed < recoilDuration)
+            {
+                while (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.Paused) yield return null;
+
+                recoilElapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(recoilElapsed / recoilDuration);
+                virtualHeadDist = Mathf.Lerp(recoilStartDist, recoilTargetDist, t);
+                UpdateUnitsAlongTrail(virtualHeadDist);
+                if (BoardManager.Instance != null && isConnected) BoardManager.Instance.UpdateParallelRopes();
+                yield return null;
+            }
+        }
+
+        // Impact pause
+        float pauseElapsed = 0f;
+        while (pauseElapsed < impactPause)
+        {
+            while (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.Paused) yield return null;
+            pauseElapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        // 4. Reverse Phase: retrace traveled polyline backwards naturally
+        moveState = QueueMoveState.Returning;
+
+        while (virtualHeadDist > initialHeadDist)
+        {
+            while (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.Paused) yield return null;
+
+            float dt = (Time.deltaTime > 0.0001f) ? Mathf.Min(Time.deltaTime, 0.05f) : 0.016f;
+            virtualHeadDist -= returnSpeed * dt;
+            if (virtualHeadDist < initialHeadDist) virtualHeadDist = initialHeadDist;
+
+            UpdateUnitsAlongTrail(virtualHeadDist);
+            if (BoardManager.Instance != null && isConnected) BoardManager.Instance.UpdateParallelRopes();
+            yield return null;
+        }
+
+        // 5. Restore original position, orientation, spacing, and idle state
+        for (int i = 0; i < units.Count && i < initialUnitPoses.Count; i++)
+        {
+            if (units[i] != null)
+            {
+                units[i].transform.localPosition = initialUnitPoses[i].localPosition;
+                units[i].transform.localRotation = initialUnitPoses[i].localRotation;
+                units[i].StopWalkAnimation();
+                units[i].IsMoving = false;
+            }
+        }
+
+        if (pipesToReserve != null)
+        {
+            foreach (var p in pipesToReserve)
+            {
+                if (p != null) p.IsPipeInUse = false;
+            }
+        }
+
+        isMoving = false;
+        moveState = QueueMoveState.Idle;
+        if (BoardManager.Instance != null && isConnected) BoardManager.Instance.UpdateParallelRopes();
+        failedMoveCoroutine = null;
+
+        onReturnComplete?.Invoke();
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.NotifyFailedMoveReturnCompleted(this);
+        }
+    }
+
+    private void UpdateUnitsAlongTrail(float headDist)
+    {
+        for (int i = 0; i < antUnits.Count; i++)
+        {
+            var u = antUnits[i];
+            if (u != null)
+            {
+                float uDist = headDist - i * segmentDistance;
+                if (SampleTrail(uDist, out var pos, out var fwdDir))
+                {
+                    u.transform.position = pos;
+                    if (fwdDir.sqrMagnitude > 0.001f)
+                    {
+                        u.transform.rotation = Quaternion.LookRotation(fwdDir, Vector3.up);
+                    }
+                }
+            }
+        }
+    }
+
+    public void PlayCosmeticBump(Vector3 bumpDirection)
+    {
+        // Blocker queues remain strictly stationary. No punch or translation displacement.
+    }
+
     public void ReleaseReservedHole()
     {
         if (ropeVisual != null)
@@ -954,6 +1393,13 @@ public class AntQueueController : MonoBehaviour
 
     private void OnDisable()
     {
+        if (failedMoveCoroutine != null)
+        {
+            StopCoroutine(failedMoveCoroutine);
+            failedMoveCoroutine = null;
+        }
+        moveState = QueueMoveState.Idle;
+        isMoving = false;
         ReleaseReservedHole();
         if (ropeVisual != null) ropeVisual.Cleanup();
         if (antUnits != null)
@@ -967,6 +1413,13 @@ public class AntQueueController : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (failedMoveCoroutine != null)
+        {
+            StopCoroutine(failedMoveCoroutine);
+            failedMoveCoroutine = null;
+        }
+        moveState = QueueMoveState.Idle;
+        isMoving = false;
         ReleaseReservedHole();
         if (ropeVisual != null) ropeVisual.Cleanup();
         if (antUnits != null)
