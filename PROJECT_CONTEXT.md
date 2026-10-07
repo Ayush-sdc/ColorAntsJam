@@ -339,4 +339,51 @@ The project utilizes a hybrid ScriptableObject and JSON architecture containing 
      - Locked queues preserve static padlock feedback.
      - Valid same-color simultaneous hole entry remains 100% unchanged.
 
+---
 
+## 22. Pipe Visual Pass (Level 22 Reference Conduits, Oct 2026)
+
+- **Visual Target**:
+  - Replaced cylindrical/hose-like pipe visual meshes with **glossy cyan conduits** featuring straight sides, soft beveled cross-sections, square 90-degree corner silhouettes, diagonal miter seams, pale-cyan end collars, and squircle usage badges matching the reference layout of Level 22 from *Color Slither Jam*.
+  - Preserved all characters as **3D Ants** (head, thorax, abdomen, 6 legs, antennae, eyes; zero caterpillars, slithers, or snake bodies).
+  - Preserved all level layouts, routing, cell footprints, simultaneous queue movement, pathfinding, and usage counters.
+
+- **Key Technical Implementations**:
+  1. **Authoritative Configuration (`PipeVisualConfig.cs`)**:
+     - Created [PipeVisualConfig.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Board/PipeVisualConfig.cs) ScriptableObject asset at `Assets/Resources/PipeVisualConfig.asset`, loaded via `PipeVisualConfig.Instance`.
+     - Exposes fully editable Inspector parameters:
+       - *Conduit Dimensions*: `pipeWidth = 0.84`, `pipeHeight = 0.34`, `bevelWidth = 0.13`, `bevelHeight = 0.10`.
+       - *End Collars*: `collarWidth = 0.92`, `collarThickness = 0.08`, `collarColor = #D8F8FF`.
+       - *Badges*: `badgeSize = 42`, `badgeForwardOffset = 0.35`, `badgeLateralOffset = 0.18`, `badgeSortingOrder = 5`, `outerBorderColor = #51D0FE`, `innerFaceColor = #004B87`.
+       - *Contact Shadows*: `shadowWidth = 1.05`, `shadowAlpha = 0.40`, `shadowYOffset = 0.002`.
+       - *Materials & Shading*: `customPipeMaterial`, `pipeBaseColor`, `smoothness = 0.88`, `metallic = 0.05`.
+  2. **Procedural Square Mitered Conduit Geometry (`PipeController.cs`)**:
+     - `GenerateSquareMiteredPipeMesh` in [PipeController.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Board/PipeController.cs) constructs a 5-facet longitudinal conduit: top flat face, left/right chamfer bevels, and left/right vertical side walls.
+     - At 90-degree turns, calculates exact angle-bisector miter vectors ($M = \nu_u + \nu_v$), creating clean 45-degree diagonal seams with zero pinching, bulging, gaps, or overlapping faces. Constant visible width is maintained across all straight, L-shaped, and U-shaped runs.
+     - Maps continuous longitudinal $V$ distance and exact cross-sectional $U$ facet coordinates to `PipeConduit_Gradient.png` (upper turquoise highlight, peak specular line, saturated cyan body, deep blue side shadow), ensuring identical shading on both horizontal and vertical runs.
+  3. **Pale-Cyan End Collars**:
+     - `GenerateCollarMesh` constructs a collar perpendicular to the pipe entrance/exit mouths, extending slightly wider than the conduit (`0.92` units) with rounded pill caps.
+     - Automatically aligns with endpoint direction and remains unaffected by length scaling.
+  4. **Squircle Counter Badges & Modal Layering**:
+     - Built using 9-sliced `Badge_Squircle.png` double-plate (cyan border and deep blue face) with bold white numeral and dark drop outline.
+     - Docked laterally along the outer rim near the entrance mouth without obstructing the traversal path.
+     - Rendered on a World Space Canvas with `sortingOrder = 5` (strictly $\le 10$), guaranteeing that modal overlays (settings, tutorials, level complete/lost at `sortingOrder = 50+`) render cleanly on top.
+  5. **Ant Traversal & Centerline Preservation**:
+     - Retains exact logical grid centerlines via `GetCenterlineWaypoints()`.
+     - Ant units enter and exit precisely at collar mouths with smooth continuous motion.
+     - Simultaneous queue movement, pipe reservations, and exhaustion destruction remain 100% intact.
+
+- **Verification Results**:
+  - Executed via `Tools/Slither Ants Jam/Tests/Run Complete Pipe Visual Verification Suite` ([PipeVisualVerificationSuite.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Editor/PipeVisualVerificationSuite.cs)):
+    - **Test 1: Comparison Gallery** (`Evidence_PipeComparison_Overview.png`, `Evidence_PipeComparison_CloseUp_Corners.png`, `Evidence_PipeComparison_CloseUp_Collars.png`):
+      - Verifies straight pipe (counter 1), 90-degree bend (counter 2), long U-pipe (counter 3), and adjacent nested U-pipes (counters 2 & 1).
+      - Confirms square outer silhouette, crisp diagonal miter seams, constant conduit width, pale-cyan end collars, and squircle counter badges.
+    - **Test 2: Level 22 Board Verification** (`Evidence_Level22_FullBoard.png`, `Evidence_Level22_LeftNestedPipes.png`, `Evidence_Level22_MiddlePipeAndMouth.png`):
+      - Recreated Level 22 layout matching `media_1791406165950.png` with nested U-pipes, middle straight conduit with yellow ant lined up at entrance mouth, and independent counter badges.
+    - **Test 3: Level 23 Multi-Pipe Traversal (`Queue_Record_75_3`)** (`Evidence_Level23_Queue75_3_Traversal.png`):
+      - Verified multi-pipe pathfinding through Pipe 6 and Pipe 7 into target hole, atomic pipe reservation, and use counter decrement.
+    - **Test 4: Modal Layering Verification** (`Evidence_PipeModalLayering.png`):
+      - Verified pipe counter badge canvas (`sortingOrder = 5`) renders strictly beneath simulated modal backdrop (`sortingOrder = 50`).
+  - Executed all project test suites:
+    - `FeatureUIPlayModeTests` (Level 23 Multi-Pipe): **3 / 3 PASS**
+    - `PreciseFailedMoveVerificationSuite`: **14 / 14 PASS**
