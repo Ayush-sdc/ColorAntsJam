@@ -607,5 +607,72 @@ The project utilizes a hybrid ScriptableObject and JSON architecture containing 
 - **Automated Verification**: 18/18 slots verified, 12 adaptive layers verified, Application Identifier verified — **PASSED**.
 - **Physical Device Verification**: Marked **untested** (requires physical Android device / launcher).
 
+---
+
+## 26. LEADER ANT HEAD-LOOK REACTION SYSTEM (COLOR ANTS JAM)
+
+### 1. Trigger and Behavioral Architecture
+- **Trigger Source**: Strictly hooked to `AntQueueController.OnQueueMoveStarted` when a queue begins moving to its destination rescue hole.
+- **Ignored / Invalid Clicks**: Blocked shakes, locked queue taps, and invalid clicks do not fire `OnQueueMoveStarted`, guaranteeing that ignored clicks never trigger reactions.
+- **Target Filtering**:
+  - Only adjacent **idle leaders** (`isHead == true`, queue index 0) react.
+  - Workers never react (workers do not receive the `LeaderHeadLook` component).
+  - Distance check is calculated in **board-space** to the closest ant/segment of the moving queue, not just its leader, ensuring long multi-segment queues are detected accurately.
+  - Configurable detection radius defaults to `1.5` grid cells (`EffectiveDetectionRadius = detectionRadius * BoardManager.CellSize`).
+- **Autonomous Lifecycle State Machine**:
+  - `Neutral`: Idle resting forward pose.
+  - `TurningToward` (default `0.15s`): Smoothly slerps head yaw toward moving target in local pivot space using `Mathf.SmoothStep`.
+  - `Watching` (default `0.40s`): Tracks moving ants using `Quaternion.RotateTowards` at `180°/sec`. Returns early if queue leaves range (`> 2.3 cells`) or stops.
+  - `Returning` (default `0.25s`): Smoothly slerps back from current turn rotation directly to authored `initialLocalRotation`.
+  - Cooldown (`0.60s`): Enforced after returning before another reaction can trigger.
+
+### 2. Mesh Hierarchy & Dedicated Visual HeadLookPivot
+- **Non-Destructive Mesh Splitting**:
+  - The unrigged multi-part mesh assets `body.asset` and `accent.asset` were split along $Z = 0.30$:
+    - `Chubby_Head_Body.asset`: Head sphere + mandibles (3,465 vertices).
+    - `Chubby_Torso_Body.asset`: Thorax + abdomen (10,395 vertices).
+    - `Chubby_Head_Accent.asset`: Antennae + eyebrows + mouth (2,212 vertices).
+    - `Chubby_Torso_Accent.asset`: Legs + waist band (6,195 vertices).
+  - Clean separation: 0 overlapping vertices, identical vertex positions, normals, and UVs.
+- **Hierarchy Organization Across All 18 ChubbyAnt Prefabs**:
+  - Dedicated visual pivot `HeadLookPivot` created at neck connection: `(0, 0.50, 0.15)`.
+  - Children under `HeadLookPivot`: `head`, `head_accent`, `eyes`, `pupils`, `iris`, `glints`, `blush` with local offset `(0, -0.50, -0.15)` preserving 100.00% exact alignment with torso.
+  - Children under root: `body` (torso), `accent` (legs), `rope`.
+  - Only `HeadLookPivot` rotates. Whole ant root, queue root, abdomen, legs, and colliders never rotate.
+  - Clamping: Head rotation strictly clamped to $\pm 25^\circ$, completely preventing backward twisting or visual detachment from the thorax.
+
+### 3. Inspector Settings & Script Configuration
+- **Script**: [LeaderHeadLook.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Ants/LeaderHeadLook.cs)
+- **Parameters**:
+  - `Detection Radius`: `1.50` grid cells.
+  - `Max Head Turn Angle`: `25.0` degrees.
+  - `Turn Toward Duration`: `0.15` seconds.
+  - `Watch Duration`: `0.40` seconds.
+  - `Return Duration`: `0.25` seconds.
+  - `Reaction Cooldown`: `0.60` seconds.
+  - `Tracking Angular Speed`: `180` degrees/second.
+- **Interruption Handling**:
+  - If the observing leader's own queue starts moving, `AntUnit.StartWalkAnimation` cancels the reaction immediately, instantly restoring authored forward orientation.
+  - Simultaneous/linked queue starts in the same frame pick the closest moving queue with zero duplicate animations or jitter.
+  - Clean reset on level restart, visual rebuild, and board state changes via `ResetToNeutral()`.
+
+### 4. Verification Suite Results & Recordings
+- **Verification Suite**: [LeaderHeadLookVerificationSuite.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Editor/LeaderHeadLookVerificationSuite.cs)
+- **Menu Item**: `Tools/Slither Ants Jam/Head Look/Run Head Look Verification Suite`
+- **Automated Verification Results**: **9 / 9 TESTS PASSED (100%)**:
+  1. `[PASS] Test 1`: Prefab Hierarchy Verification across all 18 ChubbyAnt prefabs (`HeadLookPivot` at neck with 7 head parts).
+  2. `[PASS] Test 2`: Leader vs Worker setup binding (only leaders get `LeaderHeadLook`).
+  3. `[PASS] Test 3`: Detection Radius & Long Queue Segment Detection (1.5 cells).
+  4. `[PASS] Test 4`: Turn Direction (Left vs Right) and 25° Angular Clamping.
+  5. `[PASS] Test 5`: Full Reaction State Lifecycle and Return to Neutral Pose ($0.0000^\circ$ residual offset).
+  6. `[PASS] Test 6`: Reaction Cooldown Enforcement (0.60s).
+  7. `[PASS] Test 7`: Interruption on Own Queue Movement (immediate cancel & restore).
+  8. `[PASS] Test 8`: Simultaneous / Linked Queue Multi-Start Disambiguation (prefers nearest).
+  9. `[PASS] Test 9`: Level Simulation & Gameplay Frame Recording (rendered 30 frames).
+- **Gameplay Recordings**:
+  - Animated WebP: `Assets/TestEvidence/HeadLookReaction/leader_head_look_reaction.webp`
+  - Animated GIF: `Assets/TestEvidence/HeadLookReaction/leader_head_look_reaction.gif`
+  - Frame sequence: `Assets/TestEvidence/HeadLookReaction/Frames/head_look_frame_000.png` through `029.png`
+
 
 

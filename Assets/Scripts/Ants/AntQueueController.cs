@@ -72,13 +72,14 @@ public class AntQueueController : MonoBehaviour
     [SerializeField] private List<AntUnit> antUnits = new List<AntUnit>();
     [SerializeField] private HoleController destinationHole;
 
-    public string QueueId => queueId;
+    public string QueueId { get => queueId; set => queueId = value; }
     public int ColorID => colorId;
     public AntColor Color => antColor;
     public int AntCount => antCount;
     public bool IsConnected => isConnected;
     public int ConnectedIndex => connectedIndex;
     public bool IsMoving => isMoving;
+    public void SetMovingForTesting(bool moving, QueueMoveState state = QueueMoveState.MovingToRescue) { isMoving = moving; moveState = state; }
     public bool IsLocked => isLocked && lockAmount > 0;
     public int LockAmount => lockAmount;
     public bool IsSecondColor => isSecondColor;
@@ -115,6 +116,7 @@ public class AntQueueController : MonoBehaviour
     }
     public IReadOnlyList<Vector2Int> RemainingPath => remainingPath;
     public IReadOnlyList<AntUnit> Units => antUnits;
+    public void AddUnitForTesting(AntUnit unit) { if (unit != null) antUnits.Add(unit); }
     private bool isLeaderInHole = false;
     public bool IsLeaderInHole { get => isLeaderInHole; set => isLeaderInHole = value; }
 

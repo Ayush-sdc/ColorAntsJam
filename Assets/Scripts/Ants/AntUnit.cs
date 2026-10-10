@@ -24,6 +24,10 @@ public class AntUnit : MonoBehaviour
     [SerializeField] private float bobHeight = 0.035f;
     [SerializeField] private float tiltAngle = 3.5f;
 
+    [Header("Leader Head Look Reaction")]
+    [SerializeField] private LeaderHeadLook leaderHeadLook;
+    public LeaderHeadLook HeadLook => leaderHeadLook;
+
     public AntColor Color => antColor;
     public bool IsHead => isHead;
     public bool IsTail => isTail;
@@ -174,6 +178,11 @@ public class AntUnit : MonoBehaviour
         walkCycleFreq = (Mathf.PI * 2f) / (halfStepDuration * 4f);
         walkTimer = (queueIndex * 0.04f);
         IsMoving = true;
+
+        if (leaderHeadLook != null)
+        {
+            leaderHeadLook.CancelReaction();
+        }
     }
 
     public void StopWalkAnimation()
@@ -218,6 +227,10 @@ public class AntUnit : MonoBehaviour
             modelRoot.localPosition = offset;
             modelRoot.localScale = Vector3.one * scale;
         }
+        if (leaderHeadLook != null)
+        {
+            leaderHeadLook.ResetToNeutral();
+        }
         ResetInsidePipeVisual();
     }
 
@@ -254,6 +267,21 @@ public class AntUnit : MonoBehaviour
         visualInstance.transform.localScale = Vector3.one * scale;
         modelRoot = visualInstance.transform;
 
+        // Configure HeadLook reaction for leader units
+        if (isHead)
+        {
+            Transform pivot = visualInstance.transform.Find("HeadLookPivot");
+            leaderHeadLook = GetComponent<LeaderHeadLook>();
+            if (leaderHeadLook == null) leaderHeadLook = gameObject.AddComponent<LeaderHeadLook>();
+            leaderHeadLook.Initialize(pivot, this);
+        }
+        else
+        {
+            var existingHeadLook = GetComponent<LeaderHeadLook>();
+            if (existingHeadLook != null) SafeDestroy(existingHeadLook);
+            leaderHeadLook = null;
+        }
+
         // Remove conflicting colliders/rigidbodies from visual instance so only AntUnit handles gameplay
         AntVisualConfig.StripConflictingComponents(visualInstance);
 
@@ -262,7 +290,7 @@ public class AntUnit : MonoBehaviour
         AntVisualConfig.ApplyAntColor(visualInstance, resolvedColor);
 
         // Cache body renderer reference
-        Transform bodyTransform = visualInstance.transform.Find("body");
+        Transform bodyTransform = visualInstance.transform.Find("body") ?? visualInstance.transform.Find("HeadLookPivot/head");
         if (bodyTransform != null)
         {
             bodyRenderer = bodyTransform.GetComponent<MeshRenderer>();
@@ -278,6 +306,10 @@ public class AntUnit : MonoBehaviour
     private void ClearVisuals()
     {
         KillWalkTween();
+        if (leaderHeadLook != null)
+        {
+            leaderHeadLook.ResetToNeutral();
+        }
 
         modelRoot = null;
         bodyRenderer = null;

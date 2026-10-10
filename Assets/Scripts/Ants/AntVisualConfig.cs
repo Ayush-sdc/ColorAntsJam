@@ -182,7 +182,7 @@ public class AntVisualConfig : ScriptableObject
 
             string partName = r.gameObject.name.ToLowerInvariant();
 
-            if (partName == "body")
+            if (partName == "body" || partName == "head")
             {
                 r.GetPropertyBlock(s_BodyMpb);
                 s_BodyMpb.SetColor(PropColor, resolvedColor);
@@ -192,7 +192,7 @@ public class AntVisualConfig : ScriptableObject
                 s_BodyMpb.SetColor(PropPipeTint, Color.white);
                 r.SetPropertyBlock(s_BodyMpb);
             }
-            else if (partName == "accent")
+            else if (partName == "accent" || partName == "head_accent")
             {
                 r.GetPropertyBlock(s_AccentMpb);
                 s_AccentMpb.SetColor(PropColor, limbCol);
