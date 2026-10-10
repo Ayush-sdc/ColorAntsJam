@@ -387,3 +387,225 @@ The project utilizes a hybrid ScriptableObject and JSON architecture containing 
   - Executed all project test suites:
     - `FeatureUIPlayModeTests` (Level 23 Multi-Pipe): **3 / 3 PASS**
     - `PreciseFailedMoveVerificationSuite`: **14 / 14 PASS**
+
+---
+
+## 23. Translucent Pipe Traversal, Return Speed Parity & Entrance Counters (Oct 2026)
+
+### 1. Translucent Ants Inside Pipes
+- **Rendering Pipeline Architecture**:
+  - Worker & Chubby Ant shaders ([WorkerColors.shader](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/WorkerAnt/Shaders/WorkerColors.shader), [ChubbyColors.shader](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/ChubbyAntColors/Shaders/ChubbyColors.shader)) updated with `_Opacity` (default `1.0`) and `_PipeTint` (default `(0.85, 0.96, 1.0, 1.0)`).
+  - Shaders assigned `Tags { "Queue"="Geometry+50" "RenderType"="Transparent" }`, `Blend SrcAlpha OneMinusSrcAlpha`, and `ZWrite On`.
+  - Pipe conduit surface rendered in Transparent queue (`Queue = 3000`) with semi-transparent alpha (`pipeConduitOpacity = 0.78f`) and specular cyan gloss.
+  - Ant geometry renders into the scene depth buffer first, and the conduit surface renders directly over it. This guarantees ants visually appear **inside/beneath** the glossy pipe shell, without X-ray bleed through unrelated obstacles, borders, or UI overlays.
+- **Per-Ant Smooth Entry & Exit Transition**:
+  - Ant opacity transitions per ant unit ([AntUnit.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Ants/AntUnit.cs), [AntVisualConfig.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Ants/AntVisualConfig.cs)) via `MaterialPropertyBlock` (`ApplyInsidePipeOpacity` / `ResetInsidePipeOpacity`), completely avoiding shared material mutations that could affect other queues.
+  - Ants outside the pipe remain 100% opaque.
+  - When an individual ant unit crosses the logical entrance collar into the conduit, its opacity interpolates smoothly to 40% (`insidePipeAntOpacity = 0.40f`) with soft cyan tinting (`insidePipeAntTint`).
+  - As each ant exits the pipe collar, opacity smoothly restores to 1.0.
+  - Full appearance cleanup is guaranteed on movement completion, queue swallowing, cancel, disable, destroy, and object-pool reuse.
+- **Multi-Queue Concurrency & Complex Routing**:
+  - Centerline waypoints strictly followed through straight runs, 90-degree square elbows, and U-bends.
+  - Multiple queues traversing the same or adjacent pipes simultaneously maintain independent opacity states without flickering or popping.
+
+### 2. Wrong-Move Return Speed Parity
+- **Exact 1:1 Speed Matching**:
+  - The return movement strictly shares the identical world-units-per-second speed as normal forward movement: `normalSpeed = EffectiveMoveSpeed` (`ReturnSpeed` property in [AntQueueController.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Ants/AntQueueController.cs)).
+  - Return duration is computed directly as `actualTravelledDistance / normalSpeed`.
+  - Removed fixed recoil Lerp hop loops (previously 0.08s fixed hop) and arbitrary recoil multipliers.
+  - Return movement proceeds at a constant path-distance speed without easing, acceleration, or deceleration.
+- **Exact Path Retracing & Pose Preservation**:
+  - Queue followers retrace their recorded trail distance in reverse (`virtualHeadDist -= normalSpeed * dt`).
+  - Units back away naturally along the path without flipping the entire queue 180 degrees.
+  - Final poses snap to original starting coordinates and rotations with zero drift.
+- **Fail State Rules**:
+  - Exactly 1 impact sound (`PlayOuch()`) and 1 life deduction per failed action.
+  - Zero hole capacity, slot reservation, or pipe uses consumed.
+  - Linked queues advance, impact, pause, and return in parallel lockstep.
+
+### 3. Larger Pipe Counters at Entrance
+- **Visual Design Reference (`Feature_three_pipe.png`)**:
+  - Squircle badge plate with solid dark blue inner face (`#004B87`) and vibrant cyan border (`#51D0FE`).
+  - Crisp, large white numeral with a strong dark outline for readability on mobile screens.
+- **Anchoring & Orientation**:
+  - Anchored to the pipe's logical `EntranceCell` beside the entrance collar without covering entering ants or blocking the mouth.
+  - Rotation locked to camera-facing upright angle `Quaternion.Euler(60f, 0f, 0f)`, ensuring upright readability across horizontal, vertical, and bent pipes.
+  - World scale is uniform and completely decoupled from pipe length and parent hierarchy transforms.
+  - Actual remaining use value is dynamically preserved and decremented on entry.
+- **Layering & Non-Blocking**:
+  - Graphic raycasts disabled (`raycastTarget = false`) on canvas, image, and text.
+  - Canvas `sortingOrder = 5`, ensuring badges remain beneath modal overlays (`sortingOrder >= 50`).
+
+### 4. Inspector Controls & Configuration
+- **`PipeVisualConfig.cs` (`Assets/Resources/PipeVisualConfig.asset`)**:
+  - `insidePipeAntOpacity` (float, default `0.40f`): Translucent opacity for ants inside conduit.
+  - `insidePipeAntTint` (Color, default `#D9F5FF`): Soft cyan tint applied to ant body.
+  - `pipeConduitOpacity` (float, default `0.78f`): Conduit transparency to balance shell gloss with ant visibility.
+  - `badgeScale` (float, default `0.012f`): Global badge canvas scale.
+  - `badgeSize` (float, default `52f`): Width and height of badge plate.
+  - `numeralSize` (int, default `34`): Font size of the counter numeral.
+  - `badgeForwardOffset` (float, default `0.20f`): Longitudinal offset relative to entrance mouth.
+  - `badgeLateralOffset` (float, default `0.48f`): Lateral offset docking badge beside the collar.
+  - `badgeHeightOffset` (float, default `0.42f`): Vertical elevation above ground.
+- **`PipeController.cs`**:
+  - Exposes local override Inspector fields for `badgeScale`, `numeralSize`, `entranceForwardOffset`, `entranceLateralOffset`, and `entranceHeightOffset`.
+
+### 5. Verification & Test Evidence
+- **Automated Verification Suite** (`TranslucentPipeAndReturnSpeedVerificationSuite.cs`):
+  - Executed via menu `Tools/Slither Ants Jam/Tests/Run Complete Translucent Pipe & Return Speed Suite`:
+    - `Test 1: Partial Queue Entry Translucency (Per-Ant Opacity & Tint)`: **PASS**
+    - `Test 2: Square 90-Degree Bend Centerline Traversal & Exit Restoration`: **PASS**
+    - `Test 3: Multiple Queues Inside Pipe Simultaneously (No Shared Material Mutation)`: **PASS**
+    - `Test 4: Reset & Appearance Restoration on Cleanup / Disable / Restart`: **PASS**
+    - `Test 5: Wrong-Move Return Speed Parity (1:1 with Normal Movement Speed)`: **PASS**
+    - `Test 6: Larger Entrance Badge Anchor, Upright Text & Modal Layering`: **PASS**
+    - `Test 7: Gameplay Traversal & Failed-Move Frame Sequences Generation`: **PASS**
+    - **Total: 7 PASSED, 0 FAILED**
+- **Captured Test Artifacts & Gameplay Animations** (`Assets/TestEvidence/TraversalAndReturnVerification/`):
+  - `Evidence_PartialEntry_InsideTranslucent_OutsideOpaque.png`: Head ant inside at 40% opacity, tail ant outside fully opaque.
+  - `Evidence_FullTraversal_TranslucentBeneathShell.png`: Full queue moving visibly beneath glossy conduit.
+  - `Evidence_ExitRestoration_OpaqueRestored.png`: Clean 100% opacity restored upon exiting collar.
+  - `PipeTraversal_Demo.gif` & `PipeTraversal_Demo.webp` (24 frames): Smooth traversal through pipe entrance, conduit, and exit.
+  - `FailedMoveReturn_Demo.gif` & `FailedMoveReturn_Demo.webp` (29 frames): Forward movement at normal speed, contact without penetration, impact pause, and exact 1:1 reverse return to starting pose.
+- **Status of Tests**:
+  - Automated unit and integration tests passed with zero errors.
+  - Physical multi-touch device gestures remain for human player validation on target mobile hardware.
+
+---
+
+## 24. Sound Effects System & Audio Event Integration (Oct 2026)
+
+### 1. Source Audio Asset Mapping & Import Specifications
+- **Source Folder**: Root project directory `sounds/` preserved untouched.
+- **Import Destination**: `Assets/Audio/SFX/` with Android short-SFX settings:
+  | Event | Source File | Imported Asset Path | Asset GUID | Duration | Android Importer Settings |
+  | :--- | :--- | :--- | :--- | :--- | :--- |
+  | **1. Ant Queue Tap** | `sounds/Tap sound.mp3` | `Assets/Audio/SFX/Tap sound.mp3` | `4de165e7a259ebb45a90bb4f7e4858fe` | ~1.02s (sharp pop) | Force to Mono, Preload Audio Data, Decompress On Load |
+  | **2. Wrong-Move Impact** | `sounds/wrong move.mp3` | `Assets/Audio/SFX/wrong move.mp3` | `b7069c1e7f74be04596c3242bf2b335b` | ~1.18s (impact boing) | Force to Mono, Preload Audio Data, Decompress On Load |
+  | **3. Level Completed** | `sounds/winning sound.mp3` | `Assets/Audio/SFX/winning sound.mp3` | `a486ed4c63c8ce14397f867ff46e84d5` | ~3.24s (victory fanfare) | Force to Mono, Preload Audio Data, Compressed In Memory |
+- **Audio Spatialization**: Strictly non-positional 2D playback (`sfxSource.spatialBlend = 0f`).
+
+### 2. Inspector Controls & Volume Configuration
+- **Script**: [SoundManager.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Core/SoundManager.cs)
+- **Scene Location**:
+  - `Assets/Scenes/main.unity` -> `GameController` GameObject -> `SoundManager` component.
+  - `Assets/Scenes/main.unity` -> `SoundManager` GameObject -> `SoundManager` component.
+- **Serialized Clip Fields**:
+  - `Tap Clip`: Serialized `AudioClip` field (`tapClip`), wired to `Tap sound.mp3`.
+  - `Ouch Clip`: Serialized `AudioClip` field (`ouchClip`), wired to `wrong move.mp3`.
+  - `Win Clip`: Serialized `AudioClip` field (`winClip`), wired to `winning sound.mp3`.
+- **Separate Volume Controls**:
+  - `Tap Volume` (Slider `0.0` - `1.0`, default `0.80f`): Controls queue select tap volume.
+  - `Impact Volume` (Slider `0.0` - `1.0`, default `0.95f`): Controls wrong-move impact volume.
+  - `Completion Volume` (Slider `0.0` - `1.0`, default `1.00f`): Controls level completed fanfare volume.
+  - `Master Volume` (Slider `0.0` - `1.0`, default `0.80f`): Global SFX scaling factor.
+
+### 3. Event Handling, Timing & Guard Rules
+1. **Ant Queue Tap**:
+   - Triggered strictly once in `PlayerInputHandler.ProcessClickOrTap` when an interactable queue is selected.
+   - Linked groups selected with one tap produce exactly **one** tap sound.
+   - Throttled with `TapThrottleDuration = 0.04s` to prevent duplicate playback or volume spikes from multi-touch events while allowing legitimate rapid distinct selections.
+   - Suppressed for camera dragging, pinch zooming, UI clicks, ignored taps on moving queues, and automated callbacks (`HandleQueueMoveStarted` intentionally silences movement initiation sound).
+   - Tapping that initiates a wrong move still plays the tap sound; the impact sound occurs later upon actual collision.
+2. **Wrong-Move Impact**:
+   - Plays strictly at actual contact with a blocking stationary queue or wrong-color hole rim (`AntQueueController.ExecuteImpactSequence` -> `SoundManager.PlayOuch()`).
+   - Does NOT play on initial selection while approaching the obstacle.
+   - Plays once per failed action; linked groups are guarded by `isEarliestCollisionTrigger` so only the earliest contact triggers audio and life deduction.
+   - Does NOT repeat during the reverse return animation.
+   - Fully replaces the legacy fallback procedural boing without duplicate playback.
+3. **Level Completed**:
+   - Triggered once when the game confirms level completion via `GameManager.OnGameStateChanged` (`GameState.LevelWon` -> `SoundManager.PlayWin()`), coordinated with `LevelCompletedOverlay` and `CampaignCompletedOverlay` (final level 45).
+   - Occurs strictly after all required queues finish entering their holes.
+   - Guarded by `hasPlayedWinSoundForCurrentLevel`: ignores redundant overlay re-enables and does not play per-queue or on NEXT.
+   - Reset cleanly on level restarts, scene loads, and level transitions (`ResetCompletionGuard`).
+   - Preserves the last accepted move grace period when the timer reaches 0:00.
+4. **Hole Entry Silence Preserved**:
+   - Zero audio on ant hole entry (`HoleController.OnAntSwallowed` and `OnQueueSwallowed` have zero audio triggers; `SoundManager.PlaySwallow()` is a no-op).
+   - Hole-entry smoke and glow particle effects remain completely removed.
+5. **Settings Mute Functionality**:
+   - Muting via Settings -> Sounds immediately silences currently playing effects (`sfxSource.Stop()`).
+   - Muted state persists across app launches via `PlayerPrefs` key `"SoundMuted"` (`0` = unmuted, `1` = muted).
+   - Closing Settings restores gameplay smoothly.
+
+### 4. Verification Suite & Results
+- **Automated Verification Suite**: [AudioEffectsSetupAndVerificationSuite.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Editor/AudioEffectsSetupAndVerificationSuite.cs)
+- **Menu Items**:
+  - `Tools/Slither Ants Jam/Audio/Configure SoundManager In Scene`
+  - `Tools/Slither Ants Jam/Audio/Run Audio Effects Verification Suite`
+- **Results**:
+  - `Test 1: Audio Asset Integrity & Android Import Settings (2D Mono Preload)`: **PASS**
+  - `Test 2: SoundManager Inspector Fields & Separate Volume Controls`: **PASS**
+  - `Test 3: Normal Queue Selection Tap Sound (Single Play, Throttling & PlayOneShot)`: **PASS**
+  - `Test 4: Linked Groups Tap (Single Tap Sound for Linked Group Selection)`: **PASS**
+  - `Test 5: Tap Sound Constraints (Camera Drag, UI Click, Busy Queue, Auto Callback)`: **PASS**
+  - `Test 6: Wrong-Queue Impact Audio (At Contact, Single Play, No Repeat on Return)`: **PASS**
+  - `Test 7: Wrong-Hole Rim Impact Audio (At Outer Rim, Single Play, No Repeat on Return)`: **PASS**
+  - `Test 8: Level Completion Fanfare (Waits for Queues, Coordinated, Guarded, Reset on Restart)`: **PASS**
+  - `Test 9: Final Campaign Completion (Level 45 Fanfare with CampaignCompletedOverlay)`: **PASS**
+  - `Test 10: Timer Zero Grace Period Level Completion Preserved`: **PASS**
+  - `Test 11: Settings Mute Immediate Silence, Persistence & Reload With Sounds Off`: **PASS**
+  - `Test 12: Hole Entry Silence Preserved (Zero Audio on Swallow, No Smoke/Glow Particles)`: **PASS**
+  - `Test 13: Main Scene Configuration & Duplicate Cleanup`: **PASS**
+  - **Total: 13 PASSED, 0 FAILED**
+
+---
+
+## 25. Android App Icon Configuration & Adaptive Layer Specification
+
+### 1. Source Asset & Import Location
+- **Source Image**: `C:\Users\ayush\Downloads\colorantsjam.png` (preserved untouched).
+- **Asset Directory**: `Assets/Art/AppIcon/`
+- **Generated Assets & Roles**:
+  | Asset Name | Resolution | Format | Role & Android Usage |
+  | :--- | :--- | :--- | :--- |
+  | `colorantsjam.png` | 1254x1254 | RGBA32 | Original unmodified source with baked squircle bezel. |
+  | `AppIcon_Legacy.png` | 1024x1024 | RGBA32 | Default app icon, Android Legacy icon slots, Android Round icon slots. |
+  | `AppIcon_Adaptive_Background.png` | 1024x1024 | RGB24/RGBA | Adaptive Icon Layer 0 (Background): Full-bleed vibrant blue radial gradient, 100% opaque, NO baked rounded corners. |
+  | `AppIcon_Adaptive_Foreground.png` | 1024x1024 | RGBA32 | Adaptive Icon Layer 1 (Foreground): Isolated purple ant & stadium hole centered within safe area (inner 66% circle), transparent background, NO outer bezel. |
+- **Texture Importer Settings**:
+  - `textureType`: `Default`
+  - `isReadable`: `true`
+  - `mipmapEnabled`: `false`
+  - `alphaIsTransparency`: `true`
+  - `wrapMode`: `Clamp`
+  - `npotScale`: `None`
+  - `maxTextureSize`: `2048`
+
+### 2. Flattened Image Analysis & Adaptive Layer Requirements
+- **Why `colorantsjam.png` is Flattened**:
+  - The source PNG contains the 3D purple ant, stadium hole, light streaks, blue background, and purple squircle bezel all merged onto a single flat raster plane with transparent outer corners.
+- **Why Flattened Images Cannot Serve Directly as Adaptive Foreground**:
+  1. Android launchers apply dynamic device-specific masks (circles on Google Pixel, squircles on Samsung One UI, rounded squares on Xiaomi MIUI, teardrops on OnePlus). If a pre-baked squircle frame is placed in the foreground, circular launcher masks slice through the rectangular bezel, producing jagged double-border cutouts.
+  2. Adaptive icons support parallax and dynamic physics effects on modern Android launchers. If the background and bezel remain baked into the foreground, the entire card translates over the background layer as an awkward floating tile instead of producing natural 3D parallax depth.
+  3. The Android Adaptive Icon specification mandates that all critical foreground artwork reside strictly within the central safe area (66dp / 72dp diameter out of 108dp canvas, or the inner ~66% circle). The outer bezel of `colorantsjam.png` extends to 95% of the canvas, which is immediately cropped by round masks.
+- **Separate Artwork Needed for Production**:
+  - **Foreground (`ic_launcher_foreground.png`)**: Unflattened artwork or separate 3D render containing ONLY the purple ant, hole rim, interior pit, and glow streaks on a 100% transparent alpha channel, centered within the inner 66% safe circle with zero outer bezel.
+  - **Background (`ic_launcher_background.png`)**: Full-bleed 108dp square texture without transparency or rounded corners.
+
+### 3. Unity 6 Android Player Settings Configuration
+- **Default App Icons**:
+  - `BuildTargetGroup.Unknown`: `AppIcon_Legacy.png`
+  - `BuildTargetGroup.Android`: `AppIcon_Legacy.png`
+- **Adaptive Icons (API 26)**:
+  - 6 slots configured: `432x432`, `324x324`, `216x216`, `162x162`, `108x108`, `81x81`
+  - Layer 0 (Background): `AppIcon_Adaptive_Background.png`
+  - Layer 1 (Foreground): `AppIcon_Adaptive_Foreground.png`
+- **Round Icons (API 25)**:
+  - 6 slots configured: `192x192`, `144x144`, `96x96`, `72x72`, `48x48`, `36x36` -> `AppIcon_Legacy.png`
+- **Legacy Icons**:
+  - 6 slots configured: `192x192`, `144x144`, `96x96`, `72x72`, `48x48`, `36x36` -> `AppIcon_Legacy.png`
+- **Build Settings Preservation**:
+  - `applicationIdentifier`: Preserved as `com.UnityTechnologies.com.unity.template.urpblank`.
+  - Android Min SDK: `25`, Target SDK: `Automatic` (`0`).
+  - Scripting Backend & Architectures intact.
+
+### 4. Verification & Menu Utilities
+- **Configurator & Verifier**: [AppIconConfigurator.cs](file:///c:/Users/ayush/Desktop/Unity%20Projects/Slither%20Ants%20Jam/Assets/Scripts/Editor/AppIconConfigurator.cs)
+- **Editor Menus**:
+  - `Tools/Slither Ants Jam/Icons/Configure Android App Icons`
+  - `Tools/Slither Ants Jam/Icons/Verify Android App Icons`
+- **Automated Verification**: 18/18 slots verified, 12 adaptive layers verified, Application Identifier verified — **PASSED**.
+- **Physical Device Verification**: Marked **untested** (requires physical Android device / launcher).
+
+
+

@@ -74,3 +74,8 @@ overlays generated/
 Assets/TestEvidence/FailedMoveFrames/
 Assets/TestEvidence/FailedMoveFrames.meta
 
+# Android native build intermediates
+.utmp/
+[Uu]tmp/
+sounds/
+playerprefs_backup.reg

@@ -89,6 +89,8 @@ public class AntVisualConfig : ScriptableObject
     private static readonly int PropColor = Shader.PropertyToID("_Color");
     private static readonly int PropShadowColor = Shader.PropertyToID("_ShadowColor");
     private static readonly int PropBaseColor = Shader.PropertyToID("_BaseColor");
+    public static readonly int PropOpacity = Shader.PropertyToID("_Opacity");
+    public static readonly int PropPipeTint = Shader.PropertyToID("_PipeTint");
 
     private static MaterialPropertyBlock s_BodyMpb;
     private static MaterialPropertyBlock s_AccentMpb;
@@ -186,6 +188,8 @@ public class AntVisualConfig : ScriptableObject
                 s_BodyMpb.SetColor(PropColor, resolvedColor);
                 s_BodyMpb.SetColor(PropShadowColor, shadowCol);
                 s_BodyMpb.SetColor(PropBaseColor, resolvedColor);
+                s_BodyMpb.SetFloat(PropOpacity, 1.0f);
+                s_BodyMpb.SetColor(PropPipeTint, Color.white);
                 r.SetPropertyBlock(s_BodyMpb);
             }
             else if (partName == "accent")
@@ -194,6 +198,8 @@ public class AntVisualConfig : ScriptableObject
                 s_AccentMpb.SetColor(PropColor, limbCol);
                 s_AccentMpb.SetColor(PropShadowColor, limbShadowCol);
                 s_AccentMpb.SetColor(PropBaseColor, limbCol);
+                s_AccentMpb.SetFloat(PropOpacity, 1.0f);
+                s_AccentMpb.SetColor(PropPipeTint, Color.white);
                 r.SetPropertyBlock(s_AccentMpb);
             }
             else if (partName == "iris")
@@ -202,6 +208,8 @@ public class AntVisualConfig : ScriptableObject
                 s_IrisMpb.SetColor(PropColor, irisCol);
                 s_IrisMpb.SetColor(PropShadowColor, irisShadowCol);
                 s_IrisMpb.SetColor(PropBaseColor, irisCol);
+                s_IrisMpb.SetFloat(PropOpacity, 1.0f);
+                s_IrisMpb.SetColor(PropPipeTint, Color.white);
                 r.SetPropertyBlock(s_IrisMpb);
             }
             else if (partName == "rope")
@@ -210,6 +218,37 @@ public class AntVisualConfig : ScriptableObject
             }
             // "eyes", "pupils", "glints", "blush" remain untouched preserving neutral features
         }
+    }
+
+    /// <summary>
+    /// Applies inside-pipe translucency and tint to all visual parts of an ant unit using MaterialPropertyBlock.
+    /// Preserves existing material parameters while updating opacity and pipe tint.
+    /// </summary>
+    public static void ApplyInsidePipeOpacity(GameObject visualInstance, float opacity, Color tint)
+    {
+        if (visualInstance == null) return;
+        var renderers = visualInstance.GetComponentsInChildren<MeshRenderer>(true);
+        MaterialPropertyBlock mpb = new MaterialPropertyBlock();
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            var r = renderers[i];
+            if (r == null) continue;
+            string pName = r.gameObject.name.ToLowerInvariant();
+            if (pName == "rope") continue;
+
+            r.GetPropertyBlock(mpb);
+            mpb.SetFloat(PropOpacity, Mathf.Clamp01(opacity));
+            mpb.SetColor(PropPipeTint, tint);
+            r.SetPropertyBlock(mpb);
+        }
+    }
+
+    /// <summary>
+    /// Resets inside-pipe translucency on an ant unit back to 100% opaque and neutral white tint.
+    /// </summary>
+    public static void ResetInsidePipeOpacity(GameObject visualInstance)
+    {
+        ApplyInsidePipeOpacity(visualInstance, 1.0f, Color.white);
     }
 
     /// <summary>

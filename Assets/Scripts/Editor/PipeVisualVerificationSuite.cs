@@ -29,6 +29,8 @@ public static class PipeVisualVerificationSuite
         bool level23Ok = RunLevel23AndQueue75_3Verification();
         bool modalLayeringOk = RunModalLayeringVerification();
 
+        TranslucentPipeAndReturnSpeedVerificationSuite.RunCompleteSuite();
+
         Debug.Log("=================================================================");
         Debug.Log($"[PIPE VERIFICATION COMPLETED] Gallery: {galleryOk}, Level 22: {level22Ok}, Level 23 (Queue 75_3): {level23Ok}, Modal Layering: {modalLayeringOk}");
         Debug.Log("=================================================================");

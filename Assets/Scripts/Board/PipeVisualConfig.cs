@@ -91,24 +91,44 @@ public class PipeVisualConfig : ScriptableObject
     [Tooltip("Pale cyan collar rim color")]
     public Color collarColor = new Color(0.68f, 0.94f, 1.0f, 1f); // #AEF0FE
 
+    [Header("Inside-Pipe Ant Translucency")]
+    [Tooltip("Visual opacity of ants while inside the pipe conduit (default ~40%)")]
+    [Range(0.10f, 1.0f)]
+    public float insidePipeAntOpacity = 0.40f;
+
+    [Tooltip("Soft tint color applied to translucent ants inside pipe")]
+    public Color insidePipeAntTint = new Color(0.85f, 0.95f, 1.0f, 1.0f);
+
+    [Tooltip("Pipe conduit surface opacity (1.0 = fully opaque, <1.0 = translucent shell)")]
+    [Range(0.30f, 1.0f)]
+    public float pipeConduitOpacity = 0.78f;
+
     [Header("Counter Badge")]
     public bool enableBadge = true;
 
-    [Tooltip("Badge plate size in world space canvas units")]
-    [Range(24f, 72f)]
-    public float badgeSize = 42f;
+    [Tooltip("Badge plate size in canvas units")]
+    [Range(30f, 100f)]
+    public float badgeSize = 52f;
+
+    [Tooltip("World scale of the badge canvas, independent of pipe length and parent scaling")]
+    [Range(0.005f, 0.025f)]
+    public float badgeScale = 0.012f;
+
+    [Tooltip("Font size for the numeral text")]
+    [Range(18, 54)]
+    public int numeralSize = 34;
 
     [Tooltip("World height offset above pipe mouth for badge plate")]
-    [Range(0.25f, 0.60f)]
-    public float badgeHeightOffset = 0.44f;
+    [Range(0.20f, 0.80f)]
+    public float badgeHeightOffset = 0.42f;
 
-    [Tooltip("Forward offset along pipe entry for badge placement")]
-    [Range(0.0f, 0.8f)]
-    public float badgeForwardOffset = 0.35f;
+    [Tooltip("Forward offset along pipe entry for badge placement (just inside the entrance collar)")]
+    [Range(-0.2f, 0.8f)]
+    public float badgeForwardOffset = 0.20f;
 
-    [Tooltip("Lateral offset towards outer pipe wall for badge placement")]
-    [Range(-0.4f, 0.4f)]
-    public float badgeLateralOffset = 0.18f;
+    [Tooltip("Lateral offset towards outer pipe wall for badge placement (beside the entrance collar)")]
+    [Range(-0.8f, 0.8f)]
+    public float badgeLateralOffset = 0.48f;
 
     [Tooltip("Light cyan border color for counter plate")]
     public Color badgeBorderColor = new Color(0.04f, 0.73f, 0.95f, 1f); // #0ABAFA
@@ -120,7 +140,7 @@ public class PipeVisualConfig : ScriptableObject
     public Color badgeTextColor = Color.white;
 
     [Tooltip("Numeral outline/shadow color")]
-    public Color badgeOutlineColor = new Color(0.04f, 0.15f, 0.26f, 1f);
+    public Color badgeOutlineColor = new Color(0.02f, 0.05f, 0.10f, 1f);
 
     [Header("Contact Shadow")]
     public bool enableShadow = true;

@@ -55,7 +55,7 @@ public class AntQueueController : MonoBehaviour
     public float ApproachSpeed { get => approachSpeed; set => approachSpeed = value; }
     public float ImpactPause { get => impactPause; set => impactPause = value; }
     public float RecoilAmount { get => recoilAmount; set => recoilAmount = value; }
-    public float ReturnSpeed { get => returnSpeed; set => returnSpeed = value; }
+    public float ReturnSpeed { get => EffectiveMoveSpeed; set => returnSpeed = value; }
 
     [Header("Runtime State")]
     [SerializeField] private bool isMoving = false;
@@ -965,6 +965,7 @@ public class AntQueueController : MonoBehaviour
                     else
                     {
                         unit.transform.localScale = Vector3.one;
+                        UpdateAntPipeVisual(unit, traversedPipes);
                     }
 
                     if (currentBodyCoordinates != null && i < currentBodyCoordinates.Count && BoardManager.Instance != null)
@@ -1032,6 +1033,7 @@ public class AntQueueController : MonoBehaviour
                                 unit.StopWalkAnimation();
                                 unit.SetVisualVisibility(false);
                                 if (destinationHole != null) destinationHole.OnAntEnteredHole();
+                                unit.ResetInsidePipeVisual();
                                 SafeDestroy(unit.gameObject);
                                 continue;
                             }
@@ -1039,6 +1041,7 @@ public class AntQueueController : MonoBehaviour
                         else
                         {
                             unit.transform.localScale = Vector3.one;
+                            UpdateAntPipeVisual(unit, traversedPipes);
                         }
 
                         if (currentBodyCoordinates != null && i < currentBodyCoordinates.Count && BoardManager.Instance != null)
@@ -1061,6 +1064,7 @@ public class AntQueueController : MonoBehaviour
                         destinationHole.OnAntEnteredHole();
                     }
 
+                    unit.ResetInsidePipeVisual();
                     SafeDestroy(unit.gameObject);
                 }
             }
@@ -1086,6 +1090,7 @@ public class AntQueueController : MonoBehaviour
             {
                 u.IsMoving = false;
                 u.StopWalkAnimation();
+                u.ResetInsidePipeVisual();
             }
         }
         OnQueueMoveCompleted?.Invoke(this);
@@ -1183,12 +1188,13 @@ public class AntQueueController : MonoBehaviour
 
         moveState = QueueMoveState.FailedMoveApproach;
         isMoving = true;
+        float normalSpeed = EffectiveMoveSpeed;
         for (int i = 0; i < totalAnts; i++)
         {
             if (units[i] != null)
             {
                 units[i].IsMoving = true;
-                units[i].StartWalkAnimation(i, approachSpeed);
+                units[i].StartWalkAnimation(i, normalSpeed);
             }
         }
 
@@ -1202,7 +1208,7 @@ public class AntQueueController : MonoBehaviour
             while (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.Paused) yield return null;
 
             float dt = (Time.deltaTime > 0.0001f) ? Mathf.Min(Time.deltaTime, 0.05f) : 0.016f;
-            float stepBudget = approachSpeed * dt;
+            float stepBudget = normalSpeed * dt;
 
             while (stepBudget > 0f && routeIndex < approachRoute.Count - 1)
             {
@@ -1239,14 +1245,13 @@ public class AntQueueController : MonoBehaviour
             }
 
             virtualHeadDist = totalTrailDistance;
-            UpdateUnitsAlongTrail(virtualHeadDist);
+            UpdateUnitsAlongTrail(virtualHeadDist, pipesToReserve);
             if (BoardManager.Instance != null && isConnected) BoardManager.Instance.UpdateParallelRopes();
             yield return null;
         }
 
         // 3. Impact Phase
         moveState = QueueMoveState.Impact;
-        float maxDistReached = totalTrailDistance;
 
         // Recheck blocker before impact: if blocker queue moved or disappeared, cancel penalty!
         // Holes are permanent stationary structures, so blockerHole is always valid
@@ -1268,28 +1273,6 @@ public class AntQueueController : MonoBehaviour
             // Blocker (queue or hole) remains strictly stationary - no positional punch or displacement
         }
 
-        // Recoil bump backwards
-        if (blockerStillStationary && recoilAmount > 0.01f)
-        {
-            float actualRecoil = Mathf.Min(recoilAmount, maxDistReached - initialHeadDist);
-            float recoilElapsed = 0f;
-            float recoilDuration = 0.08f;
-            float recoilStartDist = virtualHeadDist;
-            float recoilTargetDist = recoilStartDist - actualRecoil;
-
-            while (recoilElapsed < recoilDuration)
-            {
-                while (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.Paused) yield return null;
-
-                recoilElapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(recoilElapsed / recoilDuration);
-                virtualHeadDist = Mathf.Lerp(recoilStartDist, recoilTargetDist, t);
-                UpdateUnitsAlongTrail(virtualHeadDist);
-                if (BoardManager.Instance != null && isConnected) BoardManager.Instance.UpdateParallelRopes();
-                yield return null;
-            }
-        }
-
         // Impact pause
         float pauseElapsed = 0f;
         while (pauseElapsed < impactPause)
@@ -1299,7 +1282,8 @@ public class AntQueueController : MonoBehaviour
             yield return null;
         }
 
-        // 4. Reverse Phase: retrace traveled polyline backwards naturally
+        // 4. Reverse Phase: retrace traveled polyline backwards naturally at the SAME normal speed
+        // Duration = actual travelled distance / normal speed. Constant path-distance speed without easing.
         moveState = QueueMoveState.Returning;
 
         while (virtualHeadDist > initialHeadDist)
@@ -1307,10 +1291,10 @@ public class AntQueueController : MonoBehaviour
             while (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.Paused) yield return null;
 
             float dt = (Time.deltaTime > 0.0001f) ? Mathf.Min(Time.deltaTime, 0.05f) : 0.016f;
-            virtualHeadDist -= returnSpeed * dt;
+            virtualHeadDist -= normalSpeed * dt;
             if (virtualHeadDist < initialHeadDist) virtualHeadDist = initialHeadDist;
 
-            UpdateUnitsAlongTrail(virtualHeadDist);
+            UpdateUnitsAlongTrail(virtualHeadDist, pipesToReserve);
             if (BoardManager.Instance != null && isConnected) BoardManager.Instance.UpdateParallelRopes();
             yield return null;
         }
@@ -1324,8 +1308,10 @@ public class AntQueueController : MonoBehaviour
                 units[i].transform.localRotation = initialUnitPoses[i].localRotation;
                 units[i].StopWalkAnimation();
                 units[i].IsMoving = false;
+                units[i].ResetInsidePipeVisual();
             }
         }
+        ResetAllAntPipeVisuals();
 
         if (pipesToReserve != null)
         {
@@ -1348,7 +1334,7 @@ public class AntQueueController : MonoBehaviour
         }
     }
 
-    private void UpdateUnitsAlongTrail(float headDist)
+    private void UpdateUnitsAlongTrail(float headDist, List<PipeController> candidatePipes = null)
     {
         for (int i = 0; i < antUnits.Count; i++)
         {
@@ -1364,6 +1350,62 @@ public class AntQueueController : MonoBehaviour
                         u.transform.rotation = Quaternion.LookRotation(fwdDir, Vector3.up);
                     }
                 }
+                UpdateAntPipeVisual(u, candidatePipes);
+            }
+        }
+    }
+
+    public void UpdateAntPipeVisual(AntUnit unit, List<PipeController> candidatePipes = null)
+    {
+        if (unit == null) return;
+
+        IReadOnlyList<PipeController> pipes = candidatePipes;
+        if (pipes == null || pipes.Count == 0)
+        {
+            pipes = traversedPipes;
+        }
+        if ((pipes == null || pipes.Count == 0) && BoardManager.Instance != null)
+        {
+            pipes = BoardManager.Instance.ActivePipes;
+        }
+
+        float lowestOpacity = 1.0f;
+        UnityEngine.Color chosenTint = UnityEngine.Color.white;
+
+        if (pipes != null && pipes.Count > 0)
+        {
+            Vector3 pos = unit.transform.position;
+            for (int p = 0; p < pipes.Count; p++)
+            {
+                var pipe = pipes[p];
+                if (pipe == null) continue;
+                float op = pipe.GetAntVisualOpacity(pos, out UnityEngine.Color tint);
+                if (op < lowestOpacity)
+                {
+                    lowestOpacity = op;
+                    chosenTint = tint;
+                }
+            }
+        }
+
+        if (lowestOpacity < 0.999f)
+        {
+            unit.SetInsidePipeVisual(lowestOpacity, chosenTint);
+        }
+        else
+        {
+            unit.ResetInsidePipeVisual();
+        }
+    }
+
+    public void ResetAllAntPipeVisuals()
+    {
+        if (antUnits == null) return;
+        for (int i = 0; i < antUnits.Count; i++)
+        {
+            if (antUnits[i] != null)
+            {
+                antUnits[i].ResetInsidePipeVisual();
             }
         }
     }
@@ -1401,6 +1443,7 @@ public class AntQueueController : MonoBehaviour
         moveState = QueueMoveState.Idle;
         isMoving = false;
         ReleaseReservedHole();
+        ResetAllAntPipeVisuals();
         if (ropeVisual != null) ropeVisual.Cleanup();
         if (antUnits != null)
         {
@@ -1421,6 +1464,7 @@ public class AntQueueController : MonoBehaviour
         moveState = QueueMoveState.Idle;
         isMoving = false;
         ReleaseReservedHole();
+        ResetAllAntPipeVisuals();
         if (ropeVisual != null) ropeVisual.Cleanup();
         if (antUnits != null)
         {

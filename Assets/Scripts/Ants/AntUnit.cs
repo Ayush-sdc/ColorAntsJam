@@ -70,14 +70,42 @@ public class AntUnit : MonoBehaviour
         }
     }
 
+    [Header("Pipe Translucency State")]
+    [SerializeField] private bool isInsidePipe = false;
+    [SerializeField] private float currentPipeOpacity = 1.0f;
+    public bool IsInsidePipe => isInsidePipe;
+    public float CurrentPipeOpacity => currentPipeOpacity;
+
+    public void SetInsidePipeVisual(float opacity, Color tint)
+    {
+        isInsidePipe = opacity < 0.999f;
+        currentPipeOpacity = Mathf.Clamp01(opacity);
+        if (visualRoot != null)
+        {
+            AntVisualConfig.ApplyInsidePipeOpacity(visualRoot.gameObject, currentPipeOpacity, tint);
+        }
+    }
+
+    public void ResetInsidePipeVisual()
+    {
+        isInsidePipe = false;
+        currentPipeOpacity = 1.0f;
+        if (visualRoot != null)
+        {
+            AntVisualConfig.ResetInsidePipeOpacity(visualRoot.gameObject);
+        }
+    }
+
     private void OnEnable()
     {
         SetVisualVisibility(true);
+        ResetInsidePipeVisual();
     }
 
     private void OnDisable()
     {
         StopWalkAnimation();
+        ResetInsidePipeVisual();
     }
 
     private void OnDestroy()
@@ -107,6 +135,7 @@ public class AntUnit : MonoBehaviour
 
         BuildVisuals();
         SetVisualVisibility(true);
+        ResetInsidePipeVisual();
     }
 
     private float walkTimer = 0f;
@@ -189,6 +218,7 @@ public class AntUnit : MonoBehaviour
             modelRoot.localPosition = offset;
             modelRoot.localScale = Vector3.one * scale;
         }
+        ResetInsidePipeVisual();
     }
 
     [ContextMenu("Rebuild Ant Visuals")]

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class SoundManager : MonoBehaviour
 {
@@ -9,30 +10,76 @@ public class SoundManager : MonoBehaviour
     [Range(0f, 1f)] [SerializeField] private float masterVolume = 0.8f;
 
     [Header("SFX Clips")]
-    [Tooltip("AudioClip played when an ant queue bumps into a stationary obstacle. If unassigned, procedural tone is used.")]
+    [Tooltip("AudioClip played when selecting an interactable ant queue. (Source: sounds/Tap sound.mp3)")]
+    [SerializeField] private AudioClip tapClip;
+
+    [Tooltip("AudioClip played when an ant queue contacts a blocking queue or wrong-color hole. (Source: sounds/wrong move.mp3)")]
     [SerializeField] private AudioClip ouchClip;
 
-    private AudioSource sfxSource;
+    [Tooltip("AudioClip played once when a level is successfully completed. (Source: sounds/winning sound.mp3)")]
+    [SerializeField] private AudioClip winClip;
 
-    private AudioClip tapClip;
+    [Header("SFX Volume Controls")]
+    [Range(0f, 1f)] [SerializeField] private float tapVolume = 0.8f;
+    [Range(0f, 1f)] [SerializeField] private float impactVolume = 0.95f;
+    [Range(0f, 1f)] [SerializeField] private float completionVolume = 1.0f;
+
+    private AudioSource sfxSource;
+    public AudioSource SfxSource
+    {
+        get
+        {
+            if (sfxSource == null) InitAudioSource();
+            return sfxSource;
+        }
+    }
+
+    private AudioClip proceduralTapClip;
     private AudioClip hopClip;
     private AudioClip swallowClip;
     private AudioClip blockedClip;
-    private AudioClip winClip;
+    private AudioClip proceduralWinClip;
     private AudioClip loseClip;
+    private AudioClip proceduralOuchClip;
+
+    private float lastTapTime = -1f;
+    private const float TapThrottleDuration = 0.04f;
+    private bool hasPlayedWinSoundForCurrentLevel = false;
 
     private const string SoundMutedKey = "SoundMuted";
     private const string MusicMutedKey = "MusicMuted";
 
     public bool IsMuted => isMuted;
     public bool IsMusicMuted => isMusicMuted;
+    public float MasterVolume { get => masterVolume; set => masterVolume = Mathf.Clamp01(value); }
+
+    public AudioClip TapClip { get => tapClip; set => tapClip = value; }
     public AudioClip OuchClip { get => ouchClip; set => ouchClip = value; }
+    public AudioClip WinClip { get => winClip; set => winClip = value; }
+
+    public float TapVolume { get => tapVolume; set => tapVolume = Mathf.Clamp01(value); }
+    public float ImpactVolume { get => impactVolume; set => impactVolume = Mathf.Clamp01(value); }
+    public float CompletionVolume { get => completionVolume; set => completionVolume = Mathf.Clamp01(value); }
+
+    public void InitAudioSource()
+    {
+        if (sfxSource == null)
+        {
+            sfxSource = GetComponent<AudioSource>();
+            if (sfxSource == null)
+            {
+                sfxSource = gameObject.AddComponent<AudioSource>();
+            }
+            sfxSource.playOnAwake = false;
+            sfxSource.spatialBlend = 0f; // 2D Non-positional playback
+        }
+    }
 
     private void Awake()
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            Destroy(this);
             return;
         }
         Instance = this;
@@ -40,8 +87,11 @@ public class SoundManager : MonoBehaviour
         isMuted = PlayerPrefs.GetInt(SoundMutedKey, 0) == 1;
         isMusicMuted = PlayerPrefs.GetInt(MusicMutedKey, 0) == 1;
 
-        sfxSource = gameObject.AddComponent<AudioSource>();
-        sfxSource.playOnAwake = false;
+        InitAudioSource();
+
+#if UNITY_EDITOR
+        LoadDefaultClipsIfUnassigned();
+#endif
 
         GenerateProceduralAudioClips();
 
@@ -49,6 +99,7 @@ public class SoundManager : MonoBehaviour
         AntQueueController.OnQueueMoveStarted += HandleQueueMoveStarted;
         AntQueueController.OnQueueBlockedFeedback += HandleQueueBlocked;
         GameManager.OnGameStateChanged += HandleGameStateChanged;
+        LevelManager.OnLevelLoaded += HandleLevelLoaded;
     }
 
     private void OnDestroy()
@@ -61,6 +112,12 @@ public class SoundManager : MonoBehaviour
         AntQueueController.OnQueueMoveStarted -= HandleQueueMoveStarted;
         AntQueueController.OnQueueBlockedFeedback -= HandleQueueBlocked;
         GameManager.OnGameStateChanged -= HandleGameStateChanged;
+        LevelManager.OnLevelLoaded -= HandleLevelLoaded;
+    }
+
+    private void HandleLevelLoaded(Level level)
+    {
+        ResetCompletionGuard();
     }
 
     private void HandleQueueMoveStarted(AntQueueController queue)
@@ -75,8 +132,18 @@ public class SoundManager : MonoBehaviour
 
     private void HandleGameStateChanged(GameState state)
     {
-        if (state == GameState.LevelWon) PlayWin();
-        else if (state == GameState.LevelLost) PlayLose();
+        if (state == GameState.LevelWon)
+        {
+            PlayWin();
+        }
+        else if (state == GameState.LevelLost)
+        {
+            PlayLose();
+        }
+        else if (state == GameState.Playing)
+        {
+            ResetCompletionGuard();
+        }
     }
 
     public void ToggleMute()
@@ -94,6 +161,12 @@ public class SoundManager : MonoBehaviour
         isMuted = muted;
         PlayerPrefs.SetInt(SoundMutedKey, isMuted ? 1 : 0);
         PlayerPrefs.Save();
+
+        // Muting silences currently playing effects immediately
+        if (isMuted && SfxSource != null)
+        {
+            SfxSource.Stop();
+        }
     }
 
     public void SetMusicMuted(bool muted)
@@ -103,9 +176,18 @@ public class SoundManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
+    public void ResetCompletionGuard()
+    {
+        hasPlayedWinSoundForCurrentLevel = false;
+    }
+
     public void PlayTap()
     {
-        PlayClip(tapClip, 0.7f, Random.Range(0.95f, 1.05f));
+        if (Time.unscaledTime - lastTapTime < TapThrottleDuration) return;
+        lastTapTime = Time.unscaledTime;
+
+        AudioClip clip = tapClip != null ? tapClip : proceduralTapClip;
+        PlayClip(clip, tapVolume, Random.Range(0.98f, 1.02f));
     }
 
     public void PlayHop()
@@ -119,11 +201,16 @@ public class SoundManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Plays the hole-entry sound (swallowClip) immediately once when a distinct stationary queue is tapped.
+    /// Plays the tap/selection sound once when an interactable ant queue is selected.
     /// </summary>
     public void PlayQueueSelect()
     {
-        PlayClip(swallowClip, 0.85f, Random.Range(0.95f, 1.05f));
+        // Prevent duplicate events and excessive volume buildup from identical simultaneous taps
+        if (Time.unscaledTime - lastTapTime < TapThrottleDuration) return;
+        lastTapTime = Time.unscaledTime;
+
+        AudioClip clip = tapClip != null ? tapClip : proceduralTapClip;
+        PlayClip(clip, tapVolume, Random.Range(0.98f, 1.02f));
     }
 
     public void PlayBlocked()
@@ -141,19 +228,20 @@ public class SoundManager : MonoBehaviour
     /// </summary>
     public void PlayOuch()
     {
-        if (ouchClip != null)
-        {
-            PlayClip(ouchClip, 0.95f, Random.Range(0.95f, 1.05f));
-        }
-        else
-        {
-            PlayClip(blockedClip, 0.85f, 1.0f);
-        }
+        AudioClip clip = ouchClip != null ? ouchClip : proceduralOuchClip;
+        PlayClip(clip, impactVolume, Random.Range(0.98f, 1.02f));
     }
 
+    /// <summary>
+    /// Plays the level completed fanfare once when confirmed, coordinated with completion overlay.
+    /// </summary>
     public void PlayWin()
     {
-        PlayClip(winClip, 1.0f, 1.0f);
+        if (hasPlayedWinSoundForCurrentLevel) return;
+        hasPlayedWinSoundForCurrentLevel = true;
+
+        AudioClip clip = winClip != null ? winClip : proceduralWinClip;
+        PlayClip(clip, completionVolume, 1.0f);
     }
 
     public void PlayLose()
@@ -165,15 +253,33 @@ public class SoundManager : MonoBehaviour
     {
         if (isMuted || clip == null || sfxSource == null) return;
         sfxSource.pitch = pitch;
-        sfxSource.PlayOneShot(clip, volumeScale * masterVolume);
+        sfxSource.PlayOneShot(clip, Mathf.Clamp01(volumeScale * masterVolume));
     }
+
+#if UNITY_EDITOR
+    public void LoadDefaultClipsIfUnassigned()
+    {
+        if (tapClip == null)
+        {
+            tapClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/SFX/Tap sound.mp3");
+        }
+        if (ouchClip == null)
+        {
+            ouchClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/SFX/wrong move.mp3");
+        }
+        if (winClip == null)
+        {
+            winClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/SFX/winning sound.mp3");
+        }
+    }
+#endif
 
     private void GenerateProceduralAudioClips()
     {
         int sampleRate = 44100;
 
-        // 1. Crisp Pop / Tap Clip (0.06s)
-        tapClip = CreateTone(sampleRate, 0.06f, (t, dur) =>
+        // 1. Crisp Pop / Tap Clip (0.06s) - Fallback
+        proceduralTapClip = CreateTone(sampleRate, 0.06f, (t, dur) =>
         {
             float freq = Mathf.Lerp(800f, 300f, t / dur);
             float env = Mathf.Exp(-t * 40f);
@@ -204,10 +310,9 @@ public class SoundManager : MonoBehaviour
             return Mathf.Sin(2 * Mathf.PI * freq * t) * env;
         });
 
-        // 5. Victory Major Chime (0.65s)
-        winClip = CreateTone(sampleRate, 0.65f, (t, dur) =>
+        // 5. Victory Major Chime (0.65s) - Fallback
+        proceduralWinClip = CreateTone(sampleRate, 0.65f, (t, dur) =>
         {
-            // Arpeggio C5 (523), E5 (659), G5 (784), C6 (1046)
             float freq = (t < 0.12f) ? 523.25f : (t < 0.24f) ? 659.25f : (t < 0.36f) ? 783.99f : 1046.50f;
             float env = Mathf.Exp(-(t % 0.12f) * 10f) * Mathf.Clamp01((dur - t) / dur);
             return (Mathf.Sin(2 * Mathf.PI * freq * t) + 0.3f * Mathf.Sin(4 * Mathf.PI * freq * t)) * env;
@@ -221,16 +326,13 @@ public class SoundManager : MonoBehaviour
             return (Mathf.Sin(2 * Mathf.PI * freq * t) + 0.2f * Mathf.Sin(3 * Mathf.PI * freq * t)) * env;
         });
 
-        // 7. Bump / Ouch Tone (0.16s) - Fallback if no audio asset assigned
-        if (ouchClip == null)
+        // 7. Bump / Ouch Tone (0.16s) - Fallback
+        proceduralOuchClip = CreateTone(sampleRate, 0.16f, (t, dur) =>
         {
-            ouchClip = CreateTone(sampleRate, 0.16f, (t, dur) =>
-            {
-                float freq = Mathf.Lerp(320f, 130f, t / dur);
-                float env = Mathf.Exp(-t * 24f);
-                return (Mathf.Sin(2 * Mathf.PI * freq * t) + 0.35f * Mathf.Sin(4 * Mathf.PI * freq * t)) * env;
-            });
-        }
+            float freq = Mathf.Lerp(320f, 130f, t / dur);
+            float env = Mathf.Exp(-t * 24f);
+            return (Mathf.Sin(2 * Mathf.PI * freq * t) + 0.35f * Mathf.Sin(4 * Mathf.PI * freq * t)) * env;
+        });
     }
 
     private AudioClip CreateTone(int sampleRate, float duration, System.Func<float, float, float> sampleFunc)

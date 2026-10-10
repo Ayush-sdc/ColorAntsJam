@@ -194,6 +194,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 2034216161}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &4733234
 GameObject:
   m_ObjectHideFlags: 0
@@ -1396,6 +1398,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1118234151}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &20332871
 GameObject:
   m_ObjectHideFlags: 0
@@ -1741,6 +1745,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 990972688}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &23837583
 GameObject:
   m_ObjectHideFlags: 0
@@ -2520,7 +2526,12 @@ MonoBehaviour:
   isMuted: 0
   isMusicMuted: 0
   masterVolume: 0.8
-  ouchClip: {fileID: 0}
+  tapClip: {fileID: 8300000, guid: 4de165e7a259ebb45a90bb4f7e4858fe, type: 3}
+  ouchClip: {fileID: 8300000, guid: b7069c1e7f74be04596c3242bf2b335b, type: 3}
+  winClip: {fileID: 8300000, guid: a486ed4c63c8ce14397f867ff46e84d5, type: 3}
+  tapVolume: 0.8
+  impactVolume: 0.95
+  completionVolume: 1
 --- !u!114 &35470747
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3868,6 +3879,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1148863773}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &58010087
 GameObject:
   m_ObjectHideFlags: 0
@@ -5574,6 +5587,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1531440333}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &86807886
 GameObject:
   m_ObjectHideFlags: 0
@@ -5837,6 +5852,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1343911976}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &92517516
 GameObject:
   m_ObjectHideFlags: 0
@@ -6469,6 +6486,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 591650098}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &102271482
 GameObject:
   m_ObjectHideFlags: 0
@@ -7097,6 +7116,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1696552707}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &115491625
 GameObject:
   m_ObjectHideFlags: 0
@@ -8525,6 +8546,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1600137328}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!43 &142941709
 Mesh:
   m_ObjectHideFlags: 0
@@ -11006,6 +11029,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 898475775}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &191927658
 GameObject:
   m_ObjectHideFlags: 0
@@ -16955,6 +16980,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 864947771}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!21 &268715760
 Material:
   serializedVersion: 8
@@ -19441,6 +19468,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 83301745}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &323222118
 GameObject:
   m_ObjectHideFlags: 0
@@ -23738,6 +23767,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 940737364}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &377026681
 GameObject:
   m_ObjectHideFlags: 0
@@ -24850,6 +24881,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 987603451}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &393427599
 GameObject:
   m_ObjectHideFlags: 0
@@ -25687,6 +25720,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 426833828}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &421362259
 GameObject:
   m_ObjectHideFlags: 0
@@ -25975,6 +26010,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1564951975}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &425061558
 GameObject:
   m_ObjectHideFlags: 0
@@ -27295,6 +27332,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 115491627}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &439075669
 GameObject:
   m_ObjectHideFlags: 0
@@ -27763,6 +27802,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 722800237}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &445188603
 GameObject:
   m_ObjectHideFlags: 0
@@ -27952,6 +27993,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1781913885}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &446404625
 GameObject:
   m_ObjectHideFlags: 0
@@ -28766,6 +28809,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1591369310}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &455197980
 GameObject:
   m_ObjectHideFlags: 0
@@ -29201,6 +29246,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 372257485}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &466741044
 GameObject:
   m_ObjectHideFlags: 0
@@ -29830,6 +29877,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 387445025}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!43 &482235954
 Mesh:
   m_ObjectHideFlags: 0
@@ -31532,6 +31581,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 370131380}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &522745920
 GameObject:
   m_ObjectHideFlags: 0
@@ -31983,6 +32034,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 92517518}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &535985511
 GameObject:
   m_ObjectHideFlags: 0
@@ -32262,6 +32315,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 406759686}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &541993693
 GameObject:
   m_ObjectHideFlags: 0
@@ -32875,6 +32930,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1674416454}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &562025456
 GameObject:
   m_ObjectHideFlags: 0
@@ -33490,6 +33547,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 938596127}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &574179280
 GameObject:
   m_ObjectHideFlags: 0
@@ -36540,6 +36599,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 12171994}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &638936649
 GameObject:
   m_ObjectHideFlags: 0
@@ -39435,6 +39496,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 2129547107}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &696179987
 GameObject:
   m_ObjectHideFlags: 0
@@ -42658,6 +42721,11 @@ MonoBehaviour:
   badgeRoot: {fileID: 196189839}
   counterText: {fileID: 1574940550}
   badgeCanvas: {fileID: 196189840}
+  badgeScale: 0
+  numeralSize: 0
+  entranceForwardOffset: 0
+  entranceLateralOffset: 0
+  entranceHeightOffset: 0
 --- !u!1 &752091163
 GameObject:
   m_ObjectHideFlags: 0
@@ -43159,6 +43227,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 2116706447}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &765754708
 GameObject:
   m_ObjectHideFlags: 0
@@ -45134,6 +45204,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1000476655}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &811095950
 GameObject:
   m_ObjectHideFlags: 0
@@ -45261,6 +45333,11 @@ MonoBehaviour:
   badgeRoot: {fileID: 990601465}
   counterText: {fileID: 1767076869}
   badgeCanvas: {fileID: 990601466}
+  badgeScale: 0
+  numeralSize: 0
+  entranceForwardOffset: 0
+  entranceLateralOffset: 0
+  entranceHeightOffset: 0
 --- !u!1 &811438770
 GameObject:
   m_ObjectHideFlags: 0
@@ -46645,6 +46722,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 377026683}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &840221019
 GameObject:
   m_ObjectHideFlags: 0
@@ -47778,6 +47857,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1943175896}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!28 &862153192
 Texture2D:
   m_ObjectHideFlags: 0
@@ -52423,6 +52504,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1942683318}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &926354522
 GameObject:
   m_ObjectHideFlags: 0
@@ -53128,6 +53211,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1531527193}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &940737362
 GameObject:
   m_ObjectHideFlags: 0
@@ -53867,6 +53952,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 38039579}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &959617149
 GameObject:
   m_ObjectHideFlags: 0
@@ -54341,6 +54428,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 271801255}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &971795793
 GameObject:
   m_ObjectHideFlags: 0
@@ -54660,6 +54749,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 850436726}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &981588374
 GameObject:
   m_ObjectHideFlags: 0
@@ -57283,6 +57374,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 459996505}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1009857580
 GameObject:
   m_ObjectHideFlags: 0
@@ -58168,6 +58261,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 151393596}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1025926375
 GameObject:
   m_ObjectHideFlags: 0
@@ -59288,6 +59383,11 @@ MonoBehaviour:
   badgeRoot: {fileID: 1892712767}
   counterText: {fileID: 196215300}
   badgeCanvas: {fileID: 1892712768}
+  badgeScale: 0
+  numeralSize: 0
+  entranceForwardOffset: 0
+  entranceLateralOffset: 0
+  entranceHeightOffset: 0
 --- !u!1 &1046168863
 GameObject:
   m_ObjectHideFlags: 0
@@ -63860,6 +63960,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1016804528}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!21 &1133572992
 Material:
   serializedVersion: 8
@@ -68959,6 +69061,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 412951873}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1220090266
 GameObject:
   m_ObjectHideFlags: 0
@@ -69124,6 +69228,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 65478363}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1223418378
 GameObject:
   m_ObjectHideFlags: 0
@@ -72538,6 +72644,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1053483319}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1286965604
 GameObject:
   m_ObjectHideFlags: 0
@@ -72742,6 +72850,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 776113398}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1289490976
 GameObject:
   m_ObjectHideFlags: 0
@@ -77491,6 +77601,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 2023443626}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1360129689
 GameObject:
   m_ObjectHideFlags: 0
@@ -78282,6 +78394,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 675424044}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1370579879
 GameObject:
   m_ObjectHideFlags: 0
@@ -79534,6 +79648,11 @@ MonoBehaviour:
   badgeRoot: {fileID: 1558571355}
   counterText: {fileID: 240971671}
   badgeCanvas: {fileID: 1558571356}
+  badgeScale: 0
+  numeralSize: 0
+  entranceForwardOffset: 0
+  entranceLateralOffset: 0
+  entranceHeightOffset: 0
 --- !u!1 &1382508237
 GameObject:
   m_ObjectHideFlags: 0
@@ -82008,6 +82127,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1880956948}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1429029035
 GameObject:
   m_ObjectHideFlags: 0
@@ -83687,6 +83808,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 2067759038}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1452713926
 GameObject:
   m_ObjectHideFlags: 0
@@ -84176,6 +84299,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 2020107728}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1460943844
 GameObject:
   m_ObjectHideFlags: 0
@@ -84941,6 +85066,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1101538895}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1477267384
 GameObject:
   m_ObjectHideFlags: 0
@@ -88002,6 +88129,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1475596349}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!43 &1523987792
 Mesh:
   m_ObjectHideFlags: 0
@@ -89226,6 +89355,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1762868563}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1540882763
 GameObject:
   m_ObjectHideFlags: 0
@@ -92304,6 +92435,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1012835846}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1603473653
 GameObject:
   m_ObjectHideFlags: 0
@@ -92988,6 +93121,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1841925883}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1610637172
 GameObject:
   m_ObjectHideFlags: 0
@@ -93404,6 +93539,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 535362876}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1618613383
 GameObject:
   m_ObjectHideFlags: 0
@@ -94662,6 +94799,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 785371867}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1641060068
 GameObject:
   m_ObjectHideFlags: 0
@@ -94925,6 +95064,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1711069101}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1642280248
 GameObject:
   m_ObjectHideFlags: 0
@@ -95302,6 +95443,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 63461120}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1652759728
 GameObject:
   m_ObjectHideFlags: 0
@@ -95994,6 +96137,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1481106413}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1664248233
 GameObject:
   m_ObjectHideFlags: 0
@@ -96475,6 +96620,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 258717695}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1674416452
 GameObject:
   m_ObjectHideFlags: 0
@@ -97482,6 +97629,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1783561492}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1705605305
 GameObject:
   m_ObjectHideFlags: 0
@@ -98922,6 +99071,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1480408427}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1733815824
 GameObject:
   m_ObjectHideFlags: 0
@@ -101991,6 +102142,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 846601786}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1001 &1787719671
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -102329,6 +102482,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 867551600}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!21 &1795630689
 Material:
   serializedVersion: 8
@@ -102481,7 +102636,12 @@ MonoBehaviour:
   isMuted: 0
   isMusicMuted: 0
   masterVolume: 0.8
-  ouchClip: {fileID: 0}
+  tapClip: {fileID: 8300000, guid: 4de165e7a259ebb45a90bb4f7e4858fe, type: 3}
+  ouchClip: {fileID: 8300000, guid: b7069c1e7f74be04596c3242bf2b335b, type: 3}
+  winClip: {fileID: 8300000, guid: a486ed4c63c8ce14397f867ff46e84d5, type: 3}
+  tapVolume: 0.8
+  impactVolume: 0.95
+  completionVolume: 1
 --- !u!4 &1797240144
 Transform:
   m_ObjectHideFlags: 0
@@ -106635,6 +106795,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1836367076}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1859875844
 GameObject:
   m_ObjectHideFlags: 0
@@ -108649,6 +108811,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 2080428471}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1896412773
 GameObject:
   m_ObjectHideFlags: 0
@@ -108724,6 +108888,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1629316231}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1897162545
 GameObject:
   m_ObjectHideFlags: 0
@@ -110944,6 +111110,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1561413225}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1922232035
 GameObject:
   m_ObjectHideFlags: 0
@@ -111898,6 +112066,11 @@ MonoBehaviour:
   badgeRoot: {fileID: 229261535}
   counterText: {fileID: 1892498421}
   badgeCanvas: {fileID: 229261536}
+  badgeScale: 0
+  numeralSize: 0
+  entranceForwardOffset: 0
+  entranceLateralOffset: 0
+  entranceHeightOffset: 0
 --- !u!1 &1930025924
 GameObject:
   m_ObjectHideFlags: 0
@@ -115192,6 +115365,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1354589547}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1973773259
 GameObject:
   m_ObjectHideFlags: 0
@@ -116465,6 +116640,11 @@ MonoBehaviour:
   badgeRoot: {fileID: 1121615024}
   counterText: {fileID: 300016216}
   badgeCanvas: {fileID: 1121615025}
+  badgeScale: 0
+  numeralSize: 0
+  entranceForwardOffset: 0
+  entranceLateralOffset: 0
+  entranceHeightOffset: 0
 --- !u!1 &1983828082
 GameObject:
   m_ObjectHideFlags: 0
@@ -116662,6 +116842,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 538761961}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &1984745563
 GameObject:
   m_ObjectHideFlags: 0
@@ -116987,6 +117169,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 953369755}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &2007683505
 GameObject:
   m_ObjectHideFlags: 0
@@ -119173,6 +119357,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 386881727}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &2036013338
 GameObject:
   m_ObjectHideFlags: 0
@@ -120896,6 +121082,11 @@ MonoBehaviour:
   badgeRoot: {fileID: 2028778407}
   counterText: {fileID: 1418814355}
   badgeCanvas: {fileID: 2028778408}
+  badgeScale: 0
+  numeralSize: 0
+  entranceForwardOffset: 0
+  entranceLateralOffset: 0
+  entranceHeightOffset: 0
 --- !u!1 &2075944538
 GameObject:
   m_ObjectHideFlags: 0
@@ -121584,6 +121775,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 358037326}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &2082059956
 GameObject:
   m_ObjectHideFlags: 0
@@ -121659,6 +121852,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 202728843}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &2083186061
 GameObject:
   m_ObjectHideFlags: 0
@@ -122362,6 +122557,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1414147202}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &2095149601
 GameObject:
   m_ObjectHideFlags: 0
@@ -122527,6 +122724,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 2138903495}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &2099453930
 GameObject:
   m_ObjectHideFlags: 0
@@ -123853,6 +124052,8 @@ MonoBehaviour:
   bodyRenderer: {fileID: 512922677}
   bobHeight: 0.035
   tiltAngle: 3.5
+  isInsidePipe: 0
+  currentPipeOpacity: 1
 --- !u!1 &2120954486
 GameObject:
   m_ObjectHideFlags: 0

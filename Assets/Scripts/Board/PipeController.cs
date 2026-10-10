@@ -29,6 +29,24 @@ public class PipeController : MonoBehaviour
     [SerializeField] private Text counterText;
     [SerializeField] private Canvas badgeCanvas;
 
+    [Header("Entrance Badge Inspector Controls")]
+    [Tooltip("World scale of the entrance badge canvas. If <= 0, uses PipeVisualConfig.")]
+    [SerializeField] private float badgeScale = 0f;
+    [Tooltip("Numeral font size. If <= 0, uses PipeVisualConfig.")]
+    [SerializeField] private int numeralSize = 0;
+    [Tooltip("Forward offset from mouth along entry direction. If 0, uses PipeVisualConfig.")]
+    [SerializeField] private float entranceForwardOffset = 0f;
+    [Tooltip("Lateral offset from mouth towards outer wall. If 0, uses PipeVisualConfig.")]
+    [SerializeField] private float entranceLateralOffset = 0f;
+    [Tooltip("Vertical height offset above mouth. If 0, uses PipeVisualConfig.")]
+    [SerializeField] private float entranceHeightOffset = 0f;
+
+    public float ConfiguredBadgeScale => (badgeScale > 0.001f) ? badgeScale : PipeVisualConfig.Instance.badgeScale;
+    public int ConfiguredNumeralSize => (numeralSize > 0) ? numeralSize : PipeVisualConfig.Instance.numeralSize;
+    public float ConfiguredEntranceForwardOffset => (Mathf.Abs(entranceForwardOffset) > 0.001f) ? entranceForwardOffset : PipeVisualConfig.Instance.badgeForwardOffset;
+    public float ConfiguredEntranceLateralOffset => (Mathf.Abs(entranceLateralOffset) > 0.001f) ? entranceLateralOffset : PipeVisualConfig.Instance.badgeLateralOffset;
+    public float ConfiguredEntranceHeightOffset => (Mathf.Abs(entranceHeightOffset) > 0.001f) ? entranceHeightOffset : PipeVisualConfig.Instance.badgeHeightOffset;
+
     public IReadOnlyList<Vector2Int> Cells => cells;
     public int PipeCount => pipeCount;
     public int RemainingUses => remainingUses;
@@ -304,6 +322,24 @@ public class PipeController : MonoBehaviour
             pipeMat.SetColor("_BaseColor", Color.white);
             if (pipeMat.HasProperty("_Smoothness")) pipeMat.SetFloat("_Smoothness", config.smoothness);
             if (pipeMat.HasProperty("_Metallic")) pipeMat.SetFloat("_Metallic", 0.05f);
+        }
+
+        // Configure controlled transparent surface for translucent inside-ant visibility
+        if (pipeMat != null)
+        {
+            Material runMat = Application.isPlaying ? new Material(pipeMat) : pipeMat;
+            runMat.SetFloat("_Surface", 1.0f); // Transparent
+            runMat.SetFloat("_Blend", 0.0f);   // Alpha
+            runMat.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            runMat.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            runMat.SetFloat("_ZWrite", 0.0f);
+            runMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent; // 3000
+            runMat.SetOverrideTag("RenderType", "Transparent");
+            Color baseCol = runMat.HasProperty("_BaseColor") ? runMat.GetColor("_BaseColor") : Color.white;
+            baseCol.a = config.pipeConduitOpacity;
+            runMat.SetColor("_BaseColor", baseCol);
+            runMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            pipeMat = runMat;
         }
         meshRenderer.sharedMaterial = pipeMat;
 
@@ -756,33 +792,29 @@ public class PipeController : MonoBehaviour
         float cs = (BoardManager.Instance != null && BoardManager.Instance.CellSize > 0) ? BoardManager.Instance.CellSize : 1.0f;
         Vector3 rootWorldPos = transform.position;
 
-        // Position badge docked near entrance cell, elevated on top of pipe
+        // Logical configured entrance is strictly cells[0] (EntranceCell)
         Vector3 w0 = BoardManager.Instance != null
-            ? BoardManager.Instance.GridToWorldPosition(cells[0])
-            : new Vector3(cells[0].x * cs, 0f, cells[0].y * cs);
+            ? BoardManager.Instance.GridToWorldPosition(EntranceCell)
+            : new Vector3(EntranceCell.x * cs, 0f, EntranceCell.y * cs);
 
-        Vector3 d0 = Vector3.right;
-        if (cells.Count >= 2)
-        {
-            Vector3 w1 = BoardManager.Instance != null
-                ? BoardManager.Instance.GridToWorldPosition(cells[1])
-                : new Vector3(cells[1].x * cs, 0f, cells[1].y * cs);
-            d0 = (w1 - w0).normalized;
-        }
+        Vector3 d0 = new Vector3(EntryDirection.x, 0f, EntryDirection.y).normalized;
+        if (d0.sqrMagnitude < 0.001f) d0 = Vector3.right;
 
-        Vector3 lateralDir = Vector3.forward;
-        if (Mathf.Abs(d0.x) > 0.5f)
-        {
-            // Horizontal pipe: dock badge towards upper edge (+Z)
-            lateralDir = Vector3.forward;
-        }
-        else
-        {
-            // Vertical pipe: dock badge towards left outer edge (-X)
-            lateralDir = Vector3.left;
-        }
+        // Entrance mouth is at w0 - 0.5 * cs * d0 (at the entrance collar)
+        Vector3 mouthPos = w0 - 0.5f * cs * d0;
 
-        Vector3 badgeLocalPos = (w0 - rootWorldPos) + d0 * (config.badgeForwardOffset * cs) + lateralDir * (config.badgeLateralOffset * cs) + Vector3.up * config.badgeHeightOffset;
+        // Lateral side perpendicular to entry direction (outer edge beside collar)
+        Vector3 lateralDir = Vector3.Cross(Vector3.up, d0).normalized;
+        if (lateralDir.sqrMagnitude < 0.001f) lateralDir = Vector3.forward;
+
+        // Position beside entrance collar: slightly forward from mouth into pipe, and lateral to outer side
+        // so it never covers entering ants in the center, and never blocks the visible mouth opening
+        float fwdOffset = ConfiguredEntranceForwardOffset * cs;
+        float latOffset = ConfiguredEntranceLateralOffset * cs;
+        float hOffset = ConfiguredEntranceHeightOffset;
+
+        Vector3 badgeWorldPos = mouthPos + d0 * fwdOffset + lateralDir * latOffset + Vector3.up * hOffset;
+        Vector3 badgeLocalPos = badgeWorldPos - rootWorldPos;
 
         GameObject canvasObj = new GameObject("PipeUsageBadge");
         canvasObj.transform.SetParent(transform, false);
@@ -794,8 +826,18 @@ public class PipeController : MonoBehaviour
 
         badgeRoot = canvasObj.GetComponent<RectTransform>();
         badgeRoot.sizeDelta = new Vector2(config.badgeSize, config.badgeSize);
-        badgeRoot.localScale = Vector3.one * 0.008f;
-        badgeRoot.localRotation = Quaternion.Euler(75f, 0f, 0f); // Tilted forward towards camera
+
+        // Independent world scale, unaffected by pipe length or parent scaling
+        float targetScale = ConfiguredBadgeScale;
+        Vector3 parentLossy = transform.lossyScale;
+        badgeRoot.localScale = new Vector3(
+            parentLossy.x > 0.0001f ? targetScale / parentLossy.x : targetScale,
+            parentLossy.y > 0.0001f ? targetScale / parentLossy.y : targetScale,
+            parentLossy.z > 0.0001f ? targetScale / parentLossy.z : targetScale
+        );
+
+        // Keep text upright and readable for every pipe orientation (aligned with camera view)
+        canvasObj.transform.rotation = Quaternion.Euler(60f, 0f, 0f);
 
         // Load 9-slice squircle sprite for soft rounded corners
         Sprite squircleSprite = Resources.Load<Sprite>("Badge_Squircle");
@@ -820,6 +862,7 @@ public class PipeController : MonoBehaviour
         borderRect.anchorMax = Vector2.one;
         borderRect.sizeDelta = Vector2.zero;
         var borderImg = borderObj.AddComponent<Image>();
+        borderImg.raycastTarget = false; // Non-blocking to gameplay input
         if (squircleSprite != null)
         {
             borderImg.sprite = squircleSprite;
@@ -827,15 +870,16 @@ public class PipeController : MonoBehaviour
         }
         borderImg.color = config.badgeBorderColor;
 
-        // 2. Deep blue inner face plate (inset 3px)
+        // 2. Deep blue inner face plate (inset 4px)
         GameObject faceObj = new GameObject("BadgeFace");
         faceObj.transform.SetParent(badgeRoot, false);
         var faceRect = faceObj.AddComponent<RectTransform>();
         faceRect.anchorMin = Vector2.zero;
         faceRect.anchorMax = Vector2.one;
-        faceRect.offsetMin = new Vector2(3f, 3f);
-        faceRect.offsetMax = new Vector2(-3f, -3f);
+        faceRect.offsetMin = new Vector2(4f, 4f);
+        faceRect.offsetMax = new Vector2(-4f, -4f);
         var faceImg = faceObj.AddComponent<Image>();
+        faceImg.raycastTarget = false; // Non-blocking to gameplay input
         if (squircleSprite != null)
         {
             faceImg.sprite = squircleSprite;
@@ -843,7 +887,7 @@ public class PipeController : MonoBehaviour
         }
         faceImg.color = config.badgeFaceColor;
 
-        // 3. Crisp white numeral with outline
+        // 3. Crisp white numeral with strong dark outline matching reference
         GameObject textObj = new GameObject("CounterText");
         textObj.transform.SetParent(badgeRoot, false);
         var textRect = textObj.AddComponent<RectTransform>();
@@ -852,16 +896,94 @@ public class PipeController : MonoBehaviour
         textRect.sizeDelta = Vector2.zero;
 
         counterText = textObj.AddComponent<Text>();
+        counterText.raycastTarget = false; // Non-blocking to gameplay input
         counterText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        counterText.fontSize = (remainingUses >= 10) ? 22 : 26;
+        int fs = ConfiguredNumeralSize;
+        counterText.fontSize = (remainingUses >= 10) ? Mathf.RoundToInt(fs * 0.82f) : fs;
         counterText.fontStyle = FontStyle.Bold;
         counterText.alignment = TextAnchor.MiddleCenter;
         counterText.color = config.badgeTextColor;
         counterText.text = remainingUses.ToString();
 
-        // Dark outline for contrast
+        // Strong dark outline for high-contrast readability
         var outline = textObj.AddComponent<Outline>();
         outline.effectColor = config.badgeOutlineColor;
-        outline.effectDistance = new Vector2(1.5f, -1.5f);
+        outline.effectDistance = new Vector2(2.5f, -2.5f);
+    }
+
+    /// <summary>
+    /// Calculates the visual opacity and tint for an ant at world position traversing this pipe.
+    /// Returns 1.0f if the ant is outside the pipe, or smoothly transitions to insidePipeAntOpacity with insidePipeAntTint.
+    /// </summary>
+    public float GetAntVisualOpacity(Vector3 antWorldPos, out Color tint)
+    {
+        PipeVisualConfig config = PipeVisualConfig.Instance;
+        tint = (config != null) ? config.insidePipeAntTint : Color.white;
+        float baseInsideOpacity = (config != null) ? config.insidePipeAntOpacity : 0.40f;
+
+        if (cells == null || cells.Count < 2)
+        {
+            return 1.0f;
+        }
+
+        float cs = (BoardManager.Instance != null && BoardManager.Instance.CellSize > 0) ? BoardManager.Instance.CellSize : 1.0f;
+        Vector3 w0 = BoardManager.Instance != null
+            ? BoardManager.Instance.GridToWorldPosition(cells[0])
+            : new Vector3(cells[0].x * cs, 0f, cells[0].y * cs);
+        Vector3 wLast = BoardManager.Instance != null
+            ? BoardManager.Instance.GridToWorldPosition(cells[cells.Count - 1])
+            : new Vector3(cells[cells.Count - 1].x * cs, 0f, cells[cells.Count - 1].y * cs);
+
+        Vector3 entFwd = new Vector3(EntryDirection.x, 0f, EntryDirection.y).normalized;
+        Vector3 exitFwd = new Vector3(ExitDirection.x, 0f, ExitDirection.y).normalized;
+
+        Vector3 entMouth = w0 - 0.5f * cs * entFwd;
+        Vector3 exitMouth = wLast + 0.5f * cs * exitFwd;
+
+        // Check if ant is within lateral conduit envelope
+        float minCenterlineDistSq = float.MaxValue;
+        for (int i = 0; i < cells.Count - 1; i++)
+        {
+            Vector3 a = BoardManager.Instance != null
+                ? BoardManager.Instance.GridToWorldPosition(cells[i])
+                : new Vector3(cells[i].x * cs, 0f, cells[i].y * cs);
+            Vector3 b = BoardManager.Instance != null
+                ? BoardManager.Instance.GridToWorldPosition(cells[i + 1])
+                : new Vector3(cells[i + 1].x * cs, 0f, cells[i + 1].y * cs);
+            a.y = antWorldPos.y;
+            b.y = antWorldPos.y;
+            Vector3 ab = b - a;
+            float tSeg = Mathf.Clamp01(Vector3.Dot(antWorldPos - a, ab) / Mathf.Max(0.001f, ab.sqrMagnitude));
+            Vector3 proj = a + ab * tSeg;
+            float distSq = (antWorldPos - proj).sqrMagnitude;
+            if (distSq < minCenterlineDistSq) minCenterlineDistSq = distSq;
+        }
+
+        float maxLateralReach = (config != null ? config.pipeWidth : 0.84f) * cs;
+        if (minCenterlineDistSq > maxLateralReach * maxLateralReach)
+        {
+            return 1.0f;
+        }
+
+        float distPastEntrance = Vector3.Dot(antWorldPos - entMouth, entFwd);
+        float distToExit = Vector3.Dot(exitMouth - antWorldPos, exitFwd);
+
+        if (distPastEntrance < -0.05f) return 1.0f;
+        if (distToExit < -0.05f) return 1.0f;
+
+        float transitionDist = 0.35f * cs;
+        if (distPastEntrance < transitionDist)
+        {
+            float t = Mathf.Clamp01(distPastEntrance / transitionDist);
+            return Mathf.Lerp(1.0f, baseInsideOpacity, t);
+        }
+
+        if (distToExit < transitionDist)
+        {
+            float t = Mathf.Clamp01(distToExit / transitionDist);
+            return Mathf.Lerp(1.0f, baseInsideOpacity, t);
+        }
+
+        return baseInsideOpacity;
     }
 }
